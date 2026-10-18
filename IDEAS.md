@@ -1,6 +1,6 @@
 # Ideas
 
-Nine ideas, all rooted in Shenzhen or the Greater Bay Area. Each one carries the same security layer (see SECURITY.md). The ranking is in CORE_IDEA.md.
+Twelve ideas, all rooted in Shenzhen or the Greater Bay Area. Each one carries the same security layer (see SECURITY.md). The ranking is in CORE_IDEA.md.
 
 Scoring reminder: task completion 40, security 30, innovation 30, plus 0 to 5 bonus for on-chain (Topic F). Pick for execution, not for ambition.
 
@@ -120,8 +120,63 @@ Security story. Compliance heavy by design, which maxes the 30 percent.
 
 Build risk. Low to build, hard to make exciting. Product data would be mocked. Another team is already public on wealth advisory.
 
-## 10. Hidden Coverage
-...
+## 10. Hidden Coverage: an agent that finds the insurance you already own (Topic D)
+
+The pitch. Most people already own insurance they do not know about. A credit card covers purchases and travel. Contents insurance travels with you. Universities and employers run group policies. Platforms embed cover into purchases: shipping return cover on Taobao orders, flight delay cover bundled with tickets. At the same time people pay twice for overlaps and fall into gaps at borders. The agent reads every policy and card term into one coverage map, answers questions across all of them with clause citations, stops a pre-ticked add-on insurance at checkout when the user is already covered, and after a loss works out which policies pay, in which order and how much. It files the claims in a sandbox and never claims more than the actual loss. It finds cover instead of selling it.
+
+Why Shenzhen. Hong Kong and Shenzhen residents, cross-border commuters and exchange students hold policies in two or three legal systems at once, and the gaps sit exactly at the border. Embedded insurance is everywhere on mainland platforms. China's regulator NFRA bans forced bundling and pre-ticked insurance ([Insurance Sales Conduct Measures, Art. 23](https://www.hankunlaw.com/portal/article/index/cid/8/id/13675.html), issued 28 September 2023). Hong Kong gives a 21 day cooling-off period on long-term policies ([IA guideline GL29](https://www.ia.org.hk/en/consumer/industry_practices_associated_with_the_sale_of_Insurance_policies.html)). The agent enforces both rules on the customer's side.
+
+How it works.
+
+1. Ingestion. Policy PDFs, card terms, forwarded insurer emails. The LLM extracts each policy into one jurisdiction neutral schema: peril, insured object or person, territory, period, limit, deductible, exclusions, other insurance clause, obligations, and a citation for every field. Deterministic validation, then the user confirms.
+2. Coverage graph. Finds duplicates, gaps and, for a given incident, the payer order. Three clause types decide the order: exclusion (pays nothing if other cover exists), excess (pays only above the other policy), pro rata (pays a share).
+3. Jurisdiction packs for Germany, Hong Kong and China, holding only the rules the demo scenarios need, each with a citation. Germany: [§ 78 VVG](https://lxgesetze.de/vvg/78), insurers are joint debtors and the total never exceeds the loss. China: PRC Insurance Law Art. 56, the sum of all payouts never exceeds the insured value. Hong Kong: the common law indemnity principle plus the other insurance clauses ([CLIC](https://clic.org.hk/cn/topics/legal-support-for-tai-po-fire/insurance/Medical_Insurance/can-i-claim-for-the-sum-insured-under-all-policies)).
+4. Agent actions in a sandbox: the checkout guard (untick and explain), the claim split and filing to sandbox insurer APIs, a duplicate report with a cancellation draft.
+5. Portfolio Q&A. "Am I covered if my laptop is stolen in Shenzhen?" answered across all policies, with the clause, a confidence level, and "a human should check this" when unsure. No source, no answer.
+
+Demo moment. A German exchange student at HKUST buys a laptop online. Gadget insurance is pre-ticked. The agent unticks it and shows the card clause that already covers the purchase. Two weeks later the laptop is stolen from a café table in Shenzhen. The agent shows three policies and explains that the German contents insurance covers burglary and robbery outside the home, while simple theft from a table is not part of the model conditions' outside cover ([GDV VHB 2022, A 12](https://www.gdv.de/resource/blob/5922/ef7e81ad5123c48308285d4c51d4a13c/allgemeine-hausrat-versicherungsbedingungen-vhb-2022-versicherungssummenmodell--data.pdf)). It computes the order and the net payout and files two claims after one approval. Then the user asks it to claim the full amount from both insurers. The agent refuses and logs why: double recovery.
+
+Security story. Tiers from SECURITY.md: L0 read policies, L1 draft claims and cancellations, L2 send a claim inside caps, L3 anything that cancels a policy or changes a payout account. Hard denies in the policy engine: buy insurance, share data with a third party, claim more than the loss, misstate facts in a claim. Insurance specific attacks for the test suite: a policy PDF with hidden white text, an "insurer" email asking to change the payout account, a user asking to inflate a claim, the same loss claimed at two insurers. Health data is sensitive personal information under PIPL, so it needs separate consent, is minimised and is processed locally.
+
+Compliance story. Consumer side enforcement of NFRA Art. 23 (check the article number against the official text before it goes on a slide). The agent never sells or recommends a product, so it stays outside licensed advice. For real gaps it writes a neutral gap brief (categories and criteria) for a licensed advisor. Cancelling a duplicate is always the user's decision: the agent first checks waiting periods, pre-existing condition exclusions and gap days, or points to the cooling-off window.
+
+Inclusion angle. Protects people the system is not built for: students, migrants and cross-border workers who cannot read every clause in three languages. It saves money instead of selling. A bank like WeBank could offer it inside its app, where the transaction data already lives.
+
+Competition. Topic D has only two public entries, both US health insurance (policy Q&A with citations, claim and denial appeals), at about 61 of 100 in our review. Nobody covers several insurance types or several jurisdictions. See COMPETITION.md.
+
+Evaluation. Real public policy wordings (GDV VHB 2022, real card terms, real Hong Kong travel wordings, mainland platform covers) with a synthetic persona. 15 to 20 incident scenarios with the expected payer, order and amount, written by a teammate who does not write the engine and committed before the engine. One live LLM run with honest error rates.
+
+Scope for 48 hours. In: ingestion and schema, coverage graph with the three clause types, sample packs for Germany, Hong Kong and China, checkout guard, claim split and filing, portfolio Q&A, tiers, audit log, attack tests, answers in English and Chinese. Out: real insurer integration, renewal monitoring, product recommendations, more jurisdictions.
+
+Build risk. Medium. The claim order across borders is the hardest part to get exactly right, so the packs are framed as cited sample rules with a visible confidence. Breadth is the main danger: two real actions beat four mocked ones. A blind review of this planned scope gave about 85 of 100 if fully delivered and about 66 if only 70 percent lands. In the blind review of all twelve ideas it ranked first with all three judges (JUDGE_REVIEW.md).
+
+## 11. Self-Insure: an agent that tells you which insurance you do not need (Topic D)
+
+The pitch. Insurance has negative expected value for the buyer. It only makes sense for losses you cannot carry yourself. The agent takes the user's emergency buffer, existing policies and public loss frequencies, runs a Monte Carlo over the coming years, and recommends the best deductible per policy and which small covers to drop (phone, gadget, luggage, extended warranty). Saved premiums go automatically into a ring-fenced self-insurance pot. Existential covers (liability, health, life with dependants) are locked and can never be dropped by the agent.
+
+Why Shenzhen. The electronics capital sells extended warranties and gadget insurance with every phone, and e-commerce checkouts upsell micro-insurance on every order. Young professionals in the Greater Bay Area pay for many small overlapping covers.
+
+Demo moment. "Drop phone insurance and raise the contents deductible: you save about 1,450 HKD a year, and your buffer still covers a 1 in 20 year loss" (example figures), with a fan chart of 10,000 simulated years. Then the user says "cancel my health insurance too" and the agent refuses: existential risk, locked tier.
+
+Security story. Money movement into the pot is L2 within caps. Cancellations are L3 and always the user's decision. Existential covers are hard-locked in the policy engine. Every number comes from the simulation tool, not the model.
+
+Inclusion angle. Medium. Helps people with some savings keep more of their money. It must clearly tell people without a buffer to keep their cover.
+
+Build risk. Medium. The maths is simple. Credible loss probabilities per country are the hard part, and wrong numbers lead to harmful advice. Can look like a calculator rather than an agent. Works best as a second layer on top of idea 10, since it reuses the same coverage map.
+
+## 12. Second Opinion: a fact-check of the insurance sales pitch (Topic D)
+
+The pitch. The agent listens to an insurance sales conversation (or reads the proposal) and extracts every claim the salesperson made: "guaranteed 6 percent", "you can withdraw any time", "covers everything abroad". It checks each claim against the product document and the user's existing cover, flags false or misleading statements with the exact clause, shows hidden costs and surrender penalties, prepares the questions to ask back, and if the policy was already signed, drafts the cancellation inside the cooling-off window.
+
+Why Shenzhen. Hong Kong sells long-term savings and life policies to many Mainland visitors, with non-guaranteed returns and complex surrender schedules. Hong Kong's Insurance Authority sets a 21 day cooling-off period. Cross-border buyers often cannot read the full English policy.
+
+Demo moment. A role-played pitch in Mandarin. On screen, live: "guaranteed 6 percent" is marked red next to the clause "non-guaranteed dividend", the year 5 surrender value is computed, and an overlap with the user's existing medical cover is shown. The agent drafts the cooling-off cancellation and the user approves.
+
+Security story. Every flag cites a clause: no source, no flag. Proposals and transcripts are untrusted input. Recording needs consent (Hong Kong PDPO, PIPL; covert recording is a crime in Germany), so the agent asks before it listens. Cancellation is L3.
+
+Inclusion angle. Strong. Protects first-time and cross-border buyers from mis-selling.
+
+Build risk. Low to medium. Mostly analysis, so the agentic part (cooling-off cancellation, tracking the refund) must be real or task completion suffers. Can read as hostile to the insurance industry, so frame it as the customer side of the regulator's own rules.
 
 ## What every idea shares
 
