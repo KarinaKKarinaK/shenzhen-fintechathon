@@ -120,6 +120,9 @@ Security story. Compliance heavy by design, which maxes the 30 percent.
 
 Build risk. Low to build, hard to make exciting. Product data would be mocked. Another team is already public on wealth advisory.
 
+## 10. Hidden Coverage
+...
+
 ## What every idea shares
 
 See SECURITY.md. Permission tiers in code. The model never holds a key. A live injection attack blocked on camera. Numbers from tools. Twenty attack tests in the repo.
