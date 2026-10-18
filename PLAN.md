@@ -2,14 +2,14 @@
 
 Deadline: Tuesday 20 October 2026, 23:59 Beijing time (17:59 Amsterdam). Submit by 21:00 Beijing and overwrite if allowed.
 
-## Saturday night (18 Oct)
+## Sunday night (18 Oct)
 
 - Lock the team. Collect passport bio pages. Fill the registration form.
 - Email both organizer addresses (see HACKATHON.md) about exchange student eligibility and the submission address. Register tonight even if the answer is pending.
 - Pick the idea (see CORE_IDEA.md).
 - Create the testnet wallet, get faucet funds, deploy a hello world contract so the toolchain is proven.
 
-## Sunday (19 Oct)
+## Monday (19 Oct)
 
 Morning
 - Escrow contract written and deployed to the testnet. Unit tests pass.
@@ -23,7 +23,7 @@ Evening
 - Full happy path end to end: negotiate, lock escrow, submit evidence, release milestone. Save every hash.
 - Optional: deploy the same contract to a local FISCO BCOS node.
 
-## Monday (20 Oct)
+## Tuesday (20 Oct)
 
 Morning
 - Injection defenses. Run the 20 attack tests. Fix failures.
