@@ -129,13 +129,27 @@ Verify each with a link before it goes on a slide.
 - Shenzhen is China's low altitude economy hub. Meituan runs commercial drone delivery routes in the city. BYD is headquartered in Shenzhen and the city's taxi and bus fleets are fully electric.
 - Huaqiangbei is the world's largest electronics market. Yantian is one of the busiest container ports in the world. Shenzhen hosts a large share of China's cross-border e-commerce sellers.
 
-## Competitive intel
+## Additions from the official rules document (19 Oct)
 
-Public repos for this track already exist on GitHub for Topic B (wealth advisor) and Topic E (SME copilot with a STRIDE threat model). Expect those topics to be crowded with chatbots. Topic F with a real two agent transaction and a live security demo is less crowded and carries the bonus.
+The official "International Track: Topics & Rules" document confirms the scoring and answers some of the open questions below.
+
+- Scoring is stated in the rules document itself: task completion 40 percent, security and compliance 30 percent, innovation and interaction 30 percent, on-chain challenge bonus 0 to 5 points. All six topics share the same core requirements; choosing the on-chain topic does not change the scoring except for the bonus.
+- Submissions may be updated any time before the deadline. The latest version received counts. No changes after the deadline.
+- A bilingual email reminder goes out 24 hours before the deadline.
+- General contact in the rules: info@ican-x.com.
+- "Overseas universities" means institutions outside China, including Hong Kong, Macao and Taiwan, with their own accreditation and the right to award degrees. The Organizing Committee assigns the track based on members' nationalities and institutions.
+- At least one member of each finalist team must attend the Grand Final in person. An unexcused absence forfeits award eligibility. The number of invited members per team is stated in the invitation.
+- Prize naming differs: the rules say "Best Innovation Award", the IEEE page says "Best Creativity Award". Same RMB 20,000 prize.
+- IP stays with the team. The hosts may use entries and team information for non-commercial promotion. Third party data, code and open source components must be properly licensed.
+- The topic briefs in the rules are a little fuller than the public pages. A: actionable recommendations from income and expenses. B: compliant and explainable asset allocation suggestions. C: remittances, tuition payments, credit building, multi-currency management. D: also helping users understand and manage their insurance portfolios. E: cash flow management and alerts. F: asset management, transaction execution and risk control.
+
+## Competitive intel (updated 19 Oct)
+
+The earlier note (B and E crowded, F less crowded) is out of date. A full scan on 18 Oct found 113 real public entries: A 17, B 10, C 28, D 2, E 35, F 21. Each was code reviewed against the official rubric. Twelve already score 85 or more of 100, and prizes are awarded across topics. Topic F is not less crowded at the top: its leaders already ship agent to agent payments with escrow, on-chain mandates, session key wallets and real testnet hashes, and three entries are called Guardian Wallet. Topic D is the thinnest and weakest: two US health insurance entries at about 61. Details, the top 15 and the overlap for each of our ideas are in COMPETITION.md; the blind review of our twelve ideas is in JUDGE_REVIEW.md.
 
 ## Open questions for the organizers
 
 1. Exchange student eligibility under the home university.
 2. Which email receives the final submission and in what format (zip, link, form).
 3. Whether a public testnet counts as "real on-chain" for the Topic F bonus, or whether they want mainnet or FISCO BCOS.
-4. Whether submissions can be updated before the deadline.
+4. Whether submissions can be updated before the deadline. Answered: yes, the latest version received counts (official rules document).
