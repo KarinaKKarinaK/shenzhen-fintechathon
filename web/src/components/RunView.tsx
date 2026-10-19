@@ -82,21 +82,22 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
       <div className="mb-4"><KpiTiles m={m} /></div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
-        <section className="aurora aurora-cream card cut relative min-h-[420px] md:min-h-[640px]">
+        <section className="aurora aurora-cream card cut relative flex flex-col">
           <span className="bracket left-3 top-3 z-10 border-t border-l" /><span className="bracket right-3 top-3 z-10 border-t border-r" /><span className="bracket bottom-3 left-3 z-10 border-b border-l" /><span className="bracket bottom-3 right-3 z-10 border-b border-r" />
-          <div className="absolute inset-0 overflow-hidden"><Scene side={side} machine={m} txs={state.txs} jobs={state.jobs} breached={breached} slashed={slashed} frozen={frozen} worst={sol?.worst} telemetry={tel} geofence={lastJob?.geofence} /></div>
-          <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-wrap gap-2">
-            <span className="pill bg-white/90 text-ink backdrop-blur">{m ? `${m.name}: ${R.status[m.status] ?? m.status}` : R.scene}</span>
-            <span className="pill bg-white/85 text-ink backdrop-blur">{t("run.chain", { mode: chainMode })}</span>
-            <span className="pill bg-white/85 text-ink backdrop-blur">{t("run.model", { mode: modelMode })}</span>
-            {frozen ? <span className="pill bg-red text-white">{R.frozen}</span> : null}
-            {state.running ? <span className="pill bg-red text-white">{R.live}</span> : null}
-          </div>
-          <div className="pointer-events-none absolute inset-x-4 bottom-4 z-20">
-            <div className="pointer-events-auto bg-white/96 p-4 backdrop-blur" style={{ borderLeft: "4px solid #c8102e" }}>
-              <Narration lines={state.narration} pinned={pinned} />
-              {state.done ? <div className="mt-2 flex items-center gap-3"><span className="seal stamp tech px-2 py-1 text-[11px] tracking-[0.15em]">已验证 VERIFIED</span><span className="text-sm font-semibold text-red-deep">{state.done}</span></div> : null}
+          {/* The 3D view gets its own box; the caption sits under it, so scene labels never slide beneath it. */}
+          <div className="relative min-h-[340px] flex-1 md:min-h-[540px]">
+            <div className="absolute inset-0 overflow-hidden"><Scene side={side} machine={m} txs={state.txs} jobs={state.jobs} breached={breached} slashed={slashed} frozen={frozen} worst={sol?.worst} telemetry={tel} geofence={lastJob?.geofence} /></div>
+            <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-wrap gap-2">
+              <span className="pill bg-white/90 text-ink backdrop-blur">{m ? `${m.name}: ${R.status[m.status] ?? m.status}` : R.scene}</span>
+              <span className="pill bg-white/85 text-ink backdrop-blur">{t("run.chain", { mode: chainMode })}</span>
+              <span className="pill bg-white/85 text-ink backdrop-blur">{t("run.model", { mode: modelMode })}</span>
+              {frozen ? <span className="pill bg-red text-white">{R.frozen}</span> : null}
+              {state.running ? <span className="pill bg-red text-white">{R.live}</span> : null}
             </div>
+          </div>
+          <div className="relative z-20 mx-4 mb-4 bg-white/96 p-4" style={{ borderLeft: "4px solid #c8102e" }}>
+            <Narration lines={state.narration} pinned={pinned} />
+            {state.done ? <div className="mt-2 flex items-center gap-3"><span className="seal stamp tech px-2 py-1 text-[11px] tracking-[0.15em]">已验证 VERIFIED</span><span className="text-sm font-semibold text-red-deep">{state.done}</span></div> : null}
           </div>
         </section>
 
