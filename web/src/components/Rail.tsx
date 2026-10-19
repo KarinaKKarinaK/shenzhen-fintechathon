@@ -9,6 +9,7 @@ const items = [
   { href: "/app", label: "Dashboard", icon: <><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></> },
   { href: "/app/fleet", label: "Fleet", icon: <><path d="M12 4v4M12 16v4M4 12h4M16 12h4" /><circle cx="12" cy="12" r="3" /></> },
   { href: "/app/evidence", label: "Evidence", icon: <><path d="M7 4h7l4 4v12H7z" /><path d="M14 4v4h4M9.5 13h5M9.5 16h5" /></> },
+  { href: "/pitch", label: "Pitch", icon: <><rect x="4" y="5" width="16" height="11" rx="1.5" /><path d="M12 16v4M8.5 20h7M8 12l3-3 2 2 3-3" /></> },
 ];
 
 export function Rail() {
