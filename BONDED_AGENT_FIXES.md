@@ -76,6 +76,15 @@ What the log is and is not. It is not a place where people claim something never
 
 The other direction, "this never happened", is a different problem with a different fix. A pilot claiming 100 mu that was never sprayed is caught by the farmer's confirmation: the farmer pays, so the farmer only signs if the work was done. No signature, no money, and claiming the job anyway is itself a rule break that hits the pilot bond.
 
+Who can see and who can report. The worry is that random people or hunters flag actions and mess up payouts. They cannot, once fix 10 is in: the contract checks every report against the signed intent and the on-chain agreement, so a false report fails and pays nothing. Who reports is not the risk; a contract that believed the reporter was. So reporting stays open to anyone. What changes is who sees the details:
+
+- The log is kept per job. Each entry is filed under the job it belongs to, so a customer sees everything the agent did for their job in one place.
+- Only the hash goes on chain. The full intent (amounts, payees, location) is visible to the parties of that job: the customer, the operator, the lender. Strangers see that entry 57 exists for job 12, not what is in it.
+- Anyone who has the full intent can submit it as proof. The contract checks it matches the hash. Customers and the lender always have it. Hunters have it for the shadow copies they attack.
+- Payouts are fixed by the agreement, not by the reporter. A bounty goes to whoever proved the violation. Compensation goes to whoever the job agreement says lost the money, never to the reporter. Penalties are capped per day so mass reporting cannot drain a bond.
+
+Why not a log only the customer can use: customers rarely check, and a customer who colludes with the operator would never report. Keeping reporting open means the lender and hunters can still catch what a customer misses.
+
 - Public intent log: catches the agent trying things it should not. Vendor bond.
 - Farmer's confirmation: catches the pilot claiming work that was not done. Pilot bond.
 
