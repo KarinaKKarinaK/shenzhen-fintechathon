@@ -1,14 +1,20 @@
 # Core idea
 
-## Shortlist
+## Shortlist (19 Oct, after the competitor scan and the judge review)
 
-| Rank | Idea | Topic | Why it is here | Main risk |
-|---|---|---|---|---|
-| 1 | Huaqiangbei Escrow | F | Real hashes, two agent negotiation, deeply Shenzhen, natural red team, bonus points | Scope. Must cut hard. |
-| 2 | Guardian Wallet | A or F | Security is the product, strongest inclusion story, cheapest to build | Lower wow unless the voice demo lands |
-| 3 | Machine Wallet | F | Highest wow, fits the robotics background, nobody else will pitch it | Can read as a gimmick |
+Scores are expected points out of 100 if built from zero in the time left, on the official rubric (task 40, security 30, innovation 30, plus 0 to 5 bonus for Topic F). Hidden Coverage comes from the blind review in JUDGE_REVIEW.md. The others are our own estimates on the same scale and were not in the blind review. Differences of two or three points are noise.
 
-Build number 1. Use number 4 from IDEAS.md (verifiable mandates) as its security core. Keep number 2 as the fallback if the team ends up as two people with one evening.
+| Rank | Idea | Topic | Task | Security | Innovation | Bonus | Expected | Main risk |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Bonded Agent with Sky Cover as first customer (15 and 16) | F | 25 | 22 | 26 | 3 | 76 | Scope: two agents, a contract, an oracle |
+| 2 | Hidden Coverage (10) | D | 30 | 23 | 22 | 0 | 75 | Cross-border claim order is hard to get exactly right |
+| 3 | Minimal Disclosure (20) | E or C | 27 | 24 | 24 | 0 | 75 | Can look like a protocol demo, not a product |
+| 4 | Honeypot Guardian (17) | A or F | 26 | 22 | 27 | 0 | 75 | Bank panel may find deception edgy |
+| 5 | Prepaid Guard (18) | F | 30 | 24 | 17 | 3 | 74 | Escrow mechanism already in the field |
+
+Hard Button (21) is a layer, not an entry. Add it to whichever we pick.
+
+Final pick: pending. The sections below describe the original pick (Huaqiangbei Escrow) and will be rewritten once the pick is made.
 
 ## Why Huaqiangbei Escrow wins on the rubric
 
