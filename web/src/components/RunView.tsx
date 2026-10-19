@@ -5,14 +5,16 @@ import Link from "next/link";
 import Scene from "./SceneLoader";
 import { useRun } from "./useRun";
 import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PlanCard, PlanTable, PolicyCard, ProofCard, TelemetryCard, VendorBond } from "./Panels";
-import { BondHistory, CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
-import { Stages } from "./Stages";
-import { Ticker } from "./Ticker";
+import { CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
 import { KpiTiles } from "./Kpis";
 import { Moments, momentsOf, type MomentKey } from "./Moments";
 import type { Side } from "@/engine/types";
 import { useLang } from "@/i18n/LangProvider";
 import { layerLabel } from "@/engine/i18n";
+
+// The details, one question per tab: where the money goes, what was stopped, what the drone chose to do, the raw record.
+const TABS = ["money", "safety", "jobs", "log"] as const;
+type Tab = (typeof TABS)[number];
 
 export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const { d, t, lang } = useLang();
@@ -56,6 +58,7 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const active = pick && pick.n === lit.length ? pick.key : latest;
   const pinned = moments.find((x) => x.key === active)?.text;
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("money");
 
 
   return (
@@ -110,42 +113,49 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
       </div>
 
       {open ? (
-        <div id="run-details">
-          <div className="mt-4"><Stages events={state.events} solvency={sol} /></div>
-          <div className="mt-4"><Ticker txs={state.txs} /></div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <section className="card p-4"><UnitEconomics eco={eco} title={lastJob?.title} /></section>
-            <section className="card p-4"><BondHistory events={state.events} /></section>
-            <section className="card p-4"><RuleHits decisions={state.decisions} /></section>
-            <section className="card p-4"><CashFlow txs={state.txs} /><div className="mt-3"><BalanceSheet m={m} series={state.balanceSeries} /></div></section>
+        <div id="run-details" className="mt-4">
+          <div role="tablist" aria-label={R.details} className="flex flex-wrap gap-2">
+            {TABS.map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`btn ${tab === k ? "btn-red" : "btn-ghost"}`}>{R.tabs[k]}</button>)}
           </div>
+          <p className="mt-2 text-sm text-muted">{R.tabNotes[tab]}</p>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.agentsTitle}</h2><div className="scroll-thin flex max-h-[560px] flex-col overflow-auto pr-1"><AgentFeed messages={state.messages} gates={state.gates} understood={state.understood} frozen={frozen} /></div></section>
-            <section className="card p-4">
-              <h2 className="mb-3 text-sm font-semibold">{R.policyTitle}</h2>
-              <div className="scroll-thin max-h-[560px] overflow-auto pr-1"><PolicyCard decisions={state.decisions} intents={state.intents} /></div>
-              {state.attacks.length ? (<div className="mt-4 border-t border-line pt-3"><h3 className="mb-2 text-sm font-semibold">{R.attacksInRun}</h3><ul className="flex flex-col gap-1 text-sm">{state.attacks.map((a, i) => <li key={i} className="flex gap-2"><span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${a.blocked ? "bg-gold" : "bg-red"}`} /><span><span className="font-medium">{lang === "zh" ? a.nameZh ?? a.name : a.name}</span> <span className="text-muted">{layerLabel(lang, a.where)}: {lang === "zh" ? a.detailZh ?? a.detail : a.detail}</span></span></li>)}</ul></div>) : null}
+          {tab === "money" ? (
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <section className="card p-4"><UnitEconomics eco={eco} title={lastJob?.title} /></section>
+              <section className="card p-4"><BalanceSheet m={m} series={state.balanceSeries} /><div className="mt-4 border-t border-line pt-3"><CashFlow txs={state.txs} /></div></section>
+              <section className="card p-4"><BondGauge value={m?.bond ?? 0} min={m?.bondMin ?? 0} slashes={m?.slashes ?? 0} side={side} solvency={sol} /><div className="mt-4 border-t border-line pt-3"><VendorBond m={m} /></div></section>
+            </div>
+          ) : null}
+
+          {tab === "safety" ? (
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.policyTitle}</h2><div className="scroll-thin max-h-[480px] overflow-auto pr-1"><PolicyCard decisions={state.decisions} intents={state.intents} /></div></section>
+              <section className="card p-4">
+                <h2 className="mb-2 text-sm font-semibold">{R.attacksInRun}</h2>
+                {state.attacks.length ? <ul className="flex flex-col gap-2 text-sm">{state.attacks.map((a, i) => <li key={i} className="flex gap-2"><span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.blocked ? "bg-gold" : "bg-red"}`} /><span className="min-w-0"><span className="font-medium">{lang === "zh" ? a.nameZh ?? a.name : a.name}</span><span className="block text-xs text-muted">{t(a.blocked ? "run.stoppedBy" : "run.passedAt", { where: layerLabel(lang, a.where) })}</span></span></li>)}</ul> : <div className="text-sm text-muted">{R.noAttacks}</div>}
+                <div className="mt-4 border-t border-line pt-3"><TelemetryCard t={tel} /></div>
+              </section>
+              <section className="card p-4"><RuleHits decisions={state.decisions} /></section>
+            </div>
+          ) : null}
+
+          {tab === "jobs" ? (
+            <section className="card mt-4 p-4">
+              <PlanCard plan={state.plan} meta={state.planMeta} />
+              <div className="mt-4">{state.plan?.length ? <PlanTable plan={state.plan} jobs={state.jobs} /> : <JobList jobs={state.jobs} />}</div>
             </section>
-            <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.chainFeed}</h2><div className="scroll-thin max-h-[560px] overflow-auto pr-1"><ChainFeed txs={state.txs} /></div></section>
-          </div>
+          ) : null}
 
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <section className="card p-4"><TelemetryCard t={tel} /></section>
-            <section className="card p-4"><BondGauge value={m?.bond ?? 0} min={m?.bondMin ?? 0} slashes={m?.slashes ?? 0} side={side} solvency={sol} /></section>
-            <section className="card p-4"><VendorBond m={m} /></section>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(300px,1fr)_minmax(0,2fr)]">
-            <section className="card p-4"><PlanCard plan={state.plan} meta={state.planMeta} /></section>
-            <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.jobs}</h2><PlanTable plan={state.plan} /><JobList jobs={state.jobs} /></section>
-          </div>
-
-          <aside className="aurora aurora-black card-dark mt-4 flex flex-col p-4" style={{ maxHeight: 480 }}>
-            <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">{R.eventStream}</h2><Link href="/app/evidence" className="mono text-white/60 underline decoration-gold">{R.evidenceLink}</Link></div>
-            <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/55 p-3 backdrop-blur-sm"><EventStream events={state.events} dark /></div>
-          </aside>
+          {tab === "log" ? (
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.agentsTitle}</h2><div className="scroll-thin flex max-h-[520px] flex-col overflow-auto pr-1"><AgentFeed messages={state.messages} gates={state.gates} understood={state.understood} frozen={frozen} /></div></section>
+              <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.chainFeed}</h2><div className="scroll-thin max-h-[520px] overflow-auto pr-1"><ChainFeed txs={state.txs} /></div></section>
+              <aside className="aurora aurora-black card-dark flex flex-col p-4" style={{ maxHeight: 600 }}>
+                <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">{R.eventStream}</h2><Link href="/app/evidence" className="mono text-white/60 underline decoration-gold">{R.evidenceLink}</Link></div>
+                <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/55 p-3 backdrop-blur-sm"><EventStream events={state.events} dark /></div>
+              </aside>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

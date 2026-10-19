@@ -34,7 +34,8 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
       <section className="duotone flex min-h-[100svh] items-end text-white">
         <Image src="/photos/shenzhen-tower.jpg" alt={L.heroAlt} fill priority sizes="100vw" className="object-cover object-[50%_35%]" />
         <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>
-        <div className="over mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 md:px-8 md:pb-20">
+        <div className="hero-fade" aria-hidden />
+        <div className="over hero-content mx-auto w-full max-w-[1440px] px-4 pb-32 pt-28 md:px-8 md:pb-40">
           <div className="flex items-center gap-5">
             <Seal size={72} />
             <div>
@@ -50,7 +51,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
             <Link href="/app/evidence" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45)" }}>{L.cta2}</Link>
           </div>
         </div>
-        <a href="https://commons.wikimedia.org/wiki/File:China_Resources_Tower_View_from_Shenzhen_Bay_20210825.jpg" target="_blank" rel="noreferrer" className="over absolute bottom-3 right-4 text-[12px] text-white/70 hover:text-white">Photo: 歪歪, CC BY-SA 4.0, via Wikimedia Commons</a>
+        <a href="https://commons.wikimedia.org/wiki/File:China_Resources_Tower_View_from_Shenzhen_Bay_20210825.jpg" target="_blank" rel="noreferrer" className="over absolute bottom-[120px] right-4 text-[12px] text-white/70 hover:text-white">Photo: 歪歪, CC BY-SA 4.0, via Wikimedia Commons</a>
       </section>
 
       <Ticker />

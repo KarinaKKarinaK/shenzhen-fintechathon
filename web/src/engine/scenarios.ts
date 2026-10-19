@@ -238,7 +238,7 @@ class Session {
     m.vendorBond = bond.vendor.balance; m.slashes += 1;
     yield { t: "proof", intentId: rogue.id, intentHash: pr.intentHash, rule: "PayeeNotAllowlisted", signer: pr.signer, signatureOk: pr.signatureOk, slash: pr.amount, bounty: pr.bountyAmount, treasury: pr.treasury, bond: pr.bond, shadow: pr.shadow, submitter: "lender", submitterAddr: ADDR.lender, currency: CURRENCY, at: now() };
     yield this.tx(pr.slash);
-    yield this.tx(pr.payout);
+    if (pr.payout) yield this.tx(pr.payout);
     yield { t: "narration", text: t("n.slashed", { signer: short(pr.signer), jobId, amount: pr.amount, comp: pr.compensation, treasury: pr.treasury, pilot: bond.balance }), at: now() };
     yield this.emitM();
     await this.wait(d);

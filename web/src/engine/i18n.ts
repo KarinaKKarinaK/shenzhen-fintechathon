@@ -60,8 +60,8 @@ export const T = {
     zh: "已冻结任务 {jobId} 的日志意图 {id}，规则 PayeeNotAllowlisted。作为任务当事方提交证明。",
   },
   "n.slashed": {
-    en: "The contract recovered the signer {signer}, found the hash in the log for {jobId}, read the payee from the signed intent and found it off the allowlist. {amount} yuan left the vendor bond: {comp} yuan to the lender, who proved it, {treasury} yuan to the treasury. The pilot bond is untouched at {pilot} yuan. No bounty: on a live job a slash pays the harmed party, never a hunter. Bounties exist only for registered hunters on shadow jobs, so whoever compromised a live wallet can never be paid for it.",
-    zh: "合约从签名中恢复出签名方 {signer}，在任务 {jobId} 的日志中找到了该哈希，从已签名意图中读出收款方，并确认其不在白名单内。供应商保证金罚没 {amount} 元：{comp} 元赔付给举证的出租方，{treasury} 元进入金库。飞手保证金 {pilot} 元分文未动。没有赏金：真实任务上的罚没只赔付受损方，绝不付给猎手。赏金只面向影子任务上的注册猎手，因此攻破真实钱包的人永远拿不到报酬。",
+    en: "The contract recovered the signer {signer}, found the hash in the log for {jobId}, read the payee from the signed intent and found it off the allowlist. {amount} yuan left the vendor bond, all of it to the treasury. The payment was blocked, so nobody lost money, and paying whoever reported it would let a party stage a fake scam for the penalty. The pilot bond is untouched at {pilot} yuan. No bounty on a live job. Bounties exist only for registered hunters on shadow jobs, so whoever compromised a live wallet can never be paid for it.",
+    zh: "合约从签名中恢复出签名方 {signer}，在任务 {jobId} 的日志中找到了该哈希，从已签名意图中读出收款方，并确认其不在白名单内。供应商保证金罚没 {amount} 元，全部进入金库。这笔付款已被拦截，没有人受损；若付给举证方，任务当事方就可以自导自演假诈骗来领取罚金。飞手保证金 {pilot} 元分文未动。真实任务上没有赏金。赏金只面向影子任务上的注册猎手，因此攻破真实钱包的人永远拿不到报酬。",
   },
   "m.held": { en: "Your message is {state}: {reason}. No job was posted.", zh: "您的消息已{state}：{reason}。未发布任务。" },
   "m.accept": {
@@ -303,6 +303,6 @@ export const ATTACK_NAMES_ZH: Record<number, string> = {
   48: "日志条目属于另一任务的证明",
   49: "陌生人对真实任务提交证明",
   50: "猎手攻破钱包后试图在真实任务上领取赏金",
-  51: "出租方在真实任务上证明违规：获赔付，无赏金",
+  51: "出租方在真实任务上证明供应商违规：全部进入金库，无赏金，飞手分文不得",
   52: "一天内六次智能体违规：供应商每日上限拦下第六次",
 };

@@ -103,8 +103,11 @@ function slashes(id: number, name: string, standard: Standard, rule: SlashRule, 
         const pilotMoved = before.pilot - r.bond.balance;
         const vendorMoved = before.vendor - r.bond.vendor.balance;
         const right = res.bond === "vendor" ? vendorMoved === DEMO.vendorPenalty && pilotMoved === 0 : pilotMoved === DEMO.pilotSlash && vendorMoved === 0;
-        const payoutRight = res.shadow ? res.payout.kind === "bounty" && res.bountyAmount > 0 : res.payout.kind === "compensation" && res.bountyAmount === 0;
-        return { blocked: right && payoutRight, detail: `${res.bond} bond slashed ${res.amount} yuan, pilot moved ${pilotMoved}, vendor moved ${vendorMoved}, payout ${res.payout.kind} ${res.payout.amount}` };
+        // Shadow: a bounty to the hunter. Live vendor rule: all to the treasury. Live pilot rule: compensation to the farmer.
+        const payoutRight = res.shadow ? res.payout?.kind === "bounty" && res.bountyAmount > 0
+          : res.bond === "vendor" ? res.payout === null && res.treasury === res.amount
+          : res.payout?.kind === "compensation" && res.payout.to.toLowerCase() === ADDR.requester.toLowerCase() && res.bountyAmount === 0;
+        return { blocked: right && payoutRight, detail: `${res.bond} bond slashed ${res.amount} yuan, pilot moved ${pilotMoved}, vendor moved ${vendorMoved}, ${res.payout ? `payout ${res.payout.kind} ${res.payout.amount}` : `all ${res.treasury} to the treasury`}` };
       } catch (e) {
         return { blocked: false, detail: `contract refused: ${(e as Error).message}` };
       }
@@ -207,7 +210,7 @@ export const ATTACKS: AttackCase[] = [
     async (r) => ({ intent: await r.logged(await sign("machine", "pay", { jobId: "job-l", payee: ALIEN, amount: 5 })), rule: "PayeeNotAllowlisted", submitter: STRANGER })),
   rejects(50, "Hunter tries to collect a bounty on a live job after compromising the wallet", "permission hierarchy", "not a party",
     async (r) => ({ intent: await r.logged(await sign("machine", "pay", { jobId: "job-l", payee: ALIEN, amount: 5 })), rule: "PayeeNotAllowlisted", submitter: L.hunter })),
-  slashes(51, "Lender proves a violation on a live job: compensation, no bounty", "permission hierarchy", "PayeeNotAllowlisted",
+  slashes(51, "Lender proves a vendor violation on a live job: all to the treasury, no bounty, nothing to the pilot", "permission hierarchy", "PayeeNotAllowlisted",
     async (r) => r.logged(await sign("machine", "pay", { jobId: "job-l", payee: ALIEN, amount: 5 })), ADDR.lender),
   {
     id: 52, name: "Six agent violations in a day: the vendor daily cap stops the sixth", layer: "contract", standard: "permission hierarchy",

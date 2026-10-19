@@ -65,6 +65,8 @@ Words used throughout:
 | 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Docs. `../../DESIGN.md` is drone only. Contracts are scenario neutral |
 | 10 | The contract believed the reporter | Every fact read from the signed intent and the contracts' own records | Yes, this pass (B.3 rule table, B.4 views) |
 | 11 | A new machine can never start | No minimum in `covers`, a starting floor | Yes, this pass (B.3 `covers`) |
+| 12 | The pilot is paid when our AI is tricked (collusion) | A vendor rule on a live job pays the treasury only. Nobody who can submit proof earns from it (A.8) | Yes, branch `josh-changes` (`Bond.sol`, `Bond.t.sol`) |
+| 13 | The engine and the contract pay different people | The engine mirror follows the contract's payout table exactly (A.8) | Yes, branch `josh-changes` (`web/src/engine/contracts.ts`, `attacks.ts` case 51) |
 | 6 | Market section argues for insurance | Financing story replaces it (Part C) | Docs. `../../DESIGN.md` Market and Who pays |
 | 7 | Seasonal income vs a fixed monthly minimum | Zero minimum outside spraying windows, catch up inside them (Part C) | No. Not in the build; `Lease.monthlyMinimum` stays fixed |
 | 8 | Scope | Frozen to Part B plus the demo story in A.5 (Part C) | Docs |
@@ -100,7 +102,7 @@ Answer to the judge's question "who is liable if the AI gets it wrong": the comp
 
 Open questions (not blocking the build):
 
-- Collusion. A pilot could feed the agent a fake scam on purpose to drain the vendor bond. Mitigations: penalties go to the reporter only as a capped bounty, never to an address the pilot controls; a daily cap on penalties; instructions from the pilot's own channel count as the pilot's.
+- Collusion. Decided, see A.8 (problem 12): on a live job the vendor penalty goes to the treasury only, so staging a fake scam earns the pilot nothing. The daily cap stays as a second limit.
 - The Hard Button. Proposal: anything the pilot approved on the button is the pilot's responsibility.
 - Compensation for an actual loss (money that really left the wallet) needs someone to establish the loss, which a contract cannot see. Out of the hackathon build; the policy engine blocks before money moves, so the demo only needs penalties.
 
@@ -172,6 +174,26 @@ Decision. The reporter only points: "this signed intent breaks this rule". Every
 | What happened | `JobBoard` (confirmed, released) and `Lease` |
 
 Example after the fix: the farmer submits the legal "pay 160 to 0xBANK for job 12" and claims the payee was not approved. The contract reads the payee from the signed intent: 0xBANK, approved, rejected. Editing the intent to say 0xSCAMMER breaks the signature. Claiming job 12 was not confirmed is checked against `JobBoard`, which shows it was. Rejected.
+
+## A.8 Who is paid when a bond is slashed (problems 12 and 13)
+
+**Problem 12, the collusion hole.** `Bond.sol` paid half of a vendor penalty on a live job to `a.operator`, the pilot. The pilot is also a party of the job, so the pilot can submit proof. A pilot could send their own drone's agent a fake "scam" message, wait for the agent to sign the payment intent (the agent signs every intent before the policy engine decides), report the blocked intent and collect half of our 200 yuan penalty, up to 500 yuan a day under the daily cap. That broke the rule this file already set: penalties never go to an address the pilot controls.
+
+**Decision.** On a live job a vendor rule pays the treasury only. The policy engine blocked the payment, so nobody lost money and there is nobody to compensate. Paying the lender instead would move the same hole to the lender, who is also a party. The vendor still loses the penalty, so the incentive to ship a careful agent is unchanged.
+
+**Problem 13, engine and contract disagree.** The contract paid the harmed party; the engine mirror in `web/src/engine/contracts.ts` paid whoever submitted the proof. The demo showed payouts the chain would never make.
+
+**Decision.** One payout table, used by both:
+
+| Job | Rule broken | Bond slashed | Paid to |
+|---|---|---|---|
+| Live | Vendor rule (`PayeeNotAllowlisted`, `OverCap`) | Vendor | Treasury, all of it |
+| Live | Pilot rule (`FalseConfirmation`, `OutsideGeofence`) | Pilot | Half to the job's requester (the farmer the false claim harmed), half to the treasury |
+| Shadow | Any | Tagged bond | Half to the registered hunter as a bounty, half to the treasury |
+
+The submitter is never paid on a live job. A farmer reporting a pilot rule is paid as the requester, not as the reporter.
+
+Still open, not blocking: for pilot rules the farmer is both the verifier and the payee. Check whether a farmer could withhold a confirmation to provoke a `FalseConfirmation` and collect, and add a test for it.
 
 ## A.7 How real-world work is proven (context, no change)
 
@@ -276,7 +298,7 @@ Remove `NoCoverBound` (A.4).
 6. `"no violation"`: the rule holds, per the table above.
 7. Vendor rules only: `"daily cap reached"` if `slashedToday + penalty > dailyCap` (reset `slashedToday` when the day changes).
 
-Then mark `spent`, slash the tagged bond (pilot: `slashAmount` capped at the pilot balance; vendor: `penalty` capped at the vendor balance), pay half to msg.sender as a bounty and half to the treasury. Emit `Slashed(agent, intentHash, rule, bondKind, amount, submitter, bounty)`.
+Then mark `spent`, slash the tagged bond (pilot: `slashAmount` capped at the pilot balance; vendor: `penalty` capped at the vendor balance), pay per the table in A.8 (live vendor rule: all to the treasury; live pilot rule: half to `board.requesterOf(jobId)`, half to the treasury; shadow job: half to the hunter, half to the treasury). Emit `Slashed(agent, intentHash, rule, bondKind, amount, submitter, bounty)`.
 
 Known gap kept from `contracts/README.md`: switch bounty and treasury payouts to pull payments, so a reverting receiver cannot block a slash.
 
@@ -345,6 +367,12 @@ JobBoard:
 14. No cover functions remain; `start` succeeds without any cover call.
 15. A never-started job can be cancelled after its window and the fee returns to the requester.
 16. Shadow jobs never call `Lease.pay`.
+
+Payouts (A.8):
+
+17. A vendor rule on a live job, submitted by the lender, sends the whole penalty to the treasury; the lender and the pilot receive nothing (`testLenderCanSubmitProofVendorPenaltyGoesToTreasury`).
+18. The pilot reporting two vendor violations on its own live job earns nothing (`testPilotReportingVendorRuleEarnsNothing`).
+19. The engine self-check, attack case 51, checks the same table: no payout transaction, the treasury gets the full amount.
 
 ## B.8 Order of work
 

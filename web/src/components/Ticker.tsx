@@ -4,7 +4,7 @@ import { keccak256, toHex } from "viem";
 import type { ChainTx } from "@/engine/types";
 import { useLang } from "@/i18n/LangProvider";
 
-const KINDS = ["fee_in", "instalment", "bond_fill", "cover", "title", "slash", "release", "top_up"] as const;
+const KINDS = ["fee_in", "instalment", "bond_fill", "title", "slash", "release", "top_up"] as const;
 
 // A strip of event hashes. On the run page it is fed from the run's own transactions.
 // Without items it shows a labelled sample so nobody reads it as a live chain.

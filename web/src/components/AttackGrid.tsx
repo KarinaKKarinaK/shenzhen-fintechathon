@@ -27,35 +27,35 @@ export function AttackGrid({ results }: { results: AttackResult[] }) {
       {groups.map((g) => {
         const blocked = g.cases.filter((r) => r.blocked).length;
         const fell = g.cases.filter((r) => naiveFell(r) === true).length;
+        const all = blocked === g.cases.length;
         return (
           <details key={g.key} className="group cut-sm border border-line bg-white open:bg-paper-2/40">
-            <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
+            <summary title={g.where || undefined} className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
               <span className="tech text-[10px] text-red transition group-open:rotate-90">&#9656;</span>
-              <span className="font-semibold">{g.title}</span>
-              <span className="mono text-muted">{t("grid.cases", { n: g.cases.length })}</span>
-              <span className={`mono ${blocked === g.cases.length ? "text-gold-deep" : "text-red"}`}>{t("grid.blockedN", { n: blocked })}</span>
-              <span className="mono text-red">{t("grid.fellN", { n: fell })}</span>
-              {g.where ? <span className="basis-full text-xs text-muted md:ml-auto md:basis-auto">{g.where}</span> : null}
+              <span className="min-w-0 flex-1 truncate font-semibold">{g.title}</span>
+              <span className="hidden text-xs text-muted sm:inline">{t("grid.fellN", { n: fell })}</span>
+              <span className={`pill !px-2 !py-0.5 !text-[11px] tabular-nums ${all ? "bg-gold text-ink" : "bg-red text-white"}`}>{t("grid.blockedOf", { b: blocked, n: g.cases.length })}</span>
             </summary>
-            <div className="overflow-x-auto px-3 pb-3">
-              <table className="passbook w-full text-xs">
-                <thead><tr><th className="text-left">#</th><th className="text-left">{G.thCase}</th><th className="text-left">{G.thLayer}</th><th className="text-left">Zishi</th><th className="text-left">{G.thNaive}</th></tr></thead>
-                <tbody>
-                  {g.cases.map((r) => {
-                    const nf = naiveFell(r);
-                    return (
-                      <tr key={r.id} className="align-top">
-                        <td className="whitespace-nowrap">{String(r.id).padStart(2, "0")}</td>
-                        <td className="min-w-[14rem]"><div className="text-ink">{name(r)}{r.isolated ? <span className="ml-1.5 rounded-sm bg-gold-soft px-1 py-0.5 text-[9px] uppercase tracking-wide text-ink-2" title={G.isolatedNote}>{G.isolated}</span> : null}</div><div className="mt-0.5 text-muted">{detail(r)}</div></td>
-                        <td className="whitespace-nowrap text-ink-2">{layerLabel(lang, r.layer)}</td>
-                        <td className="whitespace-nowrap"><span className={`mr-1.5 inline-block h-2 w-2 rotate-45 ${r.blocked ? "bg-gold" : "bg-red"}`} aria-hidden />{r.blocked ? G.blockedPill : G.notBlocked}</td>
-                        <td className={`whitespace-nowrap ${nf ? "text-red" : "text-ink-2"}`}>{nf === undefined ? "?" : nf ? G.falls : G.holds}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ul className="flex flex-col px-3 pb-2">
+              {g.cases.map((r) => {
+                const nf = naiveFell(r);
+                return (
+                  <li key={r.id} className="border-t border-line/60 first:border-t-0">
+                    <details className="group/case">
+                      <summary className="flex cursor-pointer list-none items-center gap-2 py-1.5 text-xs [&::-webkit-details-marker]:hidden">
+                        <span className={`inline-block h-2 w-2 shrink-0 rotate-45 ${r.blocked ? "bg-gold" : "bg-red"}`} aria-label={r.blocked ? G.blockedPill : G.notBlocked} />
+                        <span className="mono w-5 shrink-0 text-muted">{String(r.id).padStart(2, "0")}</span>
+                        <span className="min-w-0 flex-1 truncate text-ink">{name(r)}</span>
+                        {r.isolated ? <span className="hidden rounded-sm bg-gold-soft px-1 py-0.5 text-[9px] uppercase tracking-wide text-ink-2 sm:inline" title={G.isolatedNote}>{G.isolated}</span> : null}
+                        {nf === false ? <span className="rounded-sm bg-paper-2 px-1 py-0.5 text-[9px] uppercase tracking-wide text-muted">{G.naiveHeld}</span> : null}
+                        <span className="w-16 shrink-0 text-right text-muted">{layerLabel(lang, r.layer)}</span>
+                      </summary>
+                      <div className="pb-2 pl-9 text-[11px] text-muted">{detail(r)}</div>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
           </details>
         );
       })}

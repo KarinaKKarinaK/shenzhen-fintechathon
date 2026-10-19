@@ -32,18 +32,30 @@ contract BondTest is BaseTest {
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
     }
 
-    /// B.7 test 4: the lender can submit proof. On a live job the payout goes to the harmed party
-    /// (the pilot, for a vendor rule) and the treasury, never to the submitter.
-    function testLenderCanSubmitProofPayoutGoesToHarmedParty() public {
+    /// B.7 test 4: the lender can submit proof. A vendor rule on a live job pays the treasury
+    /// only, never the submitter and never the pilot.
+    function testLenderCanSubmitProofVendorPenaltyGoesToTreasury() public {
         IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
         uint256 lenderBefore = lender.balance;
         uint256 pilotBefore = operator.balance;
         uint256 treasuryBefore = treasury.balance;
         _slash(i, lender, Bond.Rule.PayeeNotAllowlisted);
         assertEq(lender.balance, lenderBefore);
-        assertEq(operator.balance - pilotBefore, PENALTY / 2);
-        assertEq(treasury.balance - treasuryBefore, PENALTY / 2);
+        assertEq(operator.balance, pilotBefore);
+        assertEq(treasury.balance - treasuryBefore, PENALTY);
         assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+    }
+
+    /// The collusion hole: the pilot feeds the agent a fake scam, the policy engine blocks it,
+    /// the pilot reports the signed intent. The vendor still pays the penalty, but the pilot
+    /// earns nothing from it, so there is no reason to stage one.
+    function testPilotReportingVendorRuleEarnsNothing() public {
+        uint256 pilotBefore = operator.balance;
+        uint256 treasuryBefore = treasury.balance;
+        _slash(_pay(address(0xdead), 50 ether, id, 1), operator, Bond.Rule.PayeeNotAllowlisted);
+        _slash(_pay(address(0xdead), 50 ether, id, 2), operator, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(operator.balance, pilotBefore);
+        assertEq(treasury.balance - treasuryBefore, 2 * PENALTY);
     }
 
     function testEveryPartyCanSubmit() public {

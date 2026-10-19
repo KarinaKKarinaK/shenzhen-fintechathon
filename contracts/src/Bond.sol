@@ -16,9 +16,11 @@ import {IJobBoardView} from "./JobBoard.sol";
 ///         A proof is accepted only if the intent was committed to the log for the same job, and
 ///         only from a party of the job. Shadow jobs also accept proof from registered hunters.
 ///
-///         Who gets paid. On a live job the slash pays the harmed party and the treasury: pilot
-///         rules pay the job's requester, vendor rules pay the agent's operator. Nobody earns a
-///         bounty for compromising a live wallet. Bounties exist only for registered hunters on
+///         Who gets paid. On a live job a pilot rule pays the job's requester (the farmer the false
+///         claim harmed) and the treasury. A vendor rule on a live job pays the treasury only: the
+///         payment was blocked, so nobody lost money, and every party can submit proof, so paying a
+///         party would let the pilot or the lender feed the agent a fake scam and collect our
+///         penalty. Nobody earns a bounty for compromising a live wallet. Bounties exist only for registered hunters on
 ///         shadow jobs, paid from the vendor bond under the daily cap.
 contract Bond is IBonded {
     enum Rule { PayeeNotAllowlisted, OverCap, FalseConfirmation, OutsideGeofence }
@@ -208,14 +210,14 @@ contract Bond is IBonded {
             v.slashedToday += v.penalty;
             amount = v.penalty > v.balance ? v.balance : v.penalty;
             v.balance -= amount;
-            paidTo = shadow ? msg.sender : a.operator;
+            paidTo = shadow ? msg.sender : treasury;
         } else {
             amount = a.slashAmount > a.balance ? a.balance : a.slashAmount;
             a.balance -= amount;
             paidTo = shadow ? msg.sender : board.requesterOf(intent.jobId);
         }
         a.slashes += 1;
-        uint256 paid = (amount * BOUNTY_BPS) / 10_000;
+        uint256 paid = paidTo == treasury ? amount : (amount * BOUNTY_BPS) / 10_000;
         (bool ok1,) = paidTo.call{value: paid}("");
         (bool ok2,) = treasury.call{value: amount - paid}("");
         require(ok1 && ok2, "transfer failed");

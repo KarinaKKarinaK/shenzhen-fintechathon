@@ -134,7 +134,7 @@ export interface BondOpts {
 
 export interface SlashResult {
   slash: ChainTx; // the full amount leaving the bond, to the treasury
-  payout: ChainTx; // half to the submitter: compensation on a live job, a bounty on a shadow job
+  payout: ChainTx | null; // a bounty to the hunter on a shadow job, compensation to the farmer for a pilot rule, none for a vendor rule on a live job
   bond: BondKind;
   shadow: boolean;
   intentHash: string;
@@ -210,15 +210,18 @@ export class BondContract {
       this.balance = round(this.balance - amount);
     }
     this.spent.add(hash);
-    const half = round(amount / 2);
+    // Mirrors Bond.sol. Shadow job: half to the hunter as a bounty. Pilot rule on a live job: half
+    // to the farmer, the party the false claim harmed. Vendor rule on a live job: all of it to the
+    // treasury. The payment was blocked so nobody lost money, and every party can submit, so paying
+    // a party would let the pilot stage a fake scam and collect the vendor's penalty.
+    const toTreasuryOnly = !shadow && bond === "vendor";
+    const half = toTreasuryOnly ? 0 : round(amount / 2);
     const treasury = round(amount - half);
     const slash = await this.chain.send("slash", `${bond} bond slashed ${amount} yuan for ${rule}, intent ${intent.id}`, A.bond, A.rail, amount, { rule, bond });
-    // On a live job the submitter is a harmed party and the payout is compensation. A bounty
-    // exists only on a shadow job, for a registered hunter. Whoever compromised a live wallet
-    // is never on this list, so a slash can never reward the attacker.
     const payout = shadow
       ? await this.chain.send("bounty", `bounty ${half} yuan to the hunter, shadow job ${jobId}`, A.rail, submitter, half, { rule, bond })
-      : await this.chain.send("compensation", `${half} yuan to the party that proved it, ${treasury} yuan to the treasury`, A.rail, submitter, half, { rule, bond });
+      : toTreasuryOnly ? null
+      : await this.chain.send("compensation", `${half} yuan to the farmer, ${treasury} yuan to the treasury`, A.rail, ADDR.requester, half, { rule, bond });
     return { slash, payout, bond, shadow, intentHash: hash, signer, signatureOk, amount, bountyAmount: shadow ? half : 0, compensation: shadow ? 0 : half, treasury };
   }
 }

@@ -330,10 +330,17 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 
 /* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
 body:has(.landing-root) .page-main { padding: 0 !important; }
-.landing-root > .duotone:first-child { min-height: 100svh; }
+/* Fallback where :has is missing: pull the landing out over main's padding, edge to edge. */
+.landing-root { margin: -4rem -1rem -1.5rem; }
+@media (min-width: 768px) { .landing-root { margin: -4.75rem -1.5rem -1.5rem; } }
+body:has(.landing-root) .landing-root { margin: 0; }
+.landing-root > .duotone:first-child { min-height: 100svh; width: 100%; }
+/* The photo fades into the page instead of ending on a hard edge. Same token in light and dark. */
+.hero-fade { position: absolute; inset: auto 0 0 0; height: 110px; z-index: 2; pointer-events: none; background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-paper) 35%, transparent) 55%, var(--color-paper) 100%); }
+.duotone > .over.hero-content { z-index: 3; }
 
 /* Navbar: glass when solid, hairline gold rule, pill indicator that fills on the selected link. */
-.navbar:not(.over-photo) { background: rgba(255,255,255,0.78); backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgba(201,162,39,0.35); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset; }
+.navbar:not(.over-photo) { background: rgba(251,250,247,0.97); backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgba(201,162,39,0.35); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset; }
 .navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.9rem; transition: color 160ms, background 200ms; }
 .navbar nav a > span { display: none; }
 .navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
@@ -343,7 +350,7 @@ body:has(.landing-root) .page-main { padding: 0 !important; }
 .navbar.over-photo nav a[aria-current="page"]::before { background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); backdrop-filter: blur(6px); }
 .navbar.over-photo nav a[aria-current="page"] { color: #fff; }
 .navbar .cjk-serif { letter-spacing: 0.04em; }
-:root[data-theme="dark"] .navbar:not(.over-photo) { background: rgba(15,14,12,0.78); border-bottom-color: rgba(201,162,39,0.3); box-shadow: none; }
+:root[data-theme="dark"] .navbar:not(.over-photo) { background: rgba(15,14,12,0.97); border-bottom-color: rgba(201,162,39,0.3); box-shadow: none; }
 
 /* Softer, modern edges on the heavier surfaces while the seals and chamfers keep the tradition. */
 .band { border-radius: 14px; }

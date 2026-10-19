@@ -15,7 +15,7 @@ export function CashFlow({ txs }: { txs: ChainTx[] }) {
   const G = d.graphs;
   const items = [...txs].reverse().filter((t) => t.kind !== "title" && t.kind !== "lock").slice(-24);
   const max = Math.max(1, ...items.map((t) => t.amount));
-  const W = 320, H = 120, pad = 24;
+  const W = 320, H = 120, pad = 36;
   const bw = Math.max(4, (W - pad * 2) / Math.max(items.length, 12) - 3);
   return (
     <div>
@@ -69,38 +69,45 @@ export function BondHistory({ events }: { events: EngineEvent[] }) {
   );
 }
 
+// Only the rules that ever failed get a bar. The rest are one line: they passed every time.
 export function RuleHits({ decisions }: { decisions: PolicyDecision[] }) {
-  const { d, lang } = useLang();
+  const { d, t, lang } = useLang();
   const G = d.graphs;
   const map = new Map<string, { ok: number; bad: number }>();
   decisions.forEach((dec) => dec.lines.forEach((l) => { const r = map.get(l.rule) ?? { ok: 0, bad: 0 }; if (l.ok) r.ok += 1; else r.bad += 1; map.set(l.rule, r); }));
   const rows = [...map.entries()].sort((a, b) => b[1].ok + b[1].bad - (a[1].ok + a[1].bad));
-  const max = Math.max(1, ...rows.map(([, r]) => r.ok + r.bad));
+  const failing = rows.filter(([, r]) => r.bad > 0).sort((a, b) => b[1].bad - a[1].bad);
+  const clean = rows.filter(([, r]) => r.bad === 0);
+  const total = rows.reduce((a, [, r]) => a + r.ok + r.bad, 0);
+  const max = Math.max(1, ...failing.map(([, r]) => r.ok + r.bad));
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between text-xs text-muted"><span>{G.rulesTitle}</span><span className="flex gap-3"><span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full" style={{ background: IN }} />{G.passed}</span><span className="flex items-center gap-1"><i className="h-2 w-2 rounded-full" style={{ background: BAD }} />{G.failed}</span></span></div>
-      <ul className="flex flex-col gap-1.5">
-        {rows.map(([rule, r]) => (
-          <li key={rule} className="grid grid-cols-[120px_1fr_36px] items-center gap-2 text-xs">
-            <span className="truncate text-ink-2">{ruleLabel(lang, rule)}</span>
-            <span className="flex h-2.5 overflow-hidden rounded-full bg-paper-2"><i style={{ width: `${(r.ok / max) * 100}%`, background: IN }} /><i style={{ width: `${(r.bad / max) * 100}%`, background: BAD, marginLeft: 2 }} /></span>
-            <span className="tabular-nums text-right text-muted">{r.ok + r.bad}</span>
-          </li>
-        ))}
-        {!rows.length ? <li className="text-xs text-muted">{G.noChecks}</li> : null}
-      </ul>
+      <div className="mb-2 flex items-center justify-between text-xs text-muted"><span>{G.rulesTitle}</span><span>{t("graphs.checksTotal", { n: total })}</span></div>
+      {failing.length ? (
+        <ul className="flex flex-col gap-1.5">
+          {failing.map(([rule, r]) => (
+            <li key={rule} className="grid grid-cols-[120px_1fr_auto] items-center gap-2 text-xs">
+              <span className="truncate text-ink-2">{ruleLabel(lang, rule)}</span>
+              <span className="flex h-2.5 overflow-hidden rounded-full bg-paper-2"><i style={{ width: `${(r.ok / max) * 100}%`, background: IN }} /><i style={{ width: `${(r.bad / max) * 100}%`, background: BAD, marginLeft: 2 }} /></span>
+              <span className="tabular-nums text-right text-red">{t("graphs.failedOf", { f: r.bad, n: r.ok + r.bad })}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {clean.length ? <div className="mt-2 text-xs text-muted" title={clean.map(([rule]) => ruleLabel(lang, rule)).join(", ")}>{t(failing.length ? "graphs.cleanRules" : "graphs.allClean", { n: clean.length })}</div> : null}
+      {!rows.length ? <div className="text-xs text-muted">{G.noChecks}</div> : null}
     </div>
   );
 }
 
-// Waterfall: the fee steps down through instalment, energy, cover and rail to the margin.
+// Waterfall: the fee steps down through instalment, energy and rail to the margin.
 // The reserve rule is the dashed line. Margin goes red when it lands below it.
 export function UnitEconomics({ eco, title }: { eco?: Econ; title?: string }) {
   const { d, t } = useLang();
   const G = d.graphs;
   if (!eco) return <div><div className="mb-2 text-xs text-muted">{G.ecoTitle}</div><div className="text-xs text-muted">{G.noJob}</div></div>;
   const fee = eco.fee ?? 0;
-  const steps = [["instalment", eco.instalment ?? 0], ["energy", eco.energy ?? 0], ["cover", eco.cover ?? 0], ["rail", eco.rail ?? 0]] as const;
+  const steps = [["instalment", eco.instalment ?? 0], ["energy", eco.energy ?? 0], ["rail", eco.rail ?? 0]] as const;
   const margin = eco.margin ?? fee - steps.reduce((a, [, v]) => a + v, 0);
   const rule = eco.reserveRule ?? 0;
   const clears = eco.clears ?? margin >= rule;
