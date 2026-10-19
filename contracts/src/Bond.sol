@@ -5,10 +5,17 @@ import {IBonded} from "./IBonded.sol";
 
 /// @title Bond
 /// @notice Holds each agent's bond. Slashes on proof of a signed intent that breaks a rule the
-///         contract can check itself. Pays part of the slash to whoever submitted the proof.
-///         Only the operator key (a hardware button in the demo) can raise the minimum or top up.
+///         contract can check itself. The proof is the full typed intent plus the agent's EIP-712
+///         signature over it, so the rule is checked against fields the agent actually signed.
+///         Pays part of the slash to whoever submitted the proof.
+///         Only the operator key (a hardware button in the demo) can top up.
 contract Bond is IBonded {
-    enum Rule { PayeeNotAllowlisted, OverCap, NoCoverBound, UnconfirmedClaim, SkippedInstalment, OutsideGeofence }
+    enum Rule { PayeeNotAllowlisted, OverCap, NoCoverBound, UnconfirmedClaim, OutsideGeofence }
+
+    uint8 public constant KIND_PAY = 0;
+    uint8 public constant KIND_START_TASK = 2;
+    uint8 public constant KIND_CLAIM_DONE = 3;
+    uint8 public constant KIND_PAY_INSTALMENT = 4;
 
     struct Agent {
         address operator;      // the human's hardware key
@@ -26,6 +33,9 @@ contract Bond is IBonded {
     uint256 public constant BOUNTY_BPS = 5000; // half of the slash goes to the submitter
     address public immutable treasury;
 
+    bytes32 private constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    bytes32 public constant INTENT_TYPEHASH = keccak256("Intent(address agent,uint8 kind,address payee,uint256 amount,bytes32 jobId,bytes32 geofence,bool coverBound,bool confirmed,uint256 nonce,uint256 expiry)");
+
     event Registered(address indexed agent, address indexed operator, uint256 minimum);
     event Filled(address indexed agent, uint256 amount, uint256 balance);
     event Slashed(address indexed agent, bytes32 indexed intentHash, Rule rule, uint256 amount, address submitter, uint256 bounty);
@@ -33,21 +43,43 @@ contract Bond is IBonded {
 
     constructor(address _treasury) { treasury = _treasury; }
 
-    function register(address agent, uint256 minimum, uint256 perTxCap, uint256 slashAmount, address[] calldata allow, bytes32[] calldata fences) external {
+    function DOMAIN_SEPARATOR() public view returns (bytes32) {
+        return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256("JiXin Bond"), keccak256("1"), block.chainid, address(this)));
+    }
+
+    function hashIntent(Intent calldata i) public pure returns (bytes32) {
+        return keccak256(abi.encode(INTENT_TYPEHASH, i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.coverBound, i.confirmed, i.nonce, i.expiry));
+    }
+
+    function digestOf(Intent calldata i) public view returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), hashIntent(i)));
+    }
+
+    /// @notice Register an agent under an operator. Either the agent itself calls, or the caller
+    ///         brings the agent's signature over the terms so no one can register a wallet they
+    ///         do not control.
+    function register(address agent, address operator, uint256 minimum, uint256 perTxCap, uint256 slashAmount, address[] calldata allow, bytes32[] calldata fences, bytes calldata agentSig) external {
         Agent storage a = agents[agent];
         require(a.operator == address(0), "registered");
-        a.operator = msg.sender;
+        require(operator != address(0), "no operator");
+        if (msg.sender != agent) {
+            bytes32 terms = keccak256(abi.encode(operator, minimum, perTxCap, slashAmount));
+            bytes32 digest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", terms));
+            require(_recover(digest, agentSig) == agent, "not the agent's signature");
+        }
+        a.operator = operator;
         a.minimum = minimum;
         a.perTxCap = perTxCap;
         a.slashAmount = slashAmount;
         for (uint256 i; i < allow.length; i++) a.allowlist[allow[i]] = true;
         for (uint256 i; i < fences.length; i++) a.geofences[fences[i]] = true;
-        emit Registered(agent, msg.sender, minimum);
+        emit Registered(agent, operator, minimum);
     }
 
     /// @notice Fees accrue into the bond until it reaches the minimum. The bond is earned, not posted.
-    function fill(address agent) external payable {
+    function fill(address agent) external payable override {
         Agent storage a = agents[agent];
+        require(a.operator != address(0), "unknown agent");
         a.balance += msg.value;
         emit Filled(agent, msg.value, a.balance);
     }
@@ -75,17 +107,17 @@ contract Bond is IBonded {
     }
 
     /// @notice Anyone holding a signed intent that breaks a checkable rule can submit it.
-    /// @param intentHash keccak256 of the typed intent the agent signed.
-    /// @param signature the agent's signature over intentHash.
-    /// @param rule which rule the intent breaks.
-    /// @param evidence abi encoded fields the rule needs: (payee, amount) or (geofence) or (jobId, confirmed).
-    function slashByProof(address agent, bytes32 intentHash, bytes calldata signature, uint8 rule, bytes calldata evidence) external override {
-        Agent storage a = agents[agent];
+    /// @param intent the full typed intent the agent signed.
+    /// @param signature the agent's EIP-712 signature over the intent.
+    /// @param rule which rule the intent breaks, checked against the intent's own fields.
+    function slashByProof(Intent calldata intent, bytes calldata signature, uint8 rule) external override {
+        Agent storage a = agents[intent.agent];
         require(a.operator != address(0), "unknown agent");
+        bytes32 intentHash = hashIntent(intent);
         require(!a.spent[intentHash], "proof already used");
-        require(_recover(intentHash, signature) == agent, "not the agent's signature");
-        require(_violates(a, Rule(rule), evidence), "no violation");
+        require(_recover(digestOf(intent), signature) == intent.agent, "not the agent's signature");
         a.spent[intentHash] = true;
+        require(_violates(a, Rule(rule), intent), "no violation");
         uint256 amount = a.slashAmount > a.balance ? a.balance : a.slashAmount;
         a.balance -= amount;
         a.slashes += 1;
@@ -93,38 +125,31 @@ contract Bond is IBonded {
         (bool ok1,) = msg.sender.call{value: bounty}("");
         (bool ok2,) = treasury.call{value: amount - bounty}("");
         require(ok1 && ok2, "transfer failed");
-        emit Slashed(agent, intentHash, Rule(rule), amount, msg.sender, bounty);
+        emit Slashed(intent.agent, intentHash, Rule(rule), amount, msg.sender, bounty);
     }
 
-    function _violates(Agent storage a, Rule rule, bytes calldata evidence) internal view returns (bool) {
-        if (rule == Rule.PayeeNotAllowlisted) {
-            (address payee,) = abi.decode(evidence, (address, uint256));
-            return !a.allowlist[payee];
-        }
-        if (rule == Rule.OverCap) {
-            (, uint256 amount) = abi.decode(evidence, (address, uint256));
-            return amount > a.perTxCap;
-        }
-        if (rule == Rule.OutsideGeofence) {
-            bytes32 fence = abi.decode(evidence, (bytes32));
-            return !a.geofences[fence];
-        }
-        if (rule == Rule.UnconfirmedClaim) {
-            (, bool confirmed) = abi.decode(evidence, (bytes32, bool));
-            return !confirmed;
-        }
-        if (rule == Rule.NoCoverBound) {
-            (, bool cover) = abi.decode(evidence, (bytes32, bool));
-            return !cover;
-        }
-        return false; // SkippedInstalment is proven by the Lease contract and reported through it
+    function _violates(Agent storage a, Rule rule, Intent calldata i) internal view returns (bool) {
+        bool isPayment = i.kind == KIND_PAY || i.kind == KIND_PAY_INSTALMENT;
+        if (rule == Rule.PayeeNotAllowlisted) return isPayment && !a.allowlist[i.payee];
+        if (rule == Rule.OverCap) return isPayment && i.amount > a.perTxCap;
+        if (rule == Rule.OutsideGeofence) return i.kind == KIND_START_TASK && !a.geofences[i.geofence];
+        if (rule == Rule.NoCoverBound) return i.kind == KIND_START_TASK && !i.coverBound;
+        if (rule == Rule.UnconfirmedClaim) return i.kind == KIND_CLAIM_DONE && !i.confirmed;
+        return false;
     }
 
-    function _recover(bytes32 h, bytes calldata sig) internal pure returns (address) {
+    function _recover(bytes32 digest, bytes calldata sig) internal pure returns (address) {
         require(sig.length == 65, "bad signature length");
         bytes32 r; bytes32 s; uint8 v;
-        assembly { r := calldataload(sig.offset) s := calldataload(add(sig.offset, 32)) v := byte(0, calldataload(add(sig.offset, 64))) }
-        bytes32 digest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", h));
-        return ecrecover(digest, v, r, s);
+        assembly {
+            r := calldataload(sig.offset)
+            s := calldataload(add(sig.offset, 32))
+            v := byte(0, calldataload(add(sig.offset, 64)))
+        }
+        if (v < 27) v += 27;
+        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "bad s");
+        address signer = ecrecover(digest, v, r, s);
+        require(signer != address(0), "bad signature");
+        return signer;
     }
 }

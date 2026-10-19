@@ -7,7 +7,7 @@ import { Seal } from "./Logo";
 const items = [
   { href: "/", label: "Home" },
   { href: "/app", label: "Dashboard" },
-  { href: "/app/fleet", label: "Live demo" },
+  { href: "/app/fleet", label: "Fleet" },
   { href: "/app/evidence", label: "Evidence" },
 ];
 

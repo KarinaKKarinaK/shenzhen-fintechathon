@@ -1,48 +1,85 @@
-import { runAll } from "@/engine/attacks";
+import * as attacksMod from "@/engine/attacks";
 import { JudgeConsole } from "@/components/JudgeConsole";
-import { AttackGrid } from "@/components/AttackGrid";
-import { Status } from "@/components/StatusIcon";
+import { EvidenceLab, LastRun } from "@/components/EvidenceLab";
+import type { AttackResult } from "@/components/AttackGrid";
 
 export const dynamic = "force-dynamic";
 
-export default function Page() {
-  const results = runAll();
+// Five scored standards, the attack ids that exercise each, and the panel that shows it in the live run.
+const STANDARDS: Array<[string, string, string]> = [
+  ["Permission hierarchy", "7, 10, 13, 15", "Policy card tiers L0 to L3, operator button"],
+  ["Hallucination prevention", "3, 5", "Agents talking: facts chips, numbers from economics()"],
+  ["Injection defense", "1, 2, 4, 11, 16, 17, 18", "Gate strip under every untrusted bubble, judge console"],
+  ["Intent understanding", "2, 9, 12", "Understood line: payee by name, address in text ignored"],
+  ["Task planning", "19, 20", "Plan table, unit economics waterfall, solvency line"],
+];
+
+const CONTRACTS: Array<[string, string, string]> = [
+  ["Bond", "Holds the bond. slashByProof verifies a signed intent against a rule, slashes, pays the hunter.", "Signature check mirrored in TypeScript; on chain it needs the typed-data hash of the intent."],
+  ["JobBoard", "Locks the fee, releases on confirmation, holds on a flag.", "The 24 hour hold timer runs in the engine, not yet on chain."],
+  ["Lease", "Takes an instalment from each fee. Title moves when the balance reaches zero.", "Title is an event and a flag, not a token."],
+];
+
+export default async function Page() {
+  const mod = attacksMod as unknown as { runAll: () => AttackResult[] | Promise<AttackResult[]>; runBenign?: () => { passed: number; total: number } | Promise<{ passed: number; total: number }> };
+  const results = await Promise.resolve(mod.runAll());
+  const b = await Promise.resolve(mod.runBenign?.());
+  const benign = b ? { passed: b.passed, total: b.total } : undefined;
   const blocked = results.filter((r) => r.blocked).length;
   const chainMode = process.env.SURETY_PRIVATE_KEY ? "Base Sepolia, real transactions" : "Simulated, every hash labelled. A funded key switches to Base Sepolia.";
+  const modelMode = process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. An API key lets the model write the text.";
   return (
     <div className="page" style={{ maxWidth: 1180 }}>
-      <header className="pb-6">
-        <h1 className="display text-[39px]">Evidence</h1>
-        <p className="measure mt-2 text-lg text-ink-2">Verify without trusting us. Everything here runs at request time.</p>
-      </header>
+      <h1 className="display text-4xl md:text-5xl">Evidence</h1>
+      <p className="mt-2 max-w-xl text-sm text-ink-2">Verify without trusting us. Everything here runs at request time.</p>
 
-      <dl className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.2fr_1.2fr]">
-        <div className="tile tile-seal">
-          <dt className="label">Attack set</dt>
-          <dd className="kpi kpi-lg mt-1">{blocked} of {results.length}</dd>
-          <dd className="mt-1"><Status kind={blocked === results.length ? "ok" : "warn"}>blocked at request time</Status></dd>
-        </div>
-        <div className="tile"><dt className="label">Chain mode</dt><dd className="mt-2">{chainMode}</dd></div>
-        <div className="tile"><dt className="label">Model mode</dt><dd className="mt-2">{process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. An API key lets the model write the text."}</dd></div>
-      </dl>
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="card p-4"><div className="text-[13px] text-muted">Attack set</div><div className="kpi">{blocked} of {results.length}</div><div className="text-sm text-muted">blocked at request time{benign ? `, ${benign.passed} of ${benign.total} benign passed` : ""}</div></div>
+        <div className="card p-4"><div className="text-[13px] text-muted">Chain mode</div><div className="mt-1 text-sm">{chainMode}</div></div>
+        <div className="card p-4"><div className="text-[13px] text-muted">Model mode</div><div className="mt-1 text-sm">{modelMode}</div></div>
+      </div>
 
-      <section className="py-8">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-[25px]">Attack set</h2><span className="label">Select a row for the reason</span></div>
-        <AttackGrid results={results} />
+      <section className="card mt-4 p-5"><JudgeConsole /></section>
+
+      <section className="card mt-4 p-4"><EvidenceLab initial={results} benign={benign} /></section>
+
+      <section className="card mt-4 p-4 text-sm">
+        <h2 className="mb-2 text-sm font-semibold">Standards</h2>
+        <table className="ledger w-full text-[13px]">
+          <thead><tr><th className="text-left">Standard</th><th className="text-left">Attack ids</th><th className="text-left">Where it shows</th></tr></thead>
+          <tbody>{STANDARDS.map(([s, ids, panel]) => <tr key={s}><td>{s}</td><td className="mono">{ids}</td><td className="text-ink-2">{panel}</td></tr>)}</tbody>
+        </table>
       </section>
 
-      <section className="band p-6 md:p-8"><JudgeConsole /></section>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="card p-4 text-sm">
+          <h2 className="mb-2 text-sm font-semibold">Contracts</h2>
+          <ul className="flex flex-col gap-2">
+            {CONTRACTS.map(([n, p, gap]) => (
+              <li key={n} className="bg-paper-2 p-3">
+                <div className="flex items-center justify-between"><span className="font-semibold">{n}</span><span className="flex gap-1 text-[12px]"><span className="pill bg-gold text-ink">written</span><span className="pill bg-paper-2 text-muted">not compiled</span><span className="pill bg-paper-2 text-muted">not deployed</span></span></div>
+                <div className="mt-1 text-ink-2">{p}</div>
+                <div className="mt-1 text-[13px] text-muted">Known gap: {gap}</div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[13px] text-muted">The engine mirrors each contract&apos;s rules in TypeScript. With a funded key, every event is anchored on Base Sepolia as calldata; contract calls follow deployment.</p>
+        </section>
+        <section className="card p-4"><LastRun /></section>
+      </div>
 
-      <section className="py-8">
-        <h2 className="text-[25px]">How to verify</h2>
-        <table className="ledger mt-3">
-          <thead><tr><th>Request</th><th>Returns</th></tr></thead>
-          <tbody>
-            <tr><td className="mono text-ink">GET /api/attacks</td><td className="text-ink-2">The attack set as JSON.</td></tr>
-            <tr><td className="mono text-ink">GET /api/run?scenario=fleet&amp;fast=1</td><td className="text-ink-2">Every event of a run, streamed.</td></tr>
-            <tr><td className="mono text-ink">POST /api/judge</td><td className="text-ink-2">Your own attack, judged.</td></tr>
-          </tbody>
-        </table>
+      <section className="card mt-4 p-4 text-sm">
+        <h2 className="mb-2 text-sm font-semibold">What the model cannot do</h2>
+        <p className="text-ink-2">Sign an intent, move money, change a policy field, or produce a number. It writes one sentence from facts the engine hands it. A sentence with a number not in the facts is rejected and the template is used. <span className="mono text-red">npx tsx src/engine/selfcheck.ts</span> checks this on every build.</p>
+      </section>
+
+      <section className="card mt-4 p-4 text-sm">
+        <h2 className="mb-2 text-sm font-semibold">How to verify</h2>
+        <ul className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <li className="bg-paper-2 p-3"><div className="mono text-red">GET /api/attacks</div><div className="text-ink-2">The attack set as JSON.</div></li>
+          <li className="bg-paper-2 p-3"><div className="mono text-red">GET /api/run?scenario=fleet&amp;fast=1</div><div className="text-ink-2">Every event of a run, streamed.</div></li>
+          <li className="bg-paper-2 p-3"><div className="mono text-red">POST /api/judge</div><div className="text-ink-2">Your own attack, judged.</div></li>
+        </ul>
       </section>
     </div>
   );

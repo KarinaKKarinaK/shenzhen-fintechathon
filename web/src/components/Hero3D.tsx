@@ -15,5 +15,5 @@ export function Hero3D() {
     }, 100);
     return () => clearInterval(id);
   }, []);
-  return <Scene side="fleet" machine={m} txs={txs} jobs={{}} autoRotate live={false} />;
+  return <Scene side="fleet" machine={m} txs={txs} jobs={{}} autoRotate live={false} labels={false} />;
 }

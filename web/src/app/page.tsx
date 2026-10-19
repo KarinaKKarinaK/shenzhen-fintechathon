@@ -4,6 +4,8 @@ import { Hero3D } from "@/components/Hero3D";
 import { Seal } from "@/components/Logo";
 import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
+import { JudgeConsole } from "@/components/JudgeConsole";
+import * as attacksMod from "@/engine/attacks";
 import { DEFAULT_POLICY } from "@/engine/policy";
 
 const uses = [
@@ -13,28 +15,33 @@ const uses = [
   { who: "A household with a humanoid", line: "Lend the robot next door. The bond pays if a rule breaks.", tag: "Individual" },
   { who: "Software agents", line: "No bond, no payment. Jailbroken means slashed.", tag: "Agent" },
 ];
-const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Plans its own work", "Price, route, schedule, reserve rule"], ["One hash per step", "Bond, job and lease contracts"]];
-const pillars = [["Finishes the job", "End to end, no human in the loop"], ["Holds under attack", "Slashed by proof, 20 attacks live"], ["Nothing like it", "Machines that own themselves"], ["Real on chain", "Three contracts, verifiable hashes"]];
+const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Checks every job's economics", "Ranks the day's work, declines below the reserve"], ["One event per step", "Mirrored from the contracts"]];
 const firsts = ["An agent that loses its own money on proof", "Two agents with opposite incentives", "A machine as the borrower", "A bond that is earned, not posted", "Solvency proven before every task", "A physical button on top"];
-const steps = [["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]];
+const steps = [["Plan", "Ranks the day's work, checks the economics"], ["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]];
 
 // The rules the policy engine checks per intent kind (engine/policy.ts), with the limits it uses.
 const p = DEFAULT_POLICY;
 const rules = [
-  ["Signature", "The intent is signed with the agent's key."],
-  ["Allowlist", `Money only goes to ${Object.keys(p.allowlist).length} known addresses.`],
+  ["Signature", "The intent is signed by the key of the actor it names."],
+  ["Replay", "Each signature is accepted once, ever."],
+  ["Provenance", "A payee or amount read out of a message is never used."],
+  ["Allowlist and lookalike", `Money only goes to ${Object.keys(p.allowlist).length} known addresses; a near copy is named as a lookalike.`],
+  ["Instalment payee", "An instalment can only go to the lender."],
   ["Per transaction cap", `No single payment above ${p.perTxCap}.`],
   ["Daily cap", `No more than ${p.dailyCap} a day in total.`],
   ["Rate limit", `At most ${p.maxPerHour} payments an hour.`],
   ["Deviation", `A payment at most ${p.deviationPct} percent off the reference price.`],
   ["Rate band", `The instalment stays between ${p.rateBand[0] * 100} and ${p.rateBand[1] * 100} percent of the fee.`],
-  ["Geofence", `Work only inside ${p.geofences.length} agreed areas.`],
-  ["Cover bound", "No task starts without cover."],
+  ["Job checks", "Geofence, known contact, fee inside the listing and unit economics above the reserve before a job is accepted."],
+  ["Solvency and cover", "A task starts only with cover bound and a bond that covers the worst case."],
   ["Confirmation", "A task counts as done only with the requester's signature."],
-  ["Operator only", "Raising a cap or topping up needs the operator's hardware key."],
+  ["Operator only", "Raising a cap or topping up needs the operator key held by the button."],
 ];
 
 export default function Home() {
+  const attackN = attacksMod.ATTACKS.length;
+  const benignN = (attacksMod as unknown as { BENIGN?: unknown[] }).BENIGN?.length;
+  const pillars = [["Finishes the job", "0 human decisions on the happy path, one labelled human arbiter on a flagged task"], ["Holds under attack", `${attackN} attack cases${benignN ? ` and ${benignN} benign messages` : " and a benign set"}, both error rates shown`], ["Nothing like it", "Machines that own themselves"], ["Honest on chain", "Three contracts written, engine mirrors their rules, every event anchored on Base Sepolia when a key is funded, labelled sim otherwise"]];
   return (
     <div>
       <section className="duotone flex min-h-[100svh] items-end text-white">
@@ -72,7 +79,7 @@ export default function Home() {
         </section>
 
         <dl className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[["20", "attack cases blocked, as proof"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l], i) => (
+          {[[String(attackN), "attack cases, naive against gated"], ["3", "contracts written, mirrored in the engine"], ["0", "human decisions on the happy path"], ["2", "sides, one rail"]].map(([v, l], i) => (
             <div key={l} className={`tile ${i === 0 ? "tile-seal" : ""}`}><dt className="sr-only">{l}</dt><dd className="kpi kpi-lg">{v}</dd><dd className="mt-1 text-[15px] text-ink-2">{l}</dd></div>
           ))}
         </dl>
@@ -91,14 +98,19 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="band p-8 md:p-10">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><h2 className="h-section">Sixty seconds to break it</h2><span className="label">Live wallet moved: no</span></div>
+          <JudgeConsole compact />
+        </section>
+
         <section className="py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><span className="rule-gold mb-4" /><h2 className="h-section">How one task flows</h2><p className="mt-1 text-ink-2">Six steps, each one a signed intent and a hash on chain.</p></div>
+            <div><span className="rule-gold mb-4" /><h2 className="h-section">How one task flows</h2><p className="mt-1 text-ink-2">Seven steps, each one an event mirrored from the contracts.</p></div>
             <Link href="/app/fleet" className="link">Watch it live</Link>
           </div>
-          <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-rule bg-rule md:grid-cols-3 xl:grid-cols-6">
+          <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-rule bg-rule md:grid-cols-4 xl:grid-cols-7">
             {steps.map(([t, b], i) => (
-              <li key={t} className="bg-surface p-5"><div className="kpi text-gold-text">{i + 1}</div><div className="mt-3 text-lg font-semibold">{t}</div><div className="mt-1 text-[15px] text-ink-2">{b}</div></li>
+              <li key={t} className="bg-surface p-5"><div className="kpi text-gold-text">{i}</div><div className="mt-3 text-lg font-semibold">{t}</div><div className="mt-1 text-[15px] text-ink-2">{b}</div></li>
             ))}
           </ol>
         </section>

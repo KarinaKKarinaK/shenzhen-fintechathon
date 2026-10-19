@@ -96,7 +96,7 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; color: var(--color-ink);
 .bracket { display: none; }
 
 /* Seal stamp: the one motion moment. */
-.seal { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-ink); font-weight: 600; }
+.seal { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--color-seal); color: #fff; font-weight: 700; border-radius: 3px; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-seal); }
 @keyframes stamp { 0% { transform: scale(1.5) rotate(-8deg); opacity: 0; } 60% { transform: scale(0.96) rotate(-4deg); opacity: 1; } 100% { transform: scale(1) rotate(-4deg); opacity: 1; } }
 .stamp { animation: stamp 480ms cubic-bezier(.2,.9,.3,1.15) 1; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .stamp { animation: none; } }
@@ -130,7 +130,7 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; color: var(--color-ink);
 :focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 
 /* Hash strip: static, quiet. */
-.ticker { display: flex; flex-wrap: wrap; }
+.ticker { display: flex; flex-wrap: nowrap; }
 .scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-rule) transparent; }
 
 /* Stage tracker. */

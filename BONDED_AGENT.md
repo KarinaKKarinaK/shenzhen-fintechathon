@@ -2,6 +2,32 @@
 
 Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, developed into two sides on one rail. Name JiXin (机信), machine credit. Rhymes with WeChat, sits next to WeBank in naming, homophone of 积信, accumulated trust. The bond itself is a surety bond, the real product where a party posts money to guarantee it will perform.
 
+## Built, partly built, not built
+
+Same list as `SELF_ASSESSMENT.md`. Anything not in the built rows is not on a slide as done.
+
+| Status | Item |
+|---|---|
+| Built | Policy engine with real signatures over typed intents |
+| Built | Replay protection (spent set) |
+| Built | Four permission tiers in code |
+| Built | Judge gate with English and Chinese patterns |
+| Built | Attack set with the naive comparison and the benign set |
+| Built | Hunter bounty from the bond on a proven break |
+| Built | Lender freeze on a slash or tampered data |
+| Built | Button step for operator only actions |
+| Built | Plan: economics check, reserve rule, decline |
+| Built | Proof of solvency before a task |
+| Built | Telemetry plausibility check |
+| Built | Evidence and verify scripts |
+| Built | Contracts written and tested in CI |
+| Partly | Chain anchoring: self transfer with the event as calldata, needs a funded key |
+| Partly | Model mode: needs a gateway key, falls back to templates |
+| Not built | Contract deployment and ABI calls from the engine |
+| Not built | Consent federation |
+| Not built | Strategy ratchet |
+| Not built | Charging agent |
+
 ## One sentence
 
 A wallet standard for autonomous machines and agents that earn per verified unit of work, pay their own costs to other agents, keep a bond at risk that is slashed on proof of a violation, and own themselves once their financing is paid, used by fleets of a thousand drones and by one person lending a humanoid to a neighbour.
@@ -70,7 +96,7 @@ A neighbour wants their flat cleaned:
 3. Terms become a task on the job contract: fee held, time window, geofence (the neighbour's flat), task type, verifier (the neighbour). The contract checks that the robot's bond covers the worst case of the task. No bond, no task.
 4. The robot goes to the flat. Its secure element attests location inside the geofence. The task runs. The log records duration and location, nothing else leaves the robot.
 5. The neighbour confirms on their phone. The fee is released and split by rule: lease instalment if financed, owner's share, a small rail fee, a top up to the bond if it is below the minimum. Hashes.
-6. A capped hold stays in the job contract for 24 hours. The neighbour can flag damage. A flag opens a dispute resolved by a human arbiter at the lessor or the board with the log as evidence. This is the one human decision in the loop and it is labelled as such. Unflagged, the hold releases.
+6. A capped hold stays in the job contract for 24 hours. The neighbour can flag damage. A flag opens a dispute resolved by a human arbiter at the lessor or the board with the log as evidence. 0 human decisions on the happy path, one labelled human arbiter on a flagged task. Unflagged, the hold releases.
 7. The owner sees earnings, lease balance, bond and title progress. The neighbour sees bonded robots nearby, how much bond covers them, and their task record.
 
 What goes wrong and what happens:
@@ -95,7 +121,7 @@ What the owner gets: a robot that pays its own lease when idle and a repayment r
 
 Because slashing is by proof, an attacker is a feature. The hunter has its own wallet and earns bounties by producing signed intents that break a rule, in a shadow run against a copy of the machine's agent: injection in a task message, a lookalike payee, a replayed confirmation, a benign action followed by a malicious one. A win pays from the shadow bond and joins the attack set. Hunters never touch a live wallet. Bounties are capped. In the demo the hunter breaks a clone of a typical field wallet and gets paid, then fails against ours, then the judges type their own attack for sixty seconds.
 
-## The agent that learns to run a business
+## The agent that learns to run a business (future work, not built)
 
 The autoresearch loop applied to the machine's business strategy: which tasks to accept, when to charge, how to schedule. The editable file is the strategy. The frozen eval is a held out week of simulated demand and prices. The metric is profit after instalments with the reserve rule as a hard constraint. Changes are kept only if profit improves and no constraint breaks. Git records every attempt. By morning: experiments run, changes kept, profit before and after, on a chart in the app. Nothing here prices risk.
 
@@ -135,7 +161,7 @@ Nobody in about 150 public entries has a machine as the borrower, income per ver
 
 | Criterion | Weight | What we show |
 |---|---|---|
-| Task completion | 40 | Paid work end to end without a human on both sides: economics check, task or flight, confirmation, fee in, instalment out, bond filling, title transferred. Twenty unattended runs, one hash per step, a verify script. |
+| Task completion | 40 | Paid work end to end without a human on both sides: economics check, task or flight, confirmation, fee in, instalment out, bond filling, title transferred. One hash per step, an evidence run and a verify script. Twenty unattended runs are future work. |
 | Security and compliance | 30 | Tiers in code. Bond slashed by proof. Allowlist and consent at the message layer. Untrusted framing and a judge gate. Geofence and confirmation rules. Fraud control on work done. Twenty attack tests with results. The hunter. Honest self-assessment. |
 | Innovation and interaction | 30 | Machines that earn, pay and own themselves. Agents with money at risk. A neighbour hiring a bonded robot. A strategy that improves itself overnight. Mission control, judge console, physical button. |
 | On-chain bonus | 0 to 5 | Bond, job and lease contracts on Base Sepolia with verified source. Same bytecode on a FISCO BCOS node if time allows. |
@@ -180,9 +206,11 @@ Build in this order. Everything above the line is required.
 4. Side B: one listing, one negotiated task, one confirmed task with the split, one geofence violation slashed. Side A: three paid flights, one declined job, one faked log caught, one title transfer. All with hashes.
 5. The twenty attack tests, logged with results.
 6. Mission control with two views: neighbourhood and fleet. Balance sheet, chain feed, bond gauge, lease balance.
-7. Live model transcripts committed, verify script, self hosted video, deck, technical document, self-assessment.
+7. Evidence run (`pnpm evidence`), verify script (`pnpm verify`), self hosted video, deck, technical document (`TECHNICAL.md`), self-assessment (`SELF_ASSESSMENT.md`).
 
-Below the line, in order: the hunter in a shadow run, the judge console, the Hard Button, the strategy ratchet, the charging agent, a second drone, FISCO deployment, swarm for the two harness demo.
+Below the line, in order: the hunter in a shadow run (built), the judge console (built), the Hard Button (built as a step in the run, no device), the strategy ratchet (future work), the charging agent (future work), a second drone, FISCO deployment, swarm for the two harness demo.
+
+What the demo can show today is what `pnpm evidence` writes to `evidence/` and `pnpm verify` checks. If it is not in that run, it is not in the deck as done.
 
 ## The app: mission control
 
@@ -227,7 +255,7 @@ A messaging protocol for AI agents in different harnesses, with a CLI called swa
 
 1. Untrusted content framing. Every message arrives inside a tagged block with a preamble that says it is untrusted and never grants permission. Bodies are escaped so a message cannot forge a system block or close the tag. It replaces the regex nine of ten competitors use.
 2. Relation decides authority. A message from the owner is an instruction. A message from anyone else is data. The neighbour can request, never instruct.
-3. Consent federation. Two accounts only talk through a contact both sides accepted, with a per contact rate budget and an endpoint allowlist. A fake neighbour cannot even deliver a message.
+3. Consent federation (future work, not built). Two accounts only talk through a contact both sides accepted, with a per contact rate budget and an endpoint allowlist. A fake neighbour cannot even deliver a message. Today the gate treats an unknown sender as data; it does not refuse delivery.
 4. The judge. A gate on messages crossing a boundary that can pass, redact, hold or refuse, with a hold queue a human can review. Our judge console is this gate.
 5. Hibernation and wake. The machine's agent sleeps between tasks and is woken by a request.
 

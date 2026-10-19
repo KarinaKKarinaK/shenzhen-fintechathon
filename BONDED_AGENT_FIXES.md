@@ -1,174 +1,364 @@
-# Bonded Agent: problems and fixes
+# JiXin (Bonded Agent): design fixes
 
-A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what we decided to do about each. Newest decisions are added as we go. BONDED_AGENT.md and the contracts get updated from this once the list is settled.
+Problems found in the JiXin design (`BONDED_AGENT.md`) and the contracts (`contracts/`), what we decided, and exactly what to change in code.
 
-## Status
+Checked against commit `7abd4ef` (contracts) on 20 October 2026.
 
-"Decided" is our decision in this file. "In JiXin" is whether the rewritten BONDED_AGENT.md and the contracts in `contracts/` already reflect it (checked 19 Oct, see the last section).
+## How to read this
 
-| # | Problem | Decided | In JiXin |
+| You are | Read |
+|---|---|
+| Reviewing the ideas | The summary, the cast, the status table and Part A. About ten minutes. |
+| Implementing (a person or a coding agent) | The status table, then Part B. Part B is self-contained: interfaces, rules, edge cases, tests and the order of work. Part A explains why. |
+| Working on the pitch | Part A.5 (the scenario and the closing statement) and Part C (open problems). |
+
+Words used throughout:
+
+| Word | Meaning |
+|---|---|
+| Intent | A typed, structured action the AI agent wants to take ("pay 160 to 0xBANK for job 12"), signed by the agent under EIP-712. The agent signs every intent before the policy engine decides. |
+| Policy engine | Deterministic code between the agent and its wallet. Allows, blocks or escalates each intent. Not the model. |
+| Bond | Money held in `Bond.sol` that is slashed when a violation is proven. |
+| Slash | Taking a fixed amount from a bond as a penalty, paid partly to whoever proved the violation. |
+| Proof | A signed intent plus the rule it breaks, submitted to `Bond.slashByProof`. |
+| Verifier | The party whose confirmation releases a job's fee. In the demo, the farmer. |
+| Lender / lessor | The licensed institution that financed the machine. Owns it until the lease is paid. |
+| Vendor | Whoever built and runs the AI agent. In the demo, us. |
+
+## Summary
+
+1. Scenario: the agricultural drone pilot only. A pilot with nothing to pledge gets a drone financed by a lender. Farmers pay the drone per mu sprayed. Each fee repays the lease and fills a bond. At zero the drone belongs to the pilot. Delivery drones, robot arms, robotaxis and humanoids are one closing statement, not part of the build.
+2. Two bonds. The pilot bond (earned from fees) is slashed only for the pilot's own cheating. The vendor bond (posted by us up front) is slashed for the AI agent's mistakes. The pilot never pays for the AI.
+3. Proof is checked against records, never against the reporter's word. Every fact in a slash comes from the signed intent, `Bond`, `JobBoard` or `Lease`.
+4. Every intent is committed to a per-job log on chain (hash only) before the policy engine decides, and delivered to every party of that job. Only those parties can report. Hunters attack shadow copies only.
+5. A new machine can start: no minimum in the start check, a starting floor of 200 yuan, and the minimum becomes a reward (better rate, board listing). Insurance is out of the build.
+
+## The cast and one job, end to end
+
+| Who | Role |
+|---|---|
+| Pilot (owner, main user) | Wants a drone, cannot get a normal loan. Keeps the profit. |
+| Lender | Pays for the drone, owns it until repaid, repaid automatically per job. The paying customer of the rail. |
+| Farmer (client, verifier) | Posts and pays for spraying jobs, confirms the work. |
+| AI agent | Runs the drone's money: accepts jobs, signs intents, pays bills. Has its own key. |
+| Vendor (us) | Built the agent, deployed the contracts, posts the vendor bond, takes a 2 percent rail fee. |
+
+1. Setup, once: we deploy `Bond`, `Lease`, `JobBoard` (and the new `IntentLog`). One shared set for everyone.
+2. Loan: the lender calls `Lease.open`. The lender holds the title.
+3. Registration: the agent is registered in `Bond` under the pilot (operator) and under us (vendor). Pilot bond starts at zero.
+4. Job: the farmer calls `JobBoard.post` with the fee, the agent, the field (geofence) and the window. The fee is locked.
+5. Start: the agent calls `JobBoard.start`. The bond (plus the starting floor) must cover the job.
+6. Work: the drone sprays. Off chain, the flight log is checked for plausibility (area, tank, battery, time).
+7. Confirm: the farmer calls `JobBoard.confirm`. The fee splits: rail fee, a 24 hour hold, the lease instalment, a slice to the pilot bond, the rest to the agent wallet.
+8. Repeat until the lease balance is zero. `Lease` transfers the title to the pilot.
+
+## Status at a glance
+
+"Decided" is our decision. "In code" is whether `contracts/` already does it.
+
+| # | Problem | Decided | In code |
 |---|---|---|---|
-| 1 | Who pays when the AI agent makes a mistake | Two bonds, the vendor is liable for the AI | No. One bond per agent, still described as protection against a compromised agent |
-| 2 | Nobody outside the pilot can submit proof, so the bond can never be slashed | Private log per job, delivered to every party, hashes on chain | No. And the contract can be drained with made-up evidence (10) |
-| 3 | The bond starts at zero, so it protects the lender least when risk is highest | Limits scale with the bond, the vendor bond covers the start | Partly. Job size scales with the bond, but the minimum blocks a new machine from ever starting (11) |
-| 4 | Where insurance fits | Not in the build, only above the bonds | Partly. Physical damage is out, but "cover bound" is still required and insurance is still in the market section |
-| 5 | The document mixes delivery drone, agricultural drone, robot arm and humanoids | Open | Worse. Now two sides: drone fleet and a neighbour hiring a humanoid |
-| 6 | The market section argues for insurance pricing, which the product section rules out | Open | Still there |
-| 7 | Spraying is seasonal; a fixed monthly minimum causes default in the off-season | Open | Not addressed |
-| 8 | Scope is far bigger than the time left | Open | Worse. Both sides are in the required demo |
-| 9 | Claims that can backfire: WeBank named as lessor, farm drone subsidies may exist, unverified market sources | Open | Partly. Financing caveat kept; WeBank still named as lender; "credit bureau for machines" still there |
-| 10 | Slashing evidence is not bound to the signed intent | New | Bug in `Bond.sol` |
-| 11 | A new machine can never start a job | New | Bug in `Bond.sol` with `JobBoard.sol` |
+| 1 | The pilot pays for the AI's mistakes | Two bonds: pilot bond for pilot cheating, vendor bond for agent mistakes | No. One bond per agent |
+| 2 | Nobody but the pilot ever holds the evidence, so nothing is ever slashed | Per-job intent log: hash on chain before the policy engine decides, full intent delivered to every party, only parties report | No |
+| 3 | The bond starts at zero | Limits scale with the bond, a starting floor, the vendor bond covers the start (with 11) | Partly. Job size scales with the bond (25 percent of the fee) |
+| 4 | Where insurance fits | Not in the build. Bonds first, insurance only above them, in the pitch | No. `bindCover` and `NoCoverBound` still exist |
+| 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Contracts are scenario neutral. `BONDED_AGENT.md` still has two sides |
+| 10 | The contract believed the reporter | Every fact read from the signed intent and the contracts' own records | Half. Evidence is now bound to the signed fields. Confirmation and geofence are still taken from fields the agent signed instead of from `JobBoard` |
+| 11 | A new machine can never start | No minimum in `covers`, a starting floor | No. `covers` still requires the minimum |
+| 6 | Market section argues for insurance | Open | |
+| 7 | Seasonal income vs a fixed monthly minimum | Open | `Lease.monthlyMinimum` is fixed |
+| 8 | Scope | Open | |
+| 9 | Claims that can backfire | Open | |
 
-## 1. Who pays when the AI agent makes a mistake
+Already done in code (credit to the team, commit `7abd4ef`):
 
-The problem. The bond sits in the drone's wallet, but the drone is not a legal person. Its wallet is a ring-fenced sub-account of the pilot's business, the bond is built from the pilot's earnings and returned to the pilot at title transfer. So slashing it means the pilot loses money. As written, the bond is slashed for anything the agent does wrong, including being fooled by a scammer. The pilot would pay for a flaw in software someone else built.
+- Intents are EIP-712 typed structs, and `slashByProof` hashes the fields itself, so a real signature cannot be paired with invented evidence.
+- `JobBoard.confirm` computes the instalment from `Lease.instalmentFor` and pays through `Lease.pay`. No amount comes from the caller.
+- `Bond.register` needs the agent's own signature, so nobody can register someone else's agent.
+- The verifier cannot be the agent. A frozen lease blocks start and release.
 
-The decision. Two bonds, each covering what its owner controls.
+# Part A: the decisions explained
+
+## A.1 Two bonds (problem 1)
+
+Problem. The drone is not a legal person. Its wallet is a ring-fenced sub-account of the pilot's business, and the bond is built from the pilot's earnings and returned to the pilot. Slashing it for anything the agent does wrong means the pilot pays when the AI is tricked by a scammer: a flaw in software someone else built.
+
+Decision. Two bonds, each covering what its owner controls.
 
 | | Pilot bond | Vendor bond |
 |---|---|---|
-| Who funds it | Earned from the drone's fees, a slice per job | Posted up front by the agent's vendor (us) |
-| What it covers | The pilot's own cheating | The AI agent's mistakes |
-| Slashed for | A job claimed without the farmer's confirmation, a faked or replayed flight log, an instalment skipped while the wallet had the balance | The agent signing an intent that breaks a rule: payee not on the allowlist, amount above the cap, a payment triggered by a scammer's message, any action that traces back to untrusted input |
-| Who gets paid | The lessor (compensation) and whoever submitted the proof (bounty) | Whoever lost money (compensation) and whoever submitted the proof (bounty) |
-| Returned | To the pilot at title transfer | To the vendor if it stops operating the agent and no claims are open |
+| Funded by | A slice of each fee, earned | The vendor, posted up front |
+| Covers | The pilot's own cheating | The AI agent's mistakes |
+| Slashed for | Work and repayment rules: claiming a confirmation that does not exist, working outside the job's field | Signing rules: a payee not on the allowlist, an amount over the cap |
+| Returned | To the pilot at title transfer | To the vendor when it stops operating the agent and no claims are open |
 
-Two kinds of payout from either bond:
+Each rule is tagged with the bond it hits, so the contract never judges intent or fault. The broken rule decides.
 
-- Penalty. A rule was broken but the policy engine blocked it, so nobody lost money. A fixed amount is slashed and paid to the person who proved it as a bounty. This is what makes the hunter work: it earns from the vendor bond by finding attacks that fool our agent.
-- Compensation. A rule was broken and money was actually lost. The loss is repaid to the victim from the bond, up to a cap per incident.
+What a hallucination costs. Numbers come from tools, not the model. Code validates every action before the agent signs it, so made-up actions never become intents. The policy engine and the contracts block any bad intent, so no money moves. A blocked bad intent costs the vendor bond one small fixed penalty. The pilot bond is never touched.
 
-Why this is better. The pilot is never punished for something they did not do. The vendor has money at risk, so it has a reason to ship a safe agent. It also answers the judge's question "who is liable if the AI gets it wrong?" in one sentence: the company that made the AI, from its own bond.
+Answer to the judge's question "who is liable if the AI gets it wrong": the company that made the AI, from its own bond.
 
-How the contract decides whose fault it is. Each rule in the bond contract is tagged with the bond it slashes. Rules about work and repayment (confirmation, flight log, instalment) hit the pilot bond. Rules about what the agent signs (payee, cap, untrusted input) hit the vendor bond. The contract never has to judge intent; the rule that was broken decides.
+Open questions (not blocking the build):
 
-Open questions.
+- Collusion. A pilot could feed the agent a fake scam on purpose to drain the vendor bond. Mitigations: penalties go to the reporter only as a capped bounty, never to an address the pilot controls; a daily cap on penalties; instructions from the pilot's own channel count as the pilot's.
+- The Hard Button. Proposal: anything the pilot approved on the button is the pilot's responsibility.
+- Compensation for an actual loss (money that really left the wallet) needs someone to establish the loss, which a contract cannot see. Out of the hackathon build; the policy engine blocks before money moves, so the demo only needs penalties.
 
-- Collusion. A pilot could feed the agent a fake "scam" message on purpose, let it pay a friend, and claim compensation from the vendor bond. Ideas: compensation goes to the lessor first and never to an address the pilot controls; a cap per incident and per month; instructions from the pilot's own channel count as the pilot's, so a "scam" sent from there hits the pilot bond.
-- The Hard Button. If the pilot approves an action on the physical button, is it still the agent's mistake? Proposal: anything the pilot approved on the button is the pilot's responsibility.
-- Sizing. The vendor bond must cover the worst case across every wallet running our agent, not one drone. For the demo: one vendor bond, sized to the sum of the per-wallet caps.
+## A.2 The per-job intent log (problem 2)
 
-What a hallucination actually costs. Putting the AI's mistakes on the vendor bond does not mean one hallucination is a disaster. Layers in front of the money:
+Problem. Slashing needs someone to hold a signed intent that breaks a rule. The agent signs inside the pilot's system and the policy engine drops blocked intents, so only the pilot ever holds the evidence, and the pilot will not report against their own bond. As written, nothing is ever slashed.
 
-1. Numbers come from tools. The model explains amounts, it never produces them.
-2. Validation before signing. Code checks the action against its schema and the tool outputs before the agent signs it. A malformed or made-up action is discarded and never becomes a signed intent, so it never reaches the intent log and cannot be slashed.
-3. The policy engine and the contracts block any signed intent that breaks a rule, so a bad intent moves no money.
-4. A blocked bad intent costs the vendor bond a small fixed penalty, paid as a bounty. Nobody lost money.
-5. A loss that does get through is capped by the spending limits and repaid from the vendor bond. The pilot bond is never touched.
+Decision. Every intent is committed before the policy engine decides.
 
-Worst case for a hallucination: a small penalty paid by the vendor. Open point: penalties need a daily cap, or hunters could drain the vendor bond by attacking all day. The record of attacks, failures and penalties paid is itself demo evidence.
+- On chain: only the intent's hash, the job it belongs to and a timestamp. It reveals nothing (no amount, payee or location) but proves the intent existed in that exact form. Nobody, including us, can delete or change it.
+- Off chain: the full intent is delivered to every party of that job: the farmer, the pilot, the lender and the vendor. Including the intents the policy engine blocked. That delivery is the point: a blocked scam attempt can no longer be quietly dropped.
+- Who can report: only the parties of the job. The lender matters most: it has its own money at stake and does not depend on the farmer checking.
+- Hunters never see live jobs. They attack shadow copies of the agent on shadow jobs, and their bounties come from the vendor bond.
 
-## 2. The public intent log
+The log does not let anyone claim "this never happened". It is a permanent record of what the agent did. Reporters point at an entry and say "this broke a rule"; the contract checks for itself (A.6). "This work never happened" is a different problem, solved by the farmer's confirmation: no confirmation, no money.
 
-The problem. Slashing works by proof: anyone holding a signed intent that breaks a rule can submit it and the contract slashes the bond. But the agent signs its intents inside the pilot's system, before the policy engine. Nobody outside ever sees them. The lessor cannot look inside the policy engine. The only party holding the evidence is the pilot, who will not report against their own bond. So as written, nothing is ever slashed.
+Why this fits China: job data (fields, locations) is personal or business data under PIPL. Keeping it among the parties with hashes on chain is how a FISCO BCOS consortium chain is used in production.
 
-The decision. Every intent the agent signs is published before the policy engine decides.
+## A.3 Starting from zero (problems 3 and 11)
 
-1. The agent signs an intent (pay X to Y for reason Z).
-2. The intent's hash is written to an intent log contract on chain, with a timestamp. The full intent goes to a public store the app serves. For the testnet demo, the full intent can go on chain.
-3. Only then does the policy engine allow or block it.
-4. Anyone (the lessor, a hunter, a farmer) can take an intent from the log and submit it to the bond contract. The contract checks the signature, checks the hash is in the log, checks the rule, and slashes the right bond.
+Problem. The pilot bond starts at zero and only fills from confirmed jobs. `JobBoard.start` refuses a job until `Bond.covers` is true, and `covers` requires the minimum. So nothing ever starts.
 
-Why it works. The evidence is public the moment it exists, so the person with a reason to report (lessor, hunter) has it. An agent cannot hide a bad intent by having the policy engine drop it, because it was logged first. A blocked attack still leaves a public record.
+Decision.
 
-What the log is and is not. It is not a place where people claim something never happened. It is the opposite: a permanent record of what the agent tried to do. An entry looks like "entry 57, 14:02, drone 12's agent: pay 500 to account 0xABC for battery maintenance", with the agent's signature. Nobody else can write an entry in the agent's name, and nobody, including us and the pilot, can edit or delete one. People use it by pointing at an entry and saying "this broke a rule". The contract then checks for itself: is the entry in the log, is the signature the agent's, does it break the rule. If any answer is no, nothing happens, so false claims cost the submitter gas and earn nothing. Without the log a blocked scam attempt is quietly forgotten inside the pilot's system and the vendor never pays for its agent being fooled. With it, every attempt is visible and permanent, like accounts audited in public instead of kept by the company itself.
+1. Drop the minimum from the start check. Only the size rule stays: bond plus floor must cover 25 percent of the fee.
+2. A starting floor of 200 yuan (about 50 mu, one small job) for every machine.
+3. The minimum becomes a reward: reaching it unlocks a better lease rate and listing on the main board.
 
-The other direction, "this never happened", is a different problem with a different fix. A pilot claiming 100 mu that was never sprayed is caught by the farmer's confirmation: the farmer pays, so the farmer only signs if the work was done. No signature, no money, and claiming the job anyway is itself a rule break that hits the pilot bond.
+Why a zero bond is safe for small first jobs: the farmer cannot lose money (the fee releases only on their confirmation), the lender cannot lose the drone (it holds the title), the agent's mistakes are covered by the vendor bond from day one, and the floor keeps the pilot's possible cheating small.
 
-Decision (revised): the log is private to each job. "Public" was the wrong word. What matters is not that strangers can read it but that no party can hide, edit or delete an entry.
+## A.4 Insurance (problem 4)
 
-- Who sees an entry: only the parties to that job. The customer, the operator (pilot or fleet), the lender, and the vendor of the agent. Every intent the agent signs for a job is delivered to all of them, including the ones the policy engine blocked. That delivery guarantee is the point: the operator can no longer quietly drop a blocked scam attempt.
-- What goes on chain: only a hash of each entry, with a timestamp. It reveals nothing (no amount, payee or location) but proves the entry existed at that time in that form. Nobody, including us, can later delete it or swap it for a different version.
-- Who can report: only the parties to the job. Each of them has the full entry and can submit it as proof; the contract checks it against the hash and the job agreement (fix 10). The lender is a party, has its own money at stake and does not depend on the customer noticing, which covers a customer who never checks or who colludes with the operator.
-- Hunters: they never see live jobs. They attack shadow copies of the agent and submit the intents from those runs, so their bounties come from the vendor bond without anyone outside a job seeing its data.
-- Payouts are fixed by the agreement, not by the reporter. A bounty goes to the party that proved the violation. Compensation goes to whoever the job agreement says lost the money. Penalties are capped per day.
+Bonds cover small and medium losses the system itself creates, fast and by proof. Insurance covers what is bigger than the bonds: the agent failing across many wallets at once, or physical crash damage to crops or people, which pilots already insure today.
 
-Why this fits China: job data (locations, a neighbour's flat, a farmer's fields) is personal or business data under PIPL. Keeping it among the parties and putting only hashes on chain is also how a FISCO BCOS consortium chain would be used in production.
+Decision: no insurance in the build. Drop cover binding from `JobBoard` and the `NoCoverBound` rule. In the pitch, one line: the vendor bond is the first layer, backed in production by AI liability insurance; physical damage stays with the pilot's drone insurance. This also keeps us clear of CoverAI.
 
-- Public intent log: catches the agent trying things it should not. Vendor bond.
-- Farmer's confirmation: catches the pilot claiming work that was not done. Pilot bond.
+## A.5 One scenario: the agricultural drone pilot (problem 5)
 
-Cost. One more contract with one function (commit) and one check in the bond contract (was this intent committed). Intents contain amounts and payees, which is business data. For production: commit only the hash on chain and reveal the body only when it is submitted as proof.
+Decision: build and demo only the agricultural drone pilot.
 
-## 3. The bond starts at zero
+Why: over 200,000 agricultural drone pilots in China, 3 to 5 yuan per mu for most field crops, a drone of about 55,000 yuan; a clean unit of work (a mu sprayed, from the GPS track, confirmed by the farmer, who pays and so has no reason to confirm work not done); the strongest inclusion story for a WeBank panel; the web app already shows farmland. Delivery drones in Shenzhen belong to Meituan, and humanoids are a speculative market with privacy and safety questions.
 
-The problem. The pilot bond is earned from fees, so a new drone has none. A bond protects the lender by covering losses, so on day one it covers nothing. That is when risk is highest: no track record, untested agent. The claim "the counterparty can read from chain that the bond covers the worst case" is false at the start.
+Demo story:
 
-The decision. Two parts.
+1. A pilot with nothing to pledge gets a drone financed by a licensed lessor (sandbox).
+2. The bond starts at zero, so the drone takes small jobs inside the starting floor.
+3. Farmers post spraying jobs, the drone sprays, the farmers confirm, the fee splits automatically.
+4. The bond grows, bigger jobs unlock, the lender lowers the rate.
+5. A faked flight log is caught by the plausibility check.
+6. The agent is tricked by an injected message, the policy engine blocks it, a party proves it from the log, the vendor bond is slashed.
+7. The lease reaches zero and the drone belongs to the pilot.
 
-- Limits scale with the bond. The largest job a drone may accept and the largest payment it may make are set by its bond, for example at most five times the bond, with a small floor so a new drone can start working at all. The contract enforces this, not the agent. A new drone takes small jobs only; as the bond fills, bigger jobs unlock. The worst case is always covered.
-- The vendor bond covers the start. The vendor bond is posted up front, so it covers agent mistakes from day one. The only risk left uncovered early is pilot cheating, and that is limited by the small job sizes.
+Closing statement, for the last slide and the end of the video:
 
-Why this is better. The solvency claim is now always true. It also gives the demo a visible moment: the drone starts on small fields and earns its way to bigger jobs and a cheaper rate.
+> The same rail works for any machine that does paid work someone can verify. Delivery drones paid per drop. Robot arms paid per part. Robotaxis paid per trip. Port vehicles paid per container move. And one day the humanoid in your building, paid per errand for your neighbour. Every one of them can earn, pay its own way, post a bond and pay off its own financing. The agricultural drone is the first.
 
-Still to decide. How much of each fee goes to the bond (example: 10 percent), and how much that lengthens the lease. One line on the economics slide.
+Changes to `BONDED_AGENT.md` (owner of that file): Side B moves to the closing statement and a short "next" section; Side A becomes the agricultural drone only (spraying per mu, farmer confirmation, no delivery flow); the three-act demo becomes the story above; mission control keeps only the farmland view.
 
-## 4. Where insurance fits
+## A.6 Proof is checked against records (problem 10)
 
-The question. The earlier versions (Sky Cover, the market section) put insurance at the centre. Now the bonds cover the losses. Is insurance needed at all?
+Problem. The first version of `slashByProof` took a hash plus an `evidence` blob typed in by the reporter and believed the blob. A farmer could take a perfectly legal signed payment, claim "the job was not confirmed", and collect a bounty. The current code fixes half of this: the rule is now checked against the signed fields. The other half: for confirmation and location, the contract still trusts a field the agent signed (`confirmed`, `geofence`) instead of asking `JobBoard` what really happened and what the job allowed.
 
-The answer. Bonds and insurance cover different sizes of loss.
+Decision. The reporter only points: "this signed intent breaks this rule". Every fact comes from a source the reporter cannot control.
 
-- Bonds cover small and medium losses, fast and automatically: a bad payment, a faked job, a scam that got through. These are the losses our system creates, and the bonds pay them from proof.
-- Insurance covers losses bigger than the bonds can hold. Two cases: the vendor's agent fails across many wallets at once and the claims exceed the vendor bond; or the drone physically crashes, damages a crop or injures someone. The physical case is outside our project entirely; pilots carry drone liability cover for it today.
-
-The decision. No insurance in the build. The flat per flight cover and the cover pool are dropped. In the pitch, one line: the vendor bond is the first layer, and in production the vendor backs it with AI liability insurance for losses beyond the bond. Physical crash damage stays with the pilot's existing drone insurance. This also keeps us clear of CoverAI.
-
-## Check against JiXin (19 Oct)
-
-The team rewrote BONDED_AGENT.md as JiXin (two sides: a commercial drone fleet and an individual lending a humanoid to a neighbour) and wrote `Bond.sol`, `JobBoard.sol`, `Lease.sol` and `IBonded.sol`. The contracts are not compiled yet (contracts/README.md). What the rewrite already gets right and where it still differs from the decisions above.
-
-Already good:
-
-- The earned bond is in the document and in `Bond.fill`.
-- Slashing by proof is implemented: the contract recovers the agent's signature, checks a rule, marks the proof as used, pays half to the submitter.
-- Job size is tied to the bond: `JobBoard.start` requires the bond to cover 25 percent of the fee, so a bigger bond unlocks bigger jobs. This is half of fix 3.
-- Fees only move on the verifier's confirmation, which covers "this never happened" for work claims.
-- Physical damage and injury are declared outside the rail.
-- Financing programmes for farm drones are marked as unconfirmed.
-
-### 1. Two bonds: not in
-
-`Bond.sol` keeps one bond per agent, funded by the operator through fees and top ups. Its rules mix pilot rules (`UnconfirmedClaim`, `SkippedInstalment`) with agent rules (`PayeeNotAllowlisted`, `OverCap`) on the same bond. BONDED_AGENT.md line 90 still says the bond protects the counterparty from "an agent that is jailbroken, buggy or malicious", so the owner pays for the agent's mistakes. Slashed money goes half to the submitter and half to a treasury, never to whoever lost money, so there is no compensation path. To do: a vendor bond (one per agent vendor), a tag on each rule saying which bond it hits, and a compensation payout to the victim.
-
-### 2. Public intent log: not in
-
-`slashByProof` checks the signature but not that the intent was ever published, so the evidence still only exists inside the owner's system. To do: an intent log contract and a check in `slashByProof` that the hash was committed.
-
-### 10. New, critical: evidence is not bound to the intent
-
-`slashByProof` takes the signed `intentHash` and, separately, an `evidence` blob chosen by the submitter. It checks that the agent signed the hash, then checks the rule against the evidence, but never checks that the evidence is what the agent signed. So anyone holding any genuine signed intent, even a perfectly legal payment, can submit it with made-up evidence (a payee off the allowlist, `confirmed = false`, `cover = false`) and slash the bond. Each intent can be used once, so every signed intent the agent ever makes is one free slash for an attacker. This is exactly "anyone can just say this never happened". Fix: the evidence must be the intent itself. The submitter passes the full typed intent, the contract hashes it, checks the hash matches the signature and the log, and reads payee, amount and fence from that intent. Claims about confirmation or cover must be read from `JobBoard` state, never taken from the submitter.
-
-Two sources of truth, both already on chain, and the submitter supplies neither:
-
-| What is checked | Read from |
+| Fact | Source |
 |---|---|
-| What the agent tried to do: payee, amount, job id, location | The signed intent itself |
-| What was allowed: allowlist, caps, geofence, fee, verifier, window | The agreement on chain: the job registered in `JobBoard` between the requester, the operator and the agent, plus the agent's rules in `Bond` |
-| What actually happened: confirmed, released, instalment paid | `JobBoard` and `Lease` state |
+| What the agent did | The signed intent (EIP-712, sealed by the agent's signature) |
+| What was allowed | The agent's terms in `Bond` and the job's terms in `JobBoard` |
+| What happened | `JobBoard` (confirmed, released) and `Lease` |
 
-The submitter only points: "intent 57 against job 12". The contract compares the two records itself. A violation is a mismatch between what the agent signed and what the agreement allowed.
+Example after the fix: the farmer submits the legal "pay 160 to 0xBANK for job 12" and claims the payee was not approved. The contract reads the payee from the signed intent: 0xBANK, approved, rejected. Editing the intent to say 0xSCAMMER breaks the signature. Claiming job 12 was not confirmed is checked against `JobBoard`, which shows it was. Rejected.
 
-### 11. New: a new machine can never start
+## A.7 How real-world work is proven (context, no change)
 
-`Bond.covers` requires the balance to be at least the minimum. A new machine's bond starts at zero and only fills from confirmed jobs, but `JobBoard.start` refuses any job until `covers` is true. So with a minimum above zero, nothing ever starts. Fix: drop the minimum from `covers` and let the exposure check alone scale job size, with a small floor, and keep the minimum only for being listed on the board or for a better rate.
+No single source proves a field was sprayed, so the design layers them: the farmer's confirmation (primary, and the farmer pays so has no reason to lie), the drone's signed flight log with plausibility checks (production: signed by a secure element in the drone; demo: signed by our keys, labelled as such), and a 24 hour hold where the farmer can flag bad work for a human arbiter. State this honestly in the security self-assessment.
 
-### Other contract notes
+# Part B: implementation spec
 
-- `JobBoard.confirm` calls `bond.topUp` from the board, which reverts because the board is not the operator. Already listed as a known gap in contracts/README.md.
-- `if (toBond > 0) (bool okb,) = ...` in `JobBoard.confirm` declares a variable outside a block, which Solidity does not allow. It will not compile.
-- `JobBoard.bindCover` lets the agent mark cover as bound without paying anything, so "the flight starts only because cover is bound" is self-declared. Either drop cover (decision 4) or make it a real payment.
-- `Lease.setRate` is operator only. The rate should be set by the lender inside the band, or the owner sets their own price.
-- `Lease` has a fixed monthly minimum (7, seasonality).
+Written so a person or a coding agent can implement it directly. Contracts are in `contracts/src`, tests in `contracts/test`, the web engine mirror is `web/src/engine/contracts.ts` and must keep the same rules.
 
-### 3 to 9 in the document
+## B.0 Invariants (hold these everywhere)
 
-- 3: the minimum and the "tighter rate band until it fills" are described but not enforced; see 11.
-- 4: "cover bought at a flat price" and "cover bound" are still in Side A and in `JobBoard`; the market section still lists agent liability insurance and "a take rate on every task and cover bound".
-- 5 and 8: the rewrite adds Side B (humanoids for neighbours) and makes both sides required in the minimum demo, plus two views of mission control. That is more scope, not less.
-- 9: WeBank is still named as the lender (lines 47 and 148), and "a credit bureau for machines" (line 250) is still shenzhen-comp's pitch.
+1. Never take a fact from the caller when a contract can read it. Amounts, confirmations, geofences, parties and bond balances are read from contract state or from the signed intent.
+2. The pilot bond is slashed only by pilot rules, the vendor bond only by vendor rules. No rule touches both.
+3. A proof is accepted only if the intent was committed to `IntentLog` for the same job before the slash.
+4. Each intent hash can be used as proof once.
+5. Only parties of the job can submit proof for a live job. Shadow jobs accept proof from registered hunters.
+6. No path lets the policy engine or the model decide a slash. The contract decides from records.
 
-## Next to fix
+## B.1 New contract: `IntentLog.sol`
 
-10 and 11 first, since they break the core mechanism. Then 1 and 2 in the contracts. Then 5 (pick one side for the demo), since 6, 7 and 8 depend on it.
+Purpose: an append-only, per-job record of intent hashes.
+
+```solidity
+interface IIntentLog {
+    event Committed(bytes32 indexed jobId, bytes32 indexed intentHash, address indexed agent, uint64 at);
+    function commit(bytes32 jobId, bytes32 intentHash) external;          // msg.sender must be the agent
+    function committedAt(bytes32 intentHash) external view returns (uint64); // 0 if never committed
+    function jobOf(bytes32 intentHash) external view returns (bytes32);
+    function agentOf(bytes32 intentHash) external view returns (address);
+}
+```
+
+Rules:
+
+- `commit` stores `committedAt`, `jobOf` and `agentOf` for the hash. Reverts if the hash was already committed.
+- The caller is the agent key (the same key that signs intents). No one else can commit for that agent.
+- `intentHash` is `Bond.hashIntent(intent)` (the EIP-712 struct hash, not the digest).
+- The agent runtime commits every intent before the policy engine decides (B.6).
+
+## B.2 Changes to `IBonded.sol`
+
+- Keep the `Intent` struct as is, with two changes:
+  - `jobId` is `bytes32(uint256(jobBoardId))` so it maps one to one to `JobBoard` job ids. Document this in the struct comment.
+  - `coverBound` is removed (A.4). `confirmed` stays: on a `claim_done` intent it is what the agent asserts.
+- `slashByProof(Intent calldata intent, bytes calldata signature, uint8 rule)` keeps its signature.
+- Add `function covers(address agent, uint256 exposure) external view returns (bool);` semantics change (B.3).
+- Add vendor bond views: `vendorBondOf(address vendor) returns (uint256 balance)` and `vendorOf(address agent) returns (address)`.
+
+## B.3 Changes to `Bond.sol`
+
+State:
+
+```solidity
+struct Vendor {
+    uint256 balance;
+    uint256 penalty;        // fixed slash per proven agent violation
+    uint256 dailyCap;       // max total slashed from this vendor per day
+    uint256 slashedToday;
+    uint64  day;            // block.timestamp / 1 days of the last slash
+}
+mapping(address => Vendor) vendors;          // vendor address to vendor bond
+mapping(address => address) vendorOfAgent;   // agent to vendor
+
+IIntentLog public immutable log;
+IJobBoardView public immutable board;        // read-only view of JobBoard, B.4
+uint256 public immutable startFloor;         // 200 yuan in demo units
+```
+
+Functions to add:
+
+- `postVendorBond(uint256 penalty, uint256 dailyCap) payable`: msg.sender becomes or tops up a vendor.
+- `register(...)` gains `address vendor`. The vendor must exist. Store `vendorOfAgent[agent] = vendor`.
+
+`covers` (problems 3 and 11):
+
+```solidity
+function covers(address agent, uint256 exposure) public view returns (bool) {
+    return agents[agent].balance + startFloor >= exposure;   // no minimum here
+}
+```
+
+`minimum` stays in storage and in `bondOf`, read by the lender and the board for rate and listing, not by `start`.
+
+Rules, each tagged with the bond it slashes:
+
+| Rule | Bond | Violation when | Read from |
+|---|---|---|---|
+| `PayeeNotAllowlisted` | Vendor | `kind` is pay or pay_instalment and `payee` is not on the agent's allowlist | intent, `Bond` |
+| `OverCap` | Vendor | `kind` is pay or pay_instalment and `amount > perTxCap` | intent, `Bond` |
+| `FalseConfirmation` (replaces `UnconfirmedClaim`) | Pilot | `kind` is claim_done, the intent asserts `confirmed == true`, and `board.isConfirmed(jobId)` is false | intent, `JobBoard` |
+| `OutsideGeofence` | Pilot | `kind` is start_task and `geofence != board.geofenceOf(jobId)` | intent, `JobBoard` |
+
+Remove `NoCoverBound` (A.4).
+
+`slashByProof` checks, in this order, and reverts with these messages:
+
+1. `"unknown agent"`: the agent is registered.
+2. `"proof already used"`: the intent hash is not in `spent`.
+3. `"not the agent's signature"`: EIP-712 recovery equals `intent.agent`. (Already implemented.)
+4. `"not in log"`: `log.committedAt(hash) != 0`, `log.jobOf(hash) == intent.jobId` and `log.agentOf(hash) == intent.agent`.
+5. `"not a party"`: msg.sender is a party of the job (`board.isParty(jobId, msg.sender)`, B.4), or the job is a shadow job and msg.sender is a registered hunter.
+6. `"no violation"`: the rule holds, per the table above.
+7. Vendor rules only: `"daily cap reached"` if `slashedToday + penalty > dailyCap` (reset `slashedToday` when the day changes).
+
+Then mark `spent`, slash the tagged bond (pilot: `slashAmount` capped at the pilot balance; vendor: `penalty` capped at the vendor balance), pay half to msg.sender as a bounty and half to the treasury. Emit `Slashed(agent, intentHash, rule, bondKind, amount, submitter, bounty)`.
+
+Known gap kept from `contracts/README.md`: switch bounty and treasury payouts to pull payments, so a reverting receiver cannot block a slash.
+
+## B.4 Changes to `JobBoard.sol`
+
+- Remove `bindCover`, `coverBound` and the cover check in `start` (A.4).
+- Add a shadow flag to jobs: `post(..., bool shadow)`. Shadow jobs move no lease money and exist only for hunters. Keep them in the same contract so the rules are identical.
+- Add read-only views for `Bond` (define `IJobBoardView`):
+
+```solidity
+interface IJobBoardView {
+    function isConfirmed(bytes32 jobId) external view returns (bool);   // status is Released or Held
+    function geofenceOf(bytes32 jobId) external view returns (bytes32);
+    function isParty(bytes32 jobId, address who) external view returns (bool); // requester, verifier, agent's operator, lender of leaseOf[id], vendor of the agent
+    function isShadow(bytes32 jobId) external view returns (bool);
+}
+```
+
+- `start` keeps `bond.covers(agent, fee * 25 / 100)`. With the new `covers`, a zero bond can start jobs up to `4 * startFloor` in fee.
+- Add the cancel path listed as a known gap: the requester can cancel a job that never started after `windowEnd`, and the fee is refunded.
+
+## B.5 Changes to `Lease.sol`
+
+- No change needed for problems 1 to 11.
+- Recommended, not yet decided: `setRate` should be callable by the lender inside the band (the lender is the party that rewards a bond reaching the minimum), not only by the operator.
+- Problem 7 (seasonality) will change `monthlyMinimum`. Do not build until decided.
+
+## B.6 Agent runtime (`web/src/engine`)
+
+For every action the agent takes:
+
+1. Compute numbers with tools. The model may explain them, never produce them.
+2. Validate the action against the schema and the tool outputs. Discard anything malformed. Discarded actions are never signed.
+3. Build the typed intent (B.2 fields) and sign it with the agent key under the JiXin EIP-712 domain. The engine currently signs a canonical string with `recoverMessageAddress`; switch to EIP-712 so the same signature verifies on chain.
+4. Commit `hashIntent(intent)` to `IntentLog` for its job.
+5. Deliver the full intent and signature to every party of the job (farmer, pilot, lender, vendor).
+6. Only then run the policy engine. Blocked intents stay committed and delivered.
+
+Mirror every contract rule change in `web/src/engine/contracts.ts` (`violates`, `slashByProof`, `covers`) so the offline demo and the chain agree.
+
+## B.7 Tests (acceptance criteria)
+
+Add to `contracts/test`. Each is one Foundry test.
+
+Bond and log:
+
+1. A proof for an intent never committed to `IntentLog` reverts `"not in log"`.
+2. A proof whose log entry belongs to a different job reverts `"not in log"`.
+3. A stranger (not a party, not a hunter) reverts `"not a party"`.
+4. The lender of the job can submit proof and receives the bounty.
+5. `PayeeNotAllowlisted` and `OverCap` slash the vendor bond; the pilot bond is unchanged.
+6. `FalseConfirmation` and `OutsideGeofence` slash the pilot bond; the vendor bond is unchanged.
+7. `FalseConfirmation` on a job `JobBoard` shows as confirmed reverts `"no violation"` (the farmer's attack).
+8. `OutsideGeofence` with an intent geofence equal to the job's geofence reverts `"no violation"`.
+9. Vendor penalties stop at `dailyCap` within a day and resume the next day.
+10. Keep the existing tests: replay rejected, foreign evidence rejected, stranger signature rejected, register needs agent consent, operator-only top up.
+
+Start and floor:
+
+11. A newly registered agent with a zero bond can start a job with fee up to `4 * startFloor` and cannot start a bigger one.
+12. After confirmed jobs fill the bond, a bigger job can start.
+13. `minimum` has no effect on `start`.
+
+JobBoard:
+
+14. No cover functions remain; `start` succeeds without any cover call.
+15. A never-started job can be cancelled after its window and the fee returns to the requester.
+16. Shadow jobs never call `Lease.pay`.
+
+## B.8 Order of work
+
+1. `IntentLog.sol` and its tests (1, 2).
+2. `JobBoard`: views, remove cover, shadow flag, cancel (14 to 16).
+3. `Bond`: new `covers` and floor (11 to 13), then the rule table with `JobBoard` reads (7, 8), then two bonds and the daily cap (5, 6, 9), then the log and party checks (1 to 4).
+4. Engine: EIP-712 signing, commit to the log, delivery to parties, mirror rules.
+5. Deploy to Base Sepolia and record one transaction hash per demo step.
+
+# Part C: still open
+
+| # | Problem | Notes |
+|---|---|---|
+| 6 | The market section of `BONDED_AGENT.md` still lists insurance pricing, agent liability insurance and "a take rate on every task and cover bound" as revenue, which A.4 rules out | Replace with the financing story: number of pilots, drone cost, the gap between subsidies and credit, fees per financed machine and on repayments |
+| 7 | Spraying is seasonal; `Lease.monthlyMinimum` is fixed, so pilots default in the off-season | Next to decide. Likely a seasonal minimum or zero outside spraying windows |
+| 8 | Scope is far bigger than the time left | Freeze the build to Part B plus the demo story in A.5 |
+| 9 | Claims that can backfire | WeBank named as lender in `BONDED_AGENT.md` (use "a licensed lessor, sandbox"); farm drone purchase subsidies (农机购置补贴) may exist, verify before saying pilots cannot get financing; "a credit bureau for machines" is shenzhen-comp's pitch; verify the market sources before they go on a slide |

@@ -4,6 +4,10 @@ Name: 2026 Shenzhen International FinTech Competition (FinTechathon), 8th editio
 
 Official site: https://fintechathon.g-ican.com/#/en
 
+Wording for the deck, the README and the app header: "2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F". Not "Shenzhen FinTechathon 2026, Topic F".
+
+Deployment: the app must be re-pointed before submission. jixin-fintechathon.vercel.app returned DEPLOYMENT_NOT_FOUND on 19 Oct. Put the working URL in the README and on the submission form only after it loads.
+
 Theme: "AI as a Financial Participant", described by the organizers as balancing cutting edge innovation with inclusiveness. Teams build an AI agent that completes real tasks in a financial scenario.
 
 ## Who runs it

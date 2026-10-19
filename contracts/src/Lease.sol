@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+/// @dev What the job board needs from the lease: the instalment for a fee, whether it is frozen, and a way to pay.
+interface ILease {
+    function instalmentFor(uint256 id, uint256 fee) external view returns (uint256);
+    function isFrozen(uint256 id) external view returns (bool);
+    function pay(uint256 id) external payable;
+}
+
 /// @title Lease
 /// @notice Hire purchase for a machine. Instalments arrive from the job board per unit of work,
 ///         the balance ticks down, and the title (an ERC-721 style token id) moves to the operator at zero.
-///         A skipped instalment while the agent wallet held the balance is a provable violation.
-contract Lease {
+contract Lease is ILease {
     struct Terms {
         address lender;
         address operator;
@@ -38,14 +44,16 @@ contract Lease {
         emit Opened(id, msg.sender, operator, agent, total, rateBps);
     }
 
-    function instalmentFor(uint256 id, uint256 fee) public view returns (uint256) {
+    function instalmentFor(uint256 id, uint256 fee) public view override returns (uint256) {
         Terms storage t = leases[id];
         uint256 inst = (fee * t.rateBps) / 10_000;
         return inst > t.balance ? t.balance : inst;
     }
 
+    function isFrozen(uint256 id) external view override returns (bool) { return leases[id].frozen; }
+
     /// @notice Called with value from the job board on every released fee.
-    function pay(uint256 id) external payable {
+    function pay(uint256 id) external payable override {
         Terms storage t = leases[id];
         require(!t.frozen, "frozen");
         require(msg.value <= t.balance, "over balance");
