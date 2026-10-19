@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Hero3D } from "@/components/Hero3D";
-import { Logo, Mark } from "@/components/Logo";
+import { Seal } from "@/components/Logo";
 import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
 
@@ -17,61 +17,84 @@ const firsts = ["An agent that loses its own money on proof", "Two agents with o
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <div className="mb-4 flex items-center justify-between"><Logo /><span className="pill border border-line bg-white text-ink-2">Shenzhen FinTechathon 2026, Topic F</span></div>
+    <div className="mx-auto max-w-[1280px]">
+      <header className="flex flex-wrap items-center justify-between gap-3 py-2">
+        <span className="text-lg font-bold">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
+        <span className="label">Shenzhen FinTechathon 2026, Topic F</span>
+      </header>
 
-      <section className="grain card cut relative overflow-hidden" style={{ minHeight: 640 }}>
-        <div className="absolute inset-0"><Hero3D /></div>
-        <span className="bracket left-3 top-3 border-t border-l" /><span className="bracket right-3 top-3 border-t border-r" /><span className="bracket bottom-3 left-3 border-b border-l" /><span className="bracket bottom-3 right-3 border-b border-r" />
-        <div className="pointer-events-none relative z-10 flex h-full min-h-[640px] flex-col justify-end p-6 md:p-9">
-          <div className="pointer-events-auto max-w-2xl bg-white/85 p-6 backdrop-blur-md md:p-8" style={{ borderLeft: "4px solid #c8102e" }}>
-            <div className="tech mb-3 text-[11px] tracking-[0.25em] text-red">机信 MACHINE CREDIT</div>
-            <h1 className="display text-4xl md:text-6xl">Machines that earn, pay and post a bond.</h1>
-            <p className="mt-4 max-w-md text-base text-ink-2">Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.</p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/app/fleet" className="btn btn-red">Watch a drone pay off its lease</Link>
-              <Link href="/app/evidence" className="btn btn-ghost">Verify it yourself</Link>
+      <section className="grid grid-cols-1 items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:py-16">
+        <div>
+          <div className="flex items-center gap-5">
+            <Seal size={96} />
+            <div>
+              <div lang="zh-Hans" className="cjk-serif text-[34px] leading-none text-ink">自食其力</div>
+              <div className="mt-2 text-[15px] text-ink-2">The robot that pays for itself</div>
             </div>
           </div>
+          <h1 className="display mt-10 max-w-[16ch] text-[40px] md:text-[49px]">Machines that earn, pay and post a bond.</h1>
+          <p className="measure mt-4 text-lg text-ink-2">Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.</p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href="/app/fleet" className="btn btn-red">Watch a drone pay off its lease</Link>
+            <Link href="/app/evidence" className="link">Verify it yourself</Link>
+          </div>
+        </div>
+        <div className="card relative h-[340px] overflow-hidden md:h-[460px]">
+          <div className="absolute inset-0"><Hero3D /></div>
         </div>
       </section>
 
-      <div className="mt-4"><Ticker /></div>
+      <Ticker />
 
-      <section className="aurora cut mt-4 grid min-h-[260px] place-items-center p-8">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <Mark size={84} />
-          <div className="display text-3xl md:text-4xl">JiXin, machine credit</div>
-          <p className="max-w-md text-sm text-white/80">The machine's own money at risk, so a lender can trust it with a loan.</p>
+      <section className="grid grid-cols-1 gap-6 border-b border-rule py-12 md:grid-cols-[auto_1fr] md:items-center">
+        <Seal size={72} />
+        <div>
+          <h2 className="text-[25px]">Zishi, the robot that pays for itself</h2>
+          <p className="measure mt-1 text-ink-2">The machine&apos;s own money at risk, so a lender can trust it with a loan.</p>
         </div>
       </section>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[["20", "attack cases blocked, as proof"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l]) => (<div key={l} className="tile"><div className="kpi">{v}</div><div className="mt-1 text-xs text-muted">{l}</div></div>))}
-      </div>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 md:grid-cols-4">
+        {[["20", "attack cases blocked, as proof"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l]) => (
+          <div key={l} className="border-l-2 border-gold pl-4"><dt className="sr-only">{l}</dt><dd className="kpi kpi-lg">{v}</dd><dd className="mt-1 text-[15px] text-ink-2">{l}</dd></div>
+        ))}
+      </dl>
 
-      <section className="aurora aurora-black card-dark cut mt-4 p-6">
-        <div className="flex flex-wrap items-end justify-between gap-2"><h2 className="display text-2xl text-white">Drones first. Where else it applies</h2><span className="tech text-[11px] tracking-[0.2em] text-white/60">CLICK A CARD</span></div>
+      <section className="py-10">
+        <h2 className="text-[31px]">Drones first. Where else it applies</h2>
         <Fan items={uses} />
       </section>
 
-      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <div className="card p-5">
-          <h2 className="display text-2xl">Safe by design</h2>
-          <ul className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">{strengths.map(([t, b]) => <li key={t} className="cut-sm hover-lift bg-paper-2 px-3 py-2"><div className="text-sm font-bold">{t}</div><div className="text-xs text-ink-2">{b}</div></li>)}</ul>
+      <section className="grid grid-cols-1 gap-6 py-10 lg:grid-cols-[1.25fr_1fr]">
+        <div className="card p-6">
+          <h2 className="text-[25px]">Safe by design</h2>
+          <ul className="mt-5 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+            {strengths.map(([t, b]) => <li key={t}><div className="font-semibold">{t}</div><div className="text-[15px] text-ink-2">{b}</div></li>)}
+          </ul>
         </div>
-        <div className="aurora aurora-gold card p-5 text-ink">
-          <h2 className="display text-2xl">Why it holds up</h2>
-          <ul className="mt-3 grid grid-cols-2 gap-2">{pillars.map(([n, h], i) => <li key={n} className="cut-sm hover-lift bg-white/88 p-3 backdrop-blur"><div className="tech text-[10px] tracking-[0.2em] text-red">{String(i + 1).padStart(2, "0")}</div><div className="mt-1 text-sm font-bold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
+        <div className="card p-6">
+          <h2 className="text-[25px]">Why it holds up</h2>
+          <ul className="mt-5 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+            {pillars.map(([n, h]) => <li key={n}><div className="font-semibold">{n}</div><div className="text-[15px] text-ink-2">{h}</div></li>)}
+          </ul>
         </div>
       </section>
 
-      <section className="aurora card-dark cut mt-4 p-6 text-white">
-        <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="display text-2xl">Only here</h2><span className="tech text-[11px] tracking-[0.2em] text-white/70">SIX THINGS NOBODY ELSE BUILT</span></div>
-        <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">{firsts.map((f) => <li key={f} className="cut-sm bg-white/10 px-3 py-2 text-sm backdrop-blur">{f}</li>)}</ul>
-        <div className="mt-5 flex gap-2"><Link href="/app" className="btn btn-gold">Open mission control</Link><a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "white" }}>Design and research</a></div>
+      <section className="card mt-2 p-6 md:p-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-[25px]">Only here</h2><span className="label">Six things nobody else built</span></div>
+        <ul className="mt-5 grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-3">
+          {firsts.map((f) => <li key={f} className="flex gap-3"><span className="mt-[0.6em] h-px w-4 shrink-0 bg-gold" aria-hidden />{f}</li>)}
+        </ul>
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Link href="/app" className="btn btn-ink">Open mission control</Link>
+          <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="link">Design and research</a>
+        </div>
       </section>
-      <footer className="px-2 py-6 text-xs text-muted">JiXin 机信 rhymes with WeChat and sits next to WeBank's own naming. A homophone of 积信, accumulated trust, which is what the on chain record becomes.</footer>
+
+      <footer className="flex flex-wrap items-center gap-3 py-10 text-[15px] text-ink-2">
+        <span lang="zh-Hans" className="cjk-serif text-ink">自食其力</span>
+        <span>zì shí qí lì, to feed yourself by your own labour.</span>
+      </footer>
     </div>
   );
 }

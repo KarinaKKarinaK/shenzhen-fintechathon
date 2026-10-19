@@ -5,11 +5,13 @@ import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { useMemo, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import type { ChainTx, Job, MachineState, Side } from "@/engine/types";
+import { Seal } from "./Logo";
+import { StatusIcon } from "./StatusIcon";
 
 // Every object here maps to engine state: the machine moves on machine events, money dots fly
 // on chain events, the fence turns coral on a slash, labels show live numbers.
 
-const INK = "#121212", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#c8102e", PLUM = "#4b5563", BONE = "#f6f3ea";
+const INK = "#14213D", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#9A5B00", PLUM = "#4b5563", BONE = "#f6f3ea";
 
 // Deterministic value noise so the world is the same on every load.
 function hash(x: number, y: number) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -34,7 +36,7 @@ function useTextures() {
     const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#c9a94a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#e2c66a" : "#a98b36"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 3); } }, [3, 3]);
     const tiles = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#e7e0cf"; ctx.fillRect(0, 0, 256, 256); ctx.strokeStyle = "#cfc6b0"; ctx.lineWidth = 2; for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(i * 32, 0); ctx.lineTo(i * 32, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * 32); ctx.lineTo(256, i * 32); ctx.stroke(); } for (let k = 0; k < 300; k++) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } }, [6, 6]);
     const windows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#d8d2c2"; ctx.fillRect(0, 0, 256, 256); for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const lit = hash(x, y) > 0.55; ctx.fillStyle = lit ? "#ffd977" : "#3a3a3a"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 18); ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 4); } }, [1, 1]);
-    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#8e0e22"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#a3142b" : "#6e0a1a"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
+    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#14213D"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#22335a" : "#0f1a31"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
     return { grain, rows, rice, tiles, windows, roof };
   }, []);
 }
@@ -133,17 +135,17 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
   })}</>;
 }
 
-function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
+function Label({ pos, title, value, accent = "#14213D", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
   return (
     <Html position={[pos[0], y, pos[2]]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-      <div style={{ background: "rgba(255,255,255,0.95)", color: INK, padding: "5px 9px", borderRadius: 2, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-tech)", letterSpacing: "0.04em" }}>
-        <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10 }}>{title}</div>{value ? <div style={{ color: "#3d3d3d", fontFamily: "var(--font-sans)", letterSpacing: 0 }}>{value}</div> : null}
+      <div style={{ background: "#FFFFFF", color: INK, padding: "6px 10px", borderRadius: 6, fontSize: 13, lineHeight: 1.35, whiteSpace: "nowrap", border: "1px solid #E4E1D8", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-sans)" }}>
+        <div style={{ fontWeight: 700 }}>{title}</div>{value ? <div style={{ color: "#4A5568" }}>{value}</div> : null}
       </div>
     </Html>
   );
 }
 
-// The lender: a small bank hall with columns, a red roof and a gold plaque. Instalments fly here.
+// The lender: a small bank hall with columns, a navy roof and a gold plaque. Instalments fly here.
 function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; paid: number; total: number; windows: THREE.Texture }) {
   const pct = total > 0 ? Math.min(1, paid / total) : 0;
   return (
@@ -151,12 +153,12 @@ function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; pa
       <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[3.4, 0.3, 2.6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
       <mesh position={[0, 1.2, -0.3]} castShadow receiveShadow><boxGeometry args={[2.8, 1.8, 1.8]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
       {[-1.1, -0.37, 0.37, 1.1].map((x) => <mesh key={x} position={[x, 1.2, 0.85]} castShadow><cylinderGeometry args={[0.1, 0.12, 1.8, 10]} /><meshStandardMaterial color="#f4efe3" roughness={0.6} /></mesh>)}
-      <mesh position={[0, 2.35, 0]} castShadow><boxGeometry args={[3.5, 0.5, 2.9]} /><meshStandardMaterial color="#8e0e22" roughness={0.7} /></mesh>
-      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.2, 0.8, 4]} /><meshStandardMaterial color="#c8102e" roughness={0.7} /></mesh>
+      <mesh position={[0, 2.35, 0]} castShadow><boxGeometry args={[3.5, 0.5, 2.9]} /><meshStandardMaterial color="#14213D" roughness={0.7} /></mesh>
+      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.2, 0.8, 4]} /><meshStandardMaterial color="#22335a" roughness={0.7} /></mesh>
       <mesh position={[0, 1.6, 0.95]}><boxGeometry args={[1.2, 0.3, 0.05]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={0.8} metalness={0.6} roughness={0.3} /></mesh>
       <mesh position={[-1.5 + pct * 3, 0.36, 1.2]}><boxGeometry args={[0.08, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
       <mesh position={[0, 0.33, 1.2]}><boxGeometry args={[3, 0.04, 0.12]} /><meshStandardMaterial color="#bdb5a3" /></mesh>
-      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#8e0e22" y={3.9} />
+      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#14213D" y={3.9} />
     </group>
   );
 }
@@ -177,10 +179,10 @@ function Vault({ pos, bond, min, slashed }: { pos: [number, number, number]; bon
       <mesh position={[0, 0.12, 0]} receiveShadow><cylinderGeometry args={[1.3, 1.4, 0.24, 24]} /><meshStandardMaterial color="#2a2a2a" metalness={0.6} roughness={0.4} /></mesh>
       <mesh position={[0, 1.05, 0]}><boxGeometry args={[1.5, 1.7, 1.5]} /><meshPhysicalMaterial color="#ffffff" transmission={0.9} thickness={0.6} roughness={0.08} transparent opacity={0.5} /></mesh>
       <lineSegments position={[0, 1.05, 0]}><edgesGeometry args={[new THREE.BoxGeometry(1.5, 1.7, 1.5)]} /><lineBasicMaterial color={low ? CORAL : TURQ} /></lineSegments>
-      <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#c8102e" : "#d4a017"} emissive={low ? "#c8102e" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
+      <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#9A5B00" : "#d4a017"} emissive={low ? "#9A5B00" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
       <mesh position={[0, 0.25 + (Math.min(min, cap) / cap) * 1.6, 0]}><boxGeometry args={[1.55, 0.02, 1.55]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1.5} /></mesh>
       <mesh position={[0, 2.05, 0]}><torusGeometry args={[0.45, 0.05, 10, 40]} /><meshStandardMaterial color={TURQ} metalness={0.8} roughness={0.2} emissive={slashed ? CORAL : TURQ} emissiveIntensity={slashed ? 2 : 0.4} /></mesh>
-      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
+      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}`} accent={low ? "#9A5B00" : "#d4a017"} y={3.2} />
     </group>
   );
 }
@@ -226,7 +228,7 @@ function SprayedStrip({ job, machine }: { job?: Job; machine?: MachineState }) {
   const ang = Math.atan2(dx, dz);
   return (
     <group position={[job.from.x + dx * done / 2, 0.06, job.from.z + dz * done / 2]} rotation={[0, ang, 0]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1.2, Math.max(0.01, len * done)]} /><meshStandardMaterial color={job.status === "held" ? "#c8102e" : "#5a4a1a"} transparent opacity={job.status === "held" ? 0.35 : 0.45} roughness={1} /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1.2, Math.max(0.01, len * done)]} /><meshStandardMaterial color={job.status === "held" ? "#9A5B00" : "#5a4a1a"} transparent opacity={job.status === "held" ? 0.35 : 0.45} roughness={1} /></mesh>
     </group>
   );
 }
@@ -234,7 +236,7 @@ function SprayedStrip({ job, machine }: { job?: Job; machine?: MachineState }) {
 function Sticker({ job, kind }: { job: Job; kind: "seal" | "flag" }) {
   return (
     <Html position={[job.to.x, 1.2, job.to.z]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>已验证 CONFIRMED</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>HELD, LOG FAILED</div>}
+      {kind === "seal" ? <div className="stamp" style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFFFFF", border: "1px solid #E4E1D8", borderRadius: 6, padding: "5px 10px 5px 5px", fontSize: 13, fontWeight: 600, color: INK, whiteSpace: "nowrap" }}><Seal size={26} title="Verified" /><span><span lang="zh-Hans">已验证</span> Confirmed</span></div> : <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#FFFFFF", border: "1px solid #9A5B00", borderRadius: 6, padding: "5px 10px", fontSize: 13, fontWeight: 600, color: "#9A5B00", whiteSpace: "nowrap" }}><StatusIcon kind="warn" />Held, log failed</div>}
     </Html>
   );
 }
@@ -361,7 +363,7 @@ function Flat({ pos, label, active, windows }: { pos: [number, number, number]; 
       <mesh position={[0.9, 0.3, -0.6]} castShadow><boxGeometry args={[1.1, 0.6, 0.7]} /><meshStandardMaterial color={active ? TURQ_SOFT : "#cbbfa3"} roughness={0.7} /></mesh>
       <mesh position={[-0.9, 0.45, 0.4]} castShadow><cylinderGeometry args={[0.28, 0.28, 0.9, 16]} /><meshStandardMaterial color="#d8cfb8" roughness={0.8} /></mesh>
       <Html position={[0, 2.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ background: active ? CORAL : "rgba(255,255,255,0.94)", color: active ? "white" : INK, padding: "5px 10px", borderRadius: 2, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)" }}>{label}</div>
+        <div style={{ background: active ? INK : "#FFFFFF", color: active ? "white" : INK, padding: "5px 10px", borderRadius: 6, border: "1px solid #E4E1D8", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", fontFamily: "var(--font-sans)" }}>{label}</div>
       </Html>
     </group>
   );

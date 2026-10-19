@@ -1,5 +1,6 @@
 "use client";
 import type { EngineEvent } from "@/engine/types";
+import { StatusIcon } from "./StatusIcon";
 
 // The six stages of one task, lit from the live event stream.
 const STAGES = ["Lock", "Check", "Work", "Confirm", "Repay", "Own"] as const;
@@ -24,9 +25,9 @@ export function Stages({ events }: { events: EngineEvent[] }) {
   return (
     <ol className="grid grid-cols-3 gap-2 md:grid-cols-6">
       {STAGES.map((s, i) => (
-        <li key={s} data-on={on === i} data-done={done.has(i)} className="stage cut-sm bg-white px-3 py-2 transition-colors duration-300">
-          <div className="mono text-[10px] text-muted">{String(i + 1).padStart(2, "0")}</div>
-          <div className="tech text-sm font-bold uppercase tracking-wide">{s}</div>
+        <li key={s} data-on={on === i} data-done={done.has(i)} className="stage flex items-center justify-between gap-2 rounded-md border border-rule bg-surface px-3 py-2.5 transition-colors duration-300">
+          <span><span className="block text-[13px] text-ink-2">Step {i + 1}</span><span className="block font-semibold">{s}</span></span>
+          {done.has(i) && on !== i ? <StatusIcon kind="pass" /> : null}
         </li>
       ))}
     </ol>
