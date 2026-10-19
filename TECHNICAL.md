@@ -317,6 +317,15 @@ With `AI_GATEWAY_API_KEY` or `ANTHROPIC_API_KEY` the model writes explanations a
 
 Solidity 0.8.26, Foundry, 40 tests in `contracts/test`. Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
 
+Deployed on Base Sepolia (chain 84532) in block 48,335,911 from the demo wallet, source verified on Sourcify with an exact match. Addresses and deploy transactions are in `contracts/deployments/base-sepolia.json`; the script is `contracts/script/Deploy.s.sol`.
+
+| Contract | Address |
+|---|---|
+| IntentLog | `0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51` |
+| Bond | `0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754` |
+| Lease | `0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2` |
+| JobBoard | `0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A` |
+
 ### 7.1 IntentLog
 
 | Function | Who | Does |
@@ -395,7 +404,7 @@ Revert order: `unknown agent`, `proof already used`, `not the agent's signature`
 | Simulated | Default | `SimChain`: keccak hash of the event, `simulated: true` on every tx, labelled in the UI |
 | Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...`, explorer link, confirmed at one receipt, finalised at two more blocks |
 
-The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). Contract calls through the ABI against deployed addresses are the next step; today events are anchored, not executed, on chain.
+The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). The four contracts are deployed on Base Sepolia (section 7). Today the engine anchors events as transactions and runs the rules in its mirrors; ABI calls against the deployed addresses are the next step.
 
 ## 9. Bring your own data
 
@@ -539,7 +548,7 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 
 | Layer | Status |
 |---|---|
-| Contracts | Compiled and tested with Foundry. Not deployed. The engine mirrors them |
+| Contracts | Tested with Foundry, deployed and source verified on Base Sepolia. The engine runs its mirrors; ABI calls are next |
 | Chain | Simulated by default. Real mode anchors event records on Base Sepolia; it does not call the contracts |
 | Keys | Generated per boot for seven actors. Production: secure element, hardware button, HSMs |
 | Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |

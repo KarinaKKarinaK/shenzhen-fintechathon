@@ -7,6 +7,13 @@ import { useLang } from "@/i18n/LangProvider";
 import { LearnedComponents } from "./Learned";
 import { Monitors } from "./Monitors";
 
+// Base Sepolia, block 48335911, source verified on Sourcify. Same values in contracts/deployments/base-sepolia.json.
+const DEPLOYED: Record<string, string> = {
+  IntentLog: "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
+  Bond: "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754",
+  JobBoard: "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A",
+  Lease: "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
+};
 const CONTRACT_NAMES = ["Bond", "JobBoard", "Lease"];
 const API_LINES: [string, string][] = [["GET", "/api/attacks"], ["GET", "/api/run?scenario=fleet&fast=1&lang=zh"], ["POST", "/api/judge"]];
 
@@ -65,7 +72,7 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
                   <tr key={CONTRACT_NAMES[i]} className="align-top">
                     <td className="whitespace-nowrap">{CONTRACT_NAMES[i]}</td>
                     <td className="min-w-[16rem]"><div className="text-ink">{p}</div><div className="mt-0.5 text-muted">{E.knownGap}{gap}</div></td>
-                    <td><span className="flex flex-wrap gap-1 text-[10px]"><span className="pill bg-gold text-ink">{E.written}</span><span className="pill bg-paper-2 text-muted">{E.notCompiled}</span><span className="pill bg-paper-2 text-muted">{E.notDeployed}</span></span></td>
+                    <td><span className="flex flex-wrap gap-1 text-[10px]"><span className="pill bg-gold text-ink">{E.written}</span><span className="pill bg-gold text-ink">{E.tested}</span><a className="pill bg-gold text-ink" href={`https://sepolia.basescan.org/address/${DEPLOYED[CONTRACT_NAMES[i]] ?? ""}`} target="_blank" rel="noreferrer">{E.deployed}</a></span></td>
                   </tr>
                 ))}
               </tbody>
