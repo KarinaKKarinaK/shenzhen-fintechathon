@@ -80,52 +80,44 @@ export function YourData({ state, lang, onRun, onStop }: { state: RunState; lang
   const current = samples.find((s) => s.path === sample) ?? samples[0];
   const canRun = !state.running && (!!file || text.trim().length > 0);
 
+  // One panel: pick a sample or a file, or paste or drop into the box, then run. The format sits behind a toggle.
   return (
-    <>
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="card p-4">
-          <h2 className="mb-3 text-sm font-semibold">{L.bringTitle}</h2>
-          <div role="button" tabIndex={0} aria-label={L.dropAria} data-over={over}
-            onClick={() => input.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.current?.click(); } }}
-            onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
-            onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files?.[0]); }}
-            className={`cut-sm cursor-pointer border border-dashed p-6 text-center transition-colors ${over ? "border-red bg-gold-soft" : "border-rule bg-paper-2 hover:bg-gold-soft"}`}>
-            <div className="tech text-sm font-bold uppercase tracking-wide">{file ? file.name : L.dropHere}</div>
-            <div className="mt-1 text-xs text-muted">{file ? t("live.fileSize", { kb: (file.size / 1024).toFixed(1) }) : L.dropHint}</div>
-            <input ref={input} type="file" accept=".json,.csv,application/json,text/csv" className="hidden" onChange={(e) => take(e.target.files?.[0])} />
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <label className="text-xs text-muted" htmlFor="live-sample">{L.loadSample}</label>
-            <select id="live-sample" value={sample} onChange={(e) => loadSample(e.target.value)} className="rounded-sm border border-line bg-white px-2 py-1 text-sm text-ink" disabled={!samples.length}>
-              <option value="">{samples.length ? L.pickSample : L.noSamples}</option>
-              {samples.map((s) => <option key={s.path} value={s.path}>{s.name}</option>)}
-            </select>
-            {current ? <a href={current.path} download className="link text-sm">{L.downloadSample}</a> : null}
-          </div>
-          {current?.description?.[lang] ? <p className="mt-2 text-xs text-ink-2">{current.description[lang]}</p> : null}
-          <h3 className="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{L.schemaTitle}</h3>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+    <section className="card mb-4 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="mr-2 text-sm font-semibold">{L.bringTitle}</h2>
+        <select id="live-sample" aria-label={L.loadSample} value={sample} onChange={(e) => loadSample(e.target.value)} className="rounded-sm border border-line bg-white px-2 py-1 text-sm text-ink" disabled={!samples.length}>
+          <option value="">{samples.length ? L.pickSample : L.noSamples}</option>
+          {samples.map((s) => <option key={s.path} value={s.path}>{s.name}</option>)}
+        </select>
+        <button type="button" className="btn btn-ghost" aria-label={L.dropAria} onClick={() => input.current?.click()}>{L.dropHere}</button>
+        <input ref={input} type="file" accept=".json,.csv,application/json,text/csv" className="hidden" onChange={(e) => take(e.target.files?.[0])} />
+        {current ? <a href={current.path} download className="link text-sm">{L.downloadSample}</a> : null}
+      </div>
+      <p className="mt-2 text-xs text-ink-2">{file ? `${file.name}, ${t("live.fileSize", { kb: (file.size / 1024).toFixed(1) })}` : sample && current?.description?.[lang] ? current.description[lang] : L.dropHint}</p>
+
+      <textarea value={text} onChange={(e) => { setText(e.target.value); setFile(null); setLocal(null); }} rows={6} spellCheck={false} placeholder={L.pastePlaceholder} aria-label={L.pasteTitle}
+        onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+        onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files?.[0]); }}
+        className={`mono mt-3 w-full rounded-sm border bg-paper-2 p-3 text-[11px] text-ink outline-none focus:ring-2 focus:ring-red ${over ? "border-dashed border-red" : "border-line"}`} />
+
+      {errors.length ? (
+        <div role="alert" className="mt-3 border-l-4 border-red bg-red/5 p-3">
+          <div className="text-xs font-semibold text-red-deep">{L.notAccepted}</div>
+          <ul className="mt-1 flex flex-col gap-0.5 text-xs text-ink">{errors.map((e, i) => <li key={i} className="mono">{e}</li>)}</ul>
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {!state.running ? <button className="btn btn-red" onClick={run} disabled={!canRun}>{L.run}</button> : <button className="btn btn-ghost" onClick={onStop}>{d.run.stop}</button>}
+        {state.running ? <span className="pill bg-red text-white">{d.run.live}</span> : null}
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted hover:text-ink">{L.schemaTitle}</summary>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
             {L.schema.map(([k, v]) => <div key={k} className="contents"><dt className="mono text-ink">{k}</dt><dd className="text-ink-2">{v}</dd></div>)}
           </dl>
-        </section>
-
-        <section className="card flex flex-col p-4">
-          <h2 className="mb-3 text-sm font-semibold">{L.pasteTitle}</h2>
-          <textarea value={text} onChange={(e) => { setText(e.target.value); setFile(null); setLocal(null); }} rows={12} spellCheck={false} placeholder={L.pastePlaceholder} aria-label={L.pasteTitle}
-            className="mono min-h-[200px] w-full flex-1 rounded-sm border border-line bg-paper-2 p-3 text-[11px] text-ink outline-none focus:ring-2 focus:ring-red" />
-          {errors.length ? (
-            <div role="alert" className="mt-3 border-l-4 border-red bg-red/5 p-3">
-              <div className="text-xs font-semibold text-red-deep">{L.notAccepted}</div>
-              <ul className="mt-1 flex flex-col gap-0.5 text-xs text-ink">{errors.map((e, i) => <li key={i} className="mono">{e}</li>)}</ul>
-            </div>
-          ) : null}
-          <div className="mt-3 flex items-center gap-2">
-            {!state.running ? <button className="btn btn-red" onClick={run} disabled={!canRun}>{L.run}</button> : <button className="btn btn-ghost" onClick={onStop}>{d.run.stop}</button>}
-            {state.running ? <span className="pill bg-red text-white">{d.run.live}</span> : null}
-            <span className="mono ml-auto text-muted">{t("live.processed", { n: state.processed })}</span>
-          </div>
-        </section>
+        </details>
+        <span className="mono ml-auto text-muted">{t("live.processed", { n: state.processed })}</span>
       </div>
-    </>
+    </section>
   );
 }

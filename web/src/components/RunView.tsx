@@ -2,7 +2,7 @@
 import { captureDemoToken } from "./demoToken";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, animate, motion } from "framer-motion";
 import Scene from "./SceneLoader";
 import { useRun } from "./useRun";
 import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PlanCard, PlanTable, PolicyCard, ProofCard, TelemetryCard, VendorBond } from "./Panels";
@@ -74,6 +74,20 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const active = pick && pick.n === stamp ? pick.key : latest;
   const pinned = moments.find((x) => x.key === active)?.text;
   const [open, setOpen] = useState(false);
+  const detailsBar = useRef<HTMLDivElement>(null);
+  // Opening the details scrolls the page down with the same duration and easing as the panel's height,
+  // so the page flows down as it opens the way it flows back up as it closes. The bar stops under the navbar.
+  const toggleDetails = () => {
+    const next = !open;
+    setOpen(next);
+    const bar = detailsBar.current;
+    if (!next || !bar) return;
+    const from = window.scrollY;
+    const to = from + bar.getBoundingClientRect().top - 88;
+    if (to <= from) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { requestAnimationFrame(() => window.scrollTo(0, to)); return; }
+    animate(from, to, { duration: 0.5, ease: [0.22, 0.8, 0.24, 1], onUpdate: (y) => window.scrollTo(0, y) });
+  };
   const [tab, setTab] = useState<Tab>("money");
 
 
@@ -137,12 +151,12 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
         <aside className="flex flex-col gap-4">
           <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.proofTitle}</h2><ProofCard proof={proof} log={log} /></section>
           {state.button ? <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.buttonTitle}</h2><ButtonRing b={state.button} scenario={side} onEvents={append} /></section> : null}
-          <section className="card p-4"><LeaseBar m={m} /></section>
+          {m ? <section className="card p-4"><LeaseBar m={m} /></section> : null}
         </aside>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-y border-line py-2">
-        <button type="button" className="btn btn-ghost" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="run-details">{open ? R.hide : R.details}</button>
+      <div ref={detailsBar} className="mt-4 flex items-center justify-between gap-3 border-y border-line py-2">
+        <button type="button" className="btn btn-ghost" onClick={toggleDetails} aria-expanded={open} aria-controls="run-details">{open ? R.hide : R.details}</button>
         <span className="mono text-muted">{t("run.meta", { n: state.events.length, s: elapsed.toFixed(1), tx: state.txs.length })}</span>
       </div>
 
