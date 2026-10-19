@@ -8,9 +8,8 @@ import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, Lea
 import { BondHistory, CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
 import { Stages } from "./Stages";
 import { Ticker } from "./Ticker";
-import { CountUp } from "./CountUp";
+import { KpiTiles } from "./Kpis";
 import { Moments, momentsOf, type MomentKey } from "./Moments";
-import { yuan } from "./money";
 import type { Side } from "@/engine/types";
 import { useLang } from "@/i18n/LangProvider";
 import { layerLabel } from "@/engine/i18n";
@@ -58,13 +57,6 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const pinned = moments.find((x) => x.key === active)?.text;
   const [open, setOpen] = useState(false);
 
-  const kpis: Array<{ label: string; value: React.ReactNode; sub?: string }> = [
-    { label: R.balance, value: <>¥<CountUp value={m?.balance ?? 0} decimals={0} /></>, sub: R.balanceSub },
-    { label: R.pilotBond, value: <>¥<CountUp value={m?.bond ?? 0} decimals={0} /></>, sub: m?.bondMin ? t("run.pilotBondSubMin", { min: yuan(m.bondMin) }) : R.pilotBondSub },
-    { label: R.vendorBond, value: m?.vendorBond === undefined ? <span className="text-base text-muted">{R.na}</span> : <>¥<CountUp value={m.vendorBond} decimals={0} /></>, sub: R.vendorBondSub },
-    { label: R.leaseLeft, value: <>¥<CountUp value={m?.leaseBalance ?? 0} decimals={0} /></>, sub: m ? (m.owned ? R.leaseOwned : t("run.leaseOf", { total: yuan(m.leaseTotal), mu: m.muTotal ? t("run.leaseMu", { done: m.muDone ?? 0, total: m.muTotal }) : "" })) : undefined },
-    { label: R.tasksPaid, value: String(m?.tasksDone ?? 0), sub: R.tasksSub },
-  ];
 
   return (
     <div className="mx-auto max-w-[1560px]">
@@ -73,6 +65,7 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
           <div className="tech text-[11px] tracking-[0.25em] text-red">{side === "fleet" ? R.eyebrowFleet : R.eyebrowNeighbour}</div>
           <h1 className="display text-4xl md:text-5xl">{title}</h1>
           <p className="mt-2 max-w-xl text-sm text-ink-2">{intro}</p>
+          {side === "fleet" ? <Link href="/app/live" className="link mt-2 inline-block text-sm">{R.yourData}</Link> : null}
         </div>
         <div className="flex items-center gap-2">
           {!state.running ? <button className="btn btn-red" onClick={() => start(false)}>{R.start}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
@@ -83,9 +76,7 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
 
       <div className="mb-4"><Moments moments={moments} active={active} onSelect={(key) => setPick({ key, n: lit.length })} /></div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {kpis.map((k) => (<div key={k.label} className="tile"><div className="text-xs text-muted">{k.label}</div><div className="kpi mt-1 tabular-nums">{k.value}</div>{k.sub ? <div className="mt-0.5 text-[10px] text-muted">{k.sub}</div> : null}</div>))}
-      </div>
+      <div className="mb-4"><KpiTiles m={m} /></div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(340px,1fr)]">
         <section className="aurora aurora-cream card cut relative min-h-[420px] md:min-h-[640px]">

@@ -20,7 +20,7 @@ export interface Classification { p: number; label: "attack" | "benign"; topFeat
 export interface GateMetrics { trainN: number; testN: number; accuracy: number; precision: number; recall: number; f1: number; falseAlarmRate: number; seed: number; threshold: number; heldOut: string }
 
 // mulberry32: a small seeded PRNG so the split and the shuffles are the same on every load.
-function rng(seed: number): () => number {
+export function rng(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;

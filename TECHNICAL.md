@@ -1,203 +1,506 @@
-# Zishi technical document
+# Zishi technical documentation
 
-Zishi (自食其力) is a wallet for machines. A machine earns per verified unit of work, pays its lender and its suppliers, keeps a bond that is slashed on cryptographic proof of a rule break, and owns itself once the lease is paid. The demo is an agricultural drone on hire purchase. Everything below is grounded in `web/src/engine` and `contracts/`.
+Zishi (自食其力) is a wallet for a machine. An agricultural spraying drone on hire purchase earns per mu sprayed, pays its lender from every fee, keeps a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. The model explains; code decides. Everything below is grounded in `web/src/engine` and `contracts/`.
 
-## Architecture
+Companion documents: `SELF_ASSESSMENT.md` (security risks and what is built), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
 
-Seven parts, joined by one event stream.
+## 1. Problem
 
-- Agent (`web/src/engine/agents.ts`). Three roles: machine, lender, requester. Decisions are deterministic functions: `economics()` decides whether a job clears the reserve rule, `split()` divides a fee, `sign()` turns a decision into a typed intent. The model, when a key is present, only writes the one sentence explanation from facts the tools computed.
-- Framing and judge gate (`web/src/engine/framing.ts`). Every inbound message is escaped and wrapped in a `relay-message` block with a `relation` and an `authority` attribute. Only the owner's messages carry `authority="instruction"`. The gate (`judge()`) runs pattern checks and returns pass, redact, hold or refuse before the agent reads the body.
-- Policy engine (`web/src/engine/policy.ts`). `PolicyEngine.evaluate(intent)` runs every rule that applies to the intent kind and returns allow, deny or escalate, with one `PolicyLine` per rule. Rules are data in `DEFAULT_POLICY`: allowlist, per transaction cap, daily cap, rate limit, deviation, rate band, geofence, operator only. No cover rule: insurance is not in the build.
-- Intent log. Before the policy engine decides, the agent commits the intent's hash to `IntentLog` for its job and delivers the full intent and signature to every party of the job (farmer, pilot, lender, vendor). Blocked intents are committed and delivered too. A proof is accepted only for an intent in the log for the same job and agent.
-- Contract mirrors (`web/src/engine/contracts.ts`). `BondContract`, `LeaseContract`, `JobBoard` and the intent log hold the same state and apply the same rules as the Solidity in `contracts/`, so the demo runs without a chain and every state change still produces a transaction.
-- Chain adapter (`web/src/engine/chain.ts`). One interface, `Chain.send()`. `SimChain` produces keccak hashes labelled `simulated: true`. `RealChain` sends a Base Sepolia transaction through viem with the event as calldata and returns the mined hash and explorer link. `makeChain()` picks one from the environment.
-- UI (`web/src/components`, `web/src/app`). `RunView` subscribes to the run and renders the scene, the stage tracker, the agent messages, the policy checklist, the chain feed, the bond gauge, the lease bar and the balance sheet. `JudgeConsole` and `AttackGrid` live on the Evidence page.
+| | |
+|---|---|
+| Who | Over 200,000 agricultural drone pilots in China. A drone costs about 55,000 yuan. Spraying pays 3 to 15 yuan per mu |
+| Problem | A pilot with nothing to pledge cannot get a loan. The lender has no way to see the work or to collect from it |
+| Zishi | The drone has its own wallet. Fees arrive per confirmed job, the instalment leaves by rule, the title moves at zero. A bond covers rule breaks so a counterparty can read before a job that the worst case is covered |
+| Agent risk | The agent reads untrusted messages and signs intents. Every intent goes through a deterministic policy engine, and a broken rule in a signed intent is a proof that slashes the bond. The pilot never pays for the AI's mistakes: agent rules hit the vendor bond |
 
-The seam is the event stream. A scenario in `scenarios.ts` is an async generator of `EngineEvent` (`types.ts`): narration, agent.message, intent, policy, chain, machine, job, attack, button, done. `/api/run` streams them as server sent events. The UI never computes a number; it draws what the engine emitted. The same events are what the evidence script writes to disk.
-
-## Permission tiers in code
-
-| Tier | Name | In code | Who approves |
-|---|---|---|---|
-| L0 | Read | `economics()`, `BondContract.covers()`, `LeaseContract.instalmentFor()`, reading the chain feed | Nobody |
-| L1 | Draft | `sign()` produces a typed intent. Nothing has moved yet. | Nobody |
-| L2 | Policy allow | `PolicyEngine.evaluate()` returns `allow`. Only then does a contract mirror or the chain adapter act. | The policy engine |
-| L3 | Operator key | `set_cap` and `top_up` intents; `Bond.topUp`, `Bond.register`, `Lease.setRate` on chain. The rule `operator only` escalates anything else. | The physical button |
-
-Each `PolicyLine` carries a `tier` field and `TIERS` in `policy.ts` names the four, so the UI can show which tier a line was checked at. A failed `operator only` or `per transaction cap` line escalates; every other failure denies. A jailbroken model cannot move a tier because tiers are checked on the signed intent, not on the model's text.
-
-## Keys
-
-| Key | Signs | If lost | If stolen |
-|---|---|---|---|
-| Machine | Typed intents: pay, accept_job, start_task, claim_done, pay_instalment, and `IntentLog.commit` | The machine stops working until the operator registers a new key. Funds stay in the contracts. | The thief can sign intents, but every intent still passes the policy engine and the contract rules. Any intent that breaks a rule is a slashable proof (payment rules hit the vendor bond, work rules hit the pilot bond), and the caps bound the rest. |
-| Vendor | postVendorBond, hunter registration | No top up of the vendor bond; agents keep running until the daily caps exhaust it. | The vendor bond can be topped up or withdrawn only when no claims are open. No agent money can be moved. |
-| Operator | set_cap, top_up, register, setRate. Held in hardware (the button). | No cap changes or top ups until the lessor re-registers the agent. Work continues inside the existing caps. | Caps can be raised and the bond topped up. This is the root of trust, which is why it lives in a physical device and signs one action at a time. |
-| Lender | open, freeze, unfreeze | The lease cannot be frozen. Instalments keep flowing by rule. | A lease can be frozen or unfrozen. No money can be taken beyond the instalments the contract already pays. |
-| Requester | post, confirm, flag | The fee stays locked and the hold cannot be flagged. | A task could be confirmed before it is done, paying the machine from the requester's own locked fee, or flagged. Damage is bounded to that one job. |
-
-The model process holds none of these. `model.ts` has no key, no chain client and no signing function; it receives facts and returns a sentence.
-
-## Two bonds
-
-Each agent has two bonds in `Bond.sol`, and each rule is tagged with the one it slashes.
-
-| | Pilot bond | Vendor bond |
-|---|---|---|
-| Funded by | A slice of each confirmed fee | The vendor (us), `postVendorBond` |
-| Rules | `FalseConfirmation`, `OutsideGeofence` | `PayeeNotAllowlisted`, `OverCap` |
-| Slash | `min(slashAmount, balance)` | A fixed `penalty`, capped by `dailyCap` per day |
-| Returned | To the pilot at title transfer | To the vendor when it stops operating the agent and no claims are open |
-
-No rule touches both. A tricked or buggy agent costs the vendor, never the pilot.
-
-## Slash by proof
-
-A party of the job holds a signed intent. They call `slashByProof(intent, signature, rule)`. The contract checks, in order: the agent is registered; the intent hash is not in the spent set; the signer recovered under EIP-712 equals `intent.agent`; the hash is in `IntentLog` for the same job and agent; the caller is a party of the job (`JobBoard.isParty`), or the job is a shadow job and the caller is a registered hunter; the named rule is broken, read from the signed intent and the contracts' own records (`JobBoard.isConfirmed`, `JobBoard.geofenceOf`, the allowlist and cap in `Bond`); for vendor rules, the daily cap is not reached. Then it marks the hash spent, slashes the tagged bond, pays half to the submitter as a bounty and half to the treasury, and emits `Slashed`. Nobody decides. The engine mirror in `BondContract.slashByProof()` does the same with the same numbers.
-
-Nothing comes from the reporter's word. A farmer who submits a legal payment and claims the payee was not approved is refused: the contract reads the payee from the signed intent. A farmer who claims a confirmed job was not confirmed is refused: the contract reads `JobBoard`.
-
-The one sentence rule: a slash needs the agent's signature over exactly the fields the rule is checked on, and those fields are checked against records.
-
-Bounty rule: half of every slash to the reporter, half to the treasury. Each intent hash is proof once. On a live job only the farmer, the pilot, the lender and the vendor can report. Hunters report only on shadow jobs, which live in the same `JobBoard` under the same rules and move no lease money; their bounties come from the vendor bond.
-
-## Fee split and economics
-
-From `agents.ts`, amounts in demo units rounded to two decimals:
-
-```
-instalment = fee * rate                       (rate inside the signed band, 20 to 45 percent)
-rail       = fee * 0.02
-margin     = fee - instalment - energy - rail
-clears     = margin >= reserveRule            (the machine declines when false)
-
-bond       = min(bondGap, (fee - instalment - rail) * 0.5)
-owner      = fee - instalment - rail - bond
-```
-
-Lease: `instalment = min(fee * rate, balance)`; at balance zero the title moves to the operator. Bond: `covers(worst) = balance + startFloor >= worst`, where the board sets `worst = fee * 0.25` before a task may start. The minimum is not in the start check; it is read by the lender for the rate and by the board for listing. With a zero bond a new machine can start jobs with a fee up to `4 * startFloor`. Pilot slash: `min(slashAmount, balance)`. Vendor slash: `penalty`, refused once `slashedToday + penalty > dailyCap`. `bounty = slash * 0.5` either way.
-
-## Hallucination prevention
-
-- Facts in. The model receives a JSON object of numbers the tools computed and a system line that says not to invent numbers.
-- Number grounding check. The sentence that comes back is checked for numbers; any number not in the facts rejects the sentence.
-- Template fallback. No key, a timeout, an error or a failed grounding check all return the scripted template, which quotes the same facts.
-- `model.ts` has no key, no chain and no signing. The worst a bad sentence can do is read badly.
-
-## Oracle trust
-
-- The machine's secure element signs the track (position, time, swath).
-- The requester signs the confirmation with their own key.
-- Geometry: area claimed must fit distance over time at the swath width, and the track must stay inside the geofence.
-
-A lie by one side fails one of the three. A machine that inflates area fails geometry (the faked flight log in the fleet run, scored by the anomaly model below). A requester who refuses to confirm done work is contradicted by the track and geometry and goes to the labelled arbiter. Both sides lying together is collusion, answered below.
-
-## Learned and optimising components
-
-Four components learn or search instead of following a fixed rule. None of them moves money. Each one feeds a score or a plan into the same deterministic path: gate, policy engine, intent log, contracts. Every number they report is computed at module load or at request time from data the agent cannot edit, and the UI labels it as such.
-
-### Pipeline
+## 2. Architecture
 
 ```mermaid
-flowchart TD
-    M[Inbound message] --> F[framing.ts: escape and wrap as relay-message]
-    F --> R[Gate rules: pass, redact, hold, refuse]
-    F --> C[ml/gate.ts classifier: p attack]
-    R --> G{Combine}
-    C --> G
-    G -->|rules pass and p above 0.8| H[hold: classifier flagged]
-    G -->|pass| U[understand: model with Zod schema, or rules reader]
-    U --> P[planner.ts: knapsack over the day]
-    P --> E[agents.ts economics and sign]
-    E --> L[IntentLog commit and deliver]
-    L --> PE[policy.ts PolicyEngine.evaluate]
-    PE -->|allow| K[contracts.ts mirrors or chain.ts]
-    PE -->|deny or escalate| X[logged, nothing moves]
-    T[Telemetry] --> O[oracle.ts]
-    O --> Z[ml/plausibility.ts: robust z]
-    Z --> K
-    S[ratchet.ts: strategy search] -.->|reserveRule, minMarginPerMu, maxJobsPerCharge| P
+flowchart LR
+  subgraph Browser
+    UI[RunView, EvidenceView, DashboardView, LandingView]
+    T[useRun: EventSource over SSE]
+  end
+  subgraph NextJS["Next.js 16 API routes"]
+    R[/api/run]
+    C[/api/run-custom]
+    LV[/api/live]
+    J[/api/judge]
+    A[/api/attacks]
+    B[/api/button]
+    M[/api/metrics]
+    RA[/api/ratchet]
+  end
+  subgraph Engine["web/src/engine"]
+    S[scenarios.ts: async generator of EngineEvent]
+    F[framing.ts gate + ml/gate.ts classifier]
+    AG[agents.ts: understand, economics, split, sign]
+    PL[planner.ts knapsack]
+    P[policy.ts PolicyEngine]
+    CM[contracts.ts mirrors: IntentLog, Bond, JobBoard, Lease]
+    O[oracle.ts + ml/plausibility.ts]
+    RT[ratchet.ts]
+    K[keys.ts EIP-712]
+    MD[model.ts: explanations only]
+  end
+  subgraph Chain["chain.ts"]
+    SIM[SimChain: labelled hashes]
+    REAL[RealChain: viem]
+  end
+  BS[(Base Sepolia)]
+  subgraph Contracts["contracts/ Foundry"]
+    IL[IntentLog.sol]
+    BD[Bond.sol]
+    JB[JobBoard.sol]
+    LS[Lease.sol]
+  end
+  UI --> T --> R
+  UI --> C
+  UI --> LV
+  UI --> J
+  UI --> A
+  UI --> B
+  UI --> M
+  UI --> RA
+  R --> S
+  C --> S
+  LV --> S
+  S --> F --> AG --> PL --> P --> CM
+  S --> O
+  CM --> SIM
+  CM --> REAL --> BS
+  RA --> RT
+  CM -. same rules .- Contracts
+  AG --> K
+  AG --> MD
 ```
 
-### 1. Message classifier (`web/src/engine/ml/gate.ts`)
+| Part | File | Job |
+|---|---|---|
+| Scenario | `scenarios.ts` | One async generator per scenario (`fleet`, `neighbour`, `attack`). Takes `{ fast, lang, real }`. Emits `EngineEvent` values in order. The UI draws what it receives and computes nothing |
+| Gate | `framing.ts`, `ml/gate.ts` | Escapes and wraps every inbound message, applies pattern rules, adds a classifier risk score |
+| Agent | `agents.ts`, `model.ts` | Reads the message into typed fields, computes economics, signs intents. The model writes one sentence explanations and reads messages into a schema; it never names a payee or an amount |
+| Planner | `planner.ts` | Bounded knapsack over the day's candidate jobs |
+| Policy engine | `policy.ts` | Evaluates every signed intent against rules that are data. Allow, deny or escalate |
+| Mirrors | `contracts.ts` | TypeScript copies of the four contracts with the same rules and numbers, so the demo runs with no chain |
+| Oracle | `oracle.ts`, `ml/plausibility.ts` | Checks a flight log by geometry and by a robust z anomaly model |
+| Ratchet | `ratchet.ts` | Hill climbing over the acceptance strategy against a frozen week |
+| Keys | `keys.ts` | One secp256k1 key per actor, generated at boot. EIP-712 domain `Zishi` v1, chain 84532 |
+| Chain | `chain.ts` | `SimChain` or `RealChain` behind one `Chain` interface |
+| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 40 tests |
 
-What it is. A logistic regression in plain TypeScript, no dependencies, trained at module load. Features are character 3-grams hashed into 2^14 buckets, so English and Chinese get the same treatment without a tokenizer.
+## 3. Data model
 
-Data. `web/src/engine/ml/corpus.ts`: the 52 attack texts from `attacks.ts`, at least 60 handwritten attack paraphrases in English and Chinese, and at least 80 benign messages in English and Chinese (job posts, confirmations, questions, small talk). A fixed seed holds out 25 percent as the test split; the model never sees it in training.
+All money is yuan with two decimals. Addresses are `0x` hex.
 
-Interface. `classify(text)` returns `{ p, label, topFeatures }`. `METRICS` holds `{ trainN, testN, accuracy, precision, recall, f1, falseAlarmRate, seed }`, all computed on the held out split.
+### 3.1 Events (`types.ts`, `EngineEvent`)
 
-How it joins the gate. The rules in `framing.ts` still decide pass, redact, hold or refuse. The classifier adds a risk score. When the rules pass but `p > 0.8`, the action becomes hold with reason "classifier flagged". `selfcheck.ts` requires all 52 attacks blocked and all benign messages passing; the threshold and the corpus are tuned until that holds.
+| `t` | Fields | Meaning |
+|---|---|---|
+| `narration` | `text, at` | A line of story |
+| `agent.message` | `from, to, text, untrusted, facts?, source?, grounded?` | A message between actors. `source` is `model` or `template`; `grounded` says every number came from the facts |
+| `gate` | `from, action, categories, reason, framed, risk?` | The gate verdict on an inbound message: `pass`, `redact`, `hold`, `refuse` |
+| `understood` | `jobId, fields, source, confidence?` | The message read into `{ task, window, fee, geofence, payeeName }` by the model or by rules |
+| `plan` | `items, budgetMu, usedMu, charges, chargesUsed, totalMargin, usedMinutes, method` | The day plan from the knapsack |
+| `solvency` | `jobId, worst, bond, min, floor, covers, earnIn` | Bond plus floor against a quarter of the fee |
+| `economics` | `jobId, eco` | Fee, instalment, energy, rail, margin, reserve rule, clears |
+| `telemetry` | `jobId, trackM, swathM, seconds, areaMu, claimedMu, ratio, ok, batteryPct, altVar, z, reasons` | A flight log and its anomaly score |
+| `log` | `jobId, intentHash, parties` | The intent hash committed to the log and the full intent delivered to every party |
+| `intent` | `intent` | A signed intent (below) |
+| `policy` | `decision` | `{ intentId, verdict, lines[], signer }` |
+| `chain` | `tx` | A transaction, emitted up to three times under one hash: `pending`, `confirmed`, `finalised` |
+| `proof` | `intentId, intentHash, rule, signer, signatureOk, slash, bounty, treasury, bond, shadow, submitter, submitterAddr` | A slash by proof |
+| `machine` | `state` | The drone's full state (balances, bond, lease, position, status) |
+| `job` | `job` | A job and its status |
+| `attack` | `name, blocked, where, detail, id, standard, naive, isolated` | One attack case result |
+| `button` | `waiting, what` | The physical button is needed or has been pressed |
+| `done` | `summary` | End of run |
 
-Where it shows. Evidence page, "Learned components" row, Message classifier card: the metrics, a small bar for precision, recall and f1, and the held out note. The dashboard's four numbers row adds classifier f1. The understood event already carries `source: "model" | "rules"` and gains a `confidence` from 0 to 1.
+### 3.2 Intent (`Intent`)
 
-What it is not. Not a replacement for the rules, which keep the last word on refuse. Not trained on live traffic. Not a general language model.
+| Field | Type | Note |
+|---|---|---|
+| `id` | string | Unique per intent |
+| `actor` | Actor | `machine`, `operator`, `requester`, `lender`, `hunter`, `vendor`, `oracle` sign; others do not |
+| `kind` | enum | `pay`, `accept_job`, `start_task`, `claim_done`, `pay_instalment`, `set_cap`, `top_up` |
+| `payee` | address | Payments only. Always from the allowlist, never from message text |
+| `amount` | number | Yuan, two decimals |
+| `jobId` | string | Maps one to one to a `JobBoard` job id |
+| `geofence` | string | The field the task runs in |
+| `confirmed` | bool | On `claim_done`, what the agent asserts. The contract checks the board, not this field |
+| `nonce` | number | Replay protection |
+| `signer` | address | Recovered from the signature |
+| `signature` | hex | secp256k1 over the EIP-712 digest. Same digest as `Bond.digestOf` on chain |
+| `provenance` | `{ amount, payee }` | Where each came from: `tool`, `allowlist`, `message`, `none`. A `message` source denies |
 
-### 2. Telemetry anomaly model (`web/src/engine/ml/plausibility.ts`)
+### 3.3 Job (`Job`)
 
-What it is. A robust z-score model over four derived features of a flight: area ratio (claimed mu against track length times swath), speed, battery per mu, altitude variance. Each feature gets a median and a median absolute deviation; a flight's score is the largest absolute robust z across the four.
+| Field | Type | Note |
+|---|---|---|
+| `id`, `side`, `title` | string | `side` is `neighbour`, `fleet` or `attack` |
+| `fee`, `mu`, `ratePerMu` | number | Fee in yuan, area in mu |
+| `requester`, `geofence`, `window` | string | Who posted it, the field, the time window |
+| `status` | enum | `posted`, `locked`, `running`, `confirmed`, `released`, `held`, `declined` |
+| `shadow` | bool | Shadow jobs move no lease money; hunters report only on these |
+| `split` | `{ owner, instalment, rail, bond }` | Filled on release |
+| `hold`, `holdUntil` | number | The flaggable hold (13.33 percent of the fee, 24 hours) |
+| `from`, `to` | xyz | Positions for the map |
 
-Data. 2000 synthetic flights from physical rules with noise, fixed seed: track length, seconds, swath, claimed mu, battery used, altitude variance. 15 percent are tampered: claimed mu inflated, replayed track, impossible speed, battery too low for the distance. The tamper labels are used only to measure the model, never to fit it.
+### 3.4 Bonds and lease (`MachineState`, `Bond.sol`, `Lease.sol`)
 
-Interface. `score(flight)` returns `{ z, ok, reasons }`. `METRICS` holds `{ n, tampered, detectionRate, falseAlarmRate, threshold, seed }`.
+| Field | Where | Note |
+|---|---|---|
+| `bond` | pilot bond | Earned from a slice of each fee. Slashed only by `FalseConfirmation` and `OutsideGeofence` |
+| `bondMin` | reward threshold | 2,000 yuan. Reaching it earns a better rate and a board listing; never a start condition |
+| `startFloor` | start check | 200 yuan, added to the pilot bond. A zero bond can start jobs up to 800 yuan in fee |
+| `vendorBond` | vendor bond | 5,000 yuan posted by the vendor. Slashed only by `PayeeNotAllowlisted` and `OverCap`, penalty 200, daily cap 1,000 |
+| `leaseBalance`, `leaseTotal` | lease | Instalment per released fee is `min(fee * rate, balance)`, rate in the signed band 20 to 45 percent |
+| `muDone`, `muTotal` | lease | 13,750 mu across the demo lease |
+| `owned` | title | True once the lease balance is zero |
 
-How it joins the oracle. `oracle.ts` calls `score()` instead of the single area ratio check. The telemetry event gains `z` and `reasons`. A flight that fails is held, as before; the hold now names which feature failed.
+Demo numbers live in `DEMO` in `policy.ts`.
 
-Where it shows. Evidence page, Telemetry anomaly model card: detection rate, false alarm rate, threshold. In the live demo Details section the telemetry card shows `z` and the reasons.
+## 4. The loop
 
-What it is not. Not trained on real drone logs. It catches the four tamper patterns it was built to catch and says so in the metrics.
+Every job runs the same five phases. The live demo shows five moments, one per failure or success path.
 
-### 3. Day planner (`web/src/engine/planner.ts`)
+```mermaid
+sequenceDiagram
+  participant F as Farmer
+  participant G as Gate
+  participant A as Drone agent
+  participant L as Intent log
+  participant P as Policy engine
+  participant J as JobBoard
+  participant O as Oracle
+  participant Le as Lease
+  F->>G: 1. post job (message)
+  G->>G: rules + classifier: pass, redact, hold, refuse
+  G->>A: 2. framed message, data only
+  A->>A: understand, plan (knapsack), economics
+  A->>L: 3. commit hash of signed intent, deliver to parties
+  A->>P: evaluate signed intent
+  P-->>A: allow, deny or escalate
+  A->>J: lock fee, start task (if allow)
+  J->>O: 4. flight log
+  O->>O: geometry + robust z
+  O-->>J: plausible or held
+  F->>J: confirm
+  J->>Le: 5. instalment
+  J->>J: rail, bond slice, hold, rest to the drone
+  Le-->>F: title moves when balance is zero
+```
 
-What it is. A bounded knapsack solved by dynamic programming. Input: candidate jobs (fee, mu, field distance, window), a battery budget in mu per charge, charges available, and the `economics()` function. It maximises total margin subject to the mu per charge and the day's time. This replaces the greedy ranking that `scenarios.ts` used.
+| Moment | Phase | What the demo shows |
+|---|---|---|
+| 1 | Plan | A job declined: margin per mu below the reserve rule |
+| 2 | Confirm and split | A paid flight: farmer confirms, fee splits, instalment reaches the lender |
+| 3 | Oracle | A faked flight log, caught by the anomaly model, fee held |
+| 4 | Proof | A compromised intent slashed from the vendor bond by proof; the harmed party is paid |
+| 5 | Title | Lease at zero, title moves to the pilot |
 
-Interface. The plan event keeps its existing fields and adds `{ budgetMu, usedMu, charges, totalMargin, method: "knapsack" }`, with an ordered list of accepted and declined jobs, each with a reason.
+## 5. Policy engine
 
-Where it shows. Live demo Details section, Plan card: budget mu, used mu, accepted and declined with reasons, total margin.
+`PolicyEngine.evaluate(intent, ctx)` in `policy.ts`. Rules are data in `DEFAULT_POLICY`. Each line carries a `tier`. A failed `operator only` line on a valid machine intent escalates to the button; any other failure denies.
 
-What it is not. Not learned. It is exact for the inputs it is given and does not predict demand. The reserve rule is still checked per job by `economics()` after the plan, so the plan cannot accept a job the policy would decline.
+| Rule | Applies to | Check | Tier |
+|---|---|---|---|
+| `signature` | all | Recovered signer equals the actor's key | L2 |
+| `replay` | all | Signature hash never seen before | L2 |
+| `amount` | money kinds | Finite, positive, two decimals | L2 |
+| `provenance` | pay, pay_instalment | Neither amount nor payee came from message text | L2 |
+| `allowlist` | pay, pay_instalment | Payee is on the allowlist | L2 |
+| `lookalike` | pay, pay_instalment | Payee within 3 characters of an allowlisted address is named and denied | L2 |
+| `instalment payee` | pay_instalment | Payee is the lender | L2 |
+| `per transaction cap` | pay, pay_instalment | Amount at most 1,000 yuan | L2 |
+| `daily cap` | pay, pay_instalment | Spent today plus amount at most 5,000 yuan | L2 |
+| `rate limit` | pay, pay_instalment | Fewer than 12 payments in the last hour | L2 |
+| `deviation` | pay, pay_instalment | Within 25 percent of the reference amount | L2 |
+| `rate band` | pay_instalment | Instalment share of the fee between 20 and 45 percent | L2 |
+| `geofence` | accept_job, start_task | Field is one of the known geofences | L2 |
+| `contact` | accept_job | Requester is a known contact | L2 |
+| `listing band` | accept_job | Fee inside the listing's band | L2 |
+| `economics` | accept_job | Margin clears the reserve rule | L2 |
+| `job` | start_task | Job exists and is `locked` | L2 |
+| `job geofence` | start_task | Intent geofence equals the job's geofence | L2 |
+| `solvency` | start_task | Bond plus floor covers a quarter of the fee | L2 |
+| `confirmation` | claim_done | The agent asserts confirmed | L2 |
+| `operator only` | set_cap, top_up | Signed by the operator key | L3 |
 
-### 4. Strategy ratchet (`web/src/engine/ratchet.ts`)
+Tiers: L0 read (anyone, the model), L1 draft (the model writes text, never a payee or amount), L2 engine allow (machine key through the rules above), L3 operator (the physical button, one action at a time). The model never sees this code. Tiers are checked on the signed intent, so a jailbroken model cannot move one.
 
-What it is. Hill climbing over a strategy `{ reserveRule, minMarginPerMu, maxJobsPerCharge, acceptLowFeeIfIdle }`. A frozen eval simulates one week of jobs from a fixed seed and returns profit after instalments. The reserve rule is a hard constraint: a strategy that breaks it scores negative infinity, so the search cannot trade safety for profit.
+## 6. Gate and learned components
 
-Search. N steps, default 60, with a fixed random walk seed. Each step proposes one change and keeps it only if profit improves. Every step is logged as `{ step, proposal, profit, kept }`.
+### 6.1 Gate (`framing.ts`)
 
-Interface. `run(steps)` returns `{ steps, best, baselineProfit, bestProfit }`. `GET /api/ratchet?steps=60` returns the same and caches the result per steps value in module memory. The eval is a separate function the strategy has no access to.
+Every inbound message is escaped and wrapped in a `relay-message` block with `relation` (owner, counterparty, unknown) and `authority` attributes. Only the owner's messages carry `authority="instruction"`. `judge(body, relation)` runs in this order:
 
-Where it shows. Evidence page, Strategy ratchet card: a line of profit over steps with kept steps marked gold, baseline and best as numbers, and a Run again button that calls `/api/ratchet`.
+| Order | Condition | Action |
+|---|---|---|
+| 1 | Body over 64 KiB | refuse |
+| 2 | Asks for a key | refuse |
+| 3 | Tries to change the agent's instructions | refuse |
+| 4 | Names a payee, cap or location in the text | redact |
+| 5 | Asks for money or to skip a rule | hold |
+| 6 | Pressure words only | pass, noted |
+| 7 | Rules pass but classifier `p > 0.8` | hold, "classifier flagged" |
+| 8 | Otherwise | pass, as data |
 
-What it is not. Not an overnight loop against live data. Not a model. It tunes four numbers against one frozen week, and the chart shows exactly which steps were kept.
+The classifier can only turn a pass into a hold. The rules keep the last word on refuse.
 
-### Metrics endpoint
+### 6.2 Learned components
 
-`GET /api/metrics` returns `{ gate: METRICS, plausibility: METRICS, ratchet: { baselineProfit, bestProfit }, planner: { method }, chain: "real" | "sim", model: "real" | "scripted" }`. The Evidence page reads this once per load. Nothing on that page is typed in by hand.
+Each one has a fixed seed and a held out set the agent cannot edit. `pnpm test` prints the numbers; `/api/metrics` serves them; the Evidence page shows them.
 
-### What stays deterministic
+| Component | File | Method | Data | Held out result |
+|---|---|---|---|---|
+| Message classifier | `ml/gate.ts`, `ml/corpus.ts` | Logistic regression on hashed character 3-grams, 2^14 buckets, trained at module load | 401 messages: 52 attack texts, attack paraphrases and benign messages in English and Chinese | 100 held out: accuracy 0.95, F1 0.944, false alarm rate 0.054 |
+| Telemetry anomaly model | `ml/plausibility.ts` | Robust z (median and MAD) over area ratio, speed, battery per mu, altitude variance; flag at z 4 | 2,000 synthetic flights from physical rules with noise, 15 percent tampered | 500 held out: detection 1.00, false alarm rate 0.00 |
+| Strategy ratchet | `ratchet.ts` | Hill climbing over `{ reserveRule, minMarginPerMu, maxJobsPerCharge, acceptLowFeeIfIdle }` against a frozen week; the reserve rule is a hard constraint | One week of offers from seed 4242, walk seed 99 | 60 steps, 5 kept, profit 246 to 926 yuan |
+| Day planner | `planner.ts` | Bounded knapsack by dynamic programming over fee, mu, distance and window, subject to mu per charge, charges and minutes | The day's candidate jobs | Exact, not learned. The reserve rule is still checked per job after the plan |
 
-The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet only moves four parameters inside the reserve rule. The policy engine, the intent log and the contracts are unchanged and still check every signed intent against the same rules as before.
+What they are not: not trained on live traffic or real drone logs. The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet only moves four numbers inside the reserve rule. None of them moves money.
 
-## Demo units
+### 6.3 Model (`model.ts`)
 
-1 demo unit = 100 yuan. The fleet lease total of 40 units is shortened so a title transfer happens inside a four minute run; the pilot numbers below use real yuan.
+With `AI_GATEWAY_API_KEY` or `ANTHROPIC_API_KEY` the model writes explanations and reads messages into a Zod schema with a confidence. Without a key, templates write and rules read. In both cases:
 
-## Questions judges will ask
+- the model receives a JSON object of numbers the tools computed;
+- the sentence that comes back is checked and rejected if it contains a number not in the facts;
+- a timeout, error or failed check returns the template;
+- `model.ts` has no key, no chain client and no signing function.
 
-Licensing. A licensed lessor in a sandbox is lender of record. Zishi services the contract. The machine's wallet is a ring fenced sub account of the owner, not a legal person. The testnet is a sandbox.
+## 7. Contracts
 
-Why a bond and not reputation. Reputation is a score somebody else assigns and can be rebuilt with a new key. A bond is the agent's own money, slashed by a contract on a signature, and the counterparty reads before the task that it covers the worst case.
+Solidity 0.8.26, Foundry, 40 tests in `contracts/test`. Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
 
-Why on chain and not a bank ledger. Three parties with opposite incentives (operator, lender, requester) need one record none of them administers, and a slash that none of them can veto. In production this is a consortium chain (FISCO BCOS) with bank money and no public token; Base Sepolia is where the evidence is verifiable today.
+### 7.1 IntentLog
 
-Collusion between a requester and an owner. A task counts toward the credit file only when the requester is not the operator's address, the track and the confirmation agree, and the fee came from an address with its own history. Fake volume then costs real fees and real rail charges and still does not build the file.
+| Function | Who | Does |
+|---|---|---|
+| `commit(jobId, intentHash)` | agent key | Records hash, job and sender once |
+| `committedAt(hash)`, `jobOf(hash)`, `agentOf(hash)` | view | Read an entry |
 
-Pilot economics (illustrative). Drone 55,000 yuan, fee 10 yuan per mu, 40 percent instalment share: 4 yuan per mu to the lender, 13,750 mu to repay. At 4 yuan per mu for field crops, about 34,000 mu. The pilot bond is earned, 1 yuan per mu until it reaches 5,500. Rail fee 2 percent of fees, about 2,750 yuan per drone over one lease. Vendor bond 5,000, penalty 200, daily cap 1,000. The full schedule with lender loss given default is in `BONDED_AGENT.md`, Bond economics.
+### 7.2 Bond (implements IBonded)
 
-Who pays when the AI gets it wrong. The vendor, from the vendor bond. The pilot bond is slashed only for the pilot's own cheating. The pilot never pays for the AI.
+| Function | Who | Does |
+|---|---|---|
+| `postVendorBond(penalty, dailyCap)` payable | vendor | Posts or tops up the vendor bond and its terms |
+| `register(agent, operator, vendor, minimum, perTxCap, slashAmount, allow[], agentSig)` | operator | Registers an agent; the vendor must hold a bond |
+| `fill(agent)` payable | JobBoard | Adds a fee slice to the pilot bond |
+| `topUp(agent)` payable | operator | Tops up the pilot bond |
+| `bondOf(agent)`, `worstCase(agent)`, `covers(agent, exposure)` | view | `covers` is `balance + startFloor >= exposure` |
+| `vendorBondOf`, `vendorOf`, `operatorOf`, `vendorTerms`, `isAllowlisted` | view | Reads for the board and the UI |
+| `hashIntent`, `digestOf`, `DOMAIN_SEPARATOR` | view | EIP-712, same digest as `keys.ts` |
+| `slashByProof(intent, signature, rule)` | a party of the job, or a hunter on a shadow job | Checks the proof and slashes the tagged bond |
+| `setBoard(board)`, `setHunter(hunter, on)` | deployer | One time wiring, hunter registry |
 
-Why anything ever gets slashed. Every intent, including blocked ones, is in the log and in the hands of the lender, who has its own money at stake. The pilot is not the only holder of the evidence.
+### 7.3 JobBoard
 
-Regulation and PIPL. Only an intent hash, a track hash and a confirmation go on chain. Raw telemetry stays on the drone; full intents stay with the parties of the job. The farmer consents in the job terms. Settlement in production is bank money on a consortium chain, so no crypto reaches a mainland user.
+| Function | Who | Does |
+|---|---|---|
+| `post(agent, verifier, leaseId, geofence, windowStart, windowEnd, shadow)` payable | requester | Locks the fee, status `Posted` |
+| `start(id)` | agent | Needs `bond.covers(agent, fee / 4)`; status `Running` |
+| `confirm(id)` | verifier | Splits the fee: rail 2 percent, hold 13.33 percent for 24 hours, instalment to `Lease.pay`, bond slice `min(gap, rest / 2)` to `Bond.fill`, rest to the agent |
+| `flag(id)` | requester | Inside the hold window: refunds the hold, the rest goes to a human arbiter |
+| `releaseHold(id)` | anyone | After the window, pays the hold to the agent |
+| `cancel(id)` | requester | A never started job after its window; fee refunded |
+| `isConfirmed`, `geofenceOf`, `isParty`, `isShadow`, `requesterOf` | view | Read by `Bond.slashByProof` |
 
-Physical damage. Outside the rail. The bonds cover rule breaks the contract can check. Crash damage and injury go to the pilot's drone insurance and a human dispute path, which the app labels as the one human decision. There is no insurance in the build; in production, AI liability insurance sits above the vendor bond.
+### 7.4 Lease
+
+| Function | Who | Does |
+|---|---|---|
+| `open(operator, agent, total, rateBps, bandLoBps, bandHiBps, monthlyMinimum)` | lender | Opens a lease |
+| `pay(id)` payable | JobBoard | Instalment `min(fee * rate, balance)`; emits `TitleTransferred` at zero |
+| `instalmentFor(id, fee)`, `isFrozen(id)`, `lenderOf(id)` | view | Reads |
+| `freeze(id, reason)`, `unfreeze(id)` | lender | Freezes instalment flow |
+| `setRate(id, rateBps)` | operator | Inside the signed band |
+
+### 7.5 Proof of violation
+
+```mermaid
+sequenceDiagram
+  participant Pa as Party (farmer, pilot, lender, vendor)
+  participant B as Bond
+  participant L as IntentLog
+  participant J as JobBoard
+  Pa->>B: slashByProof(intent, signature, rule)
+  B->>B: agent registered, hash not spent
+  B->>B: EIP-712 recover == intent.agent
+  B->>L: hash in log for this job and agent
+  B->>J: isParty(job, caller) or shadow job and hunter
+  B->>J: rule holds: isConfirmed, geofenceOf, allowlist, perTxCap
+  B->>B: vendor rules: daily cap not reached
+  B->>B: mark spent, slash tagged bond
+  B-->>Pa: half to the harmed party, half to the treasury
+```
+
+| Rule | Bond | Violation | Read from |
+|---|---|---|---|
+| `PayeeNotAllowlisted` (0) | vendor | pay or pay_instalment to a payee not on the allowlist | intent, `Bond` |
+| `OverCap` (1) | vendor | amount over `perTxCap` | intent, `Bond` |
+| `FalseConfirmation` (2) | pilot | claim_done asserting confirmed while `JobBoard.isConfirmed` is false | intent, `JobBoard` |
+| `OutsideGeofence` (3) | pilot | start_task with a geofence different from `JobBoard.geofenceOf` | intent, `JobBoard` |
+
+Revert order: `unknown agent`, `proof already used`, `not the agent's signature`, `not in log`, `not a party`, `no violation`, `daily cap reached`. Nothing comes from the reporter's word. On a live job the submitter earns no bounty, so compromising a live wallet pays nothing; hunters earn half of the slash on shadow jobs only. The engine mirror `BondContract.slashByProof()` applies the same checks and numbers.
+
+## 8. Chain modes
+
+| Mode | When | What a transaction is |
+|---|---|---|
+| Simulated | Default | `SimChain`: keccak hash of the event, `simulated: true` on every tx, labelled in the UI |
+| Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...`, explorer link, confirmed at one receipt, finalised at two more blocks |
+
+The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). Contract calls through the ABI against deployed addresses are the next step; today events are anchored, not executed, on chain.
+
+## 9. Bring your own data
+
+The scripted scenarios are one way in. `/app/live` runs the same engine on other data in two modes. Nothing else changes: gate, planner, policy engine, intent log, mirrors and chain adapter are the ones above.
+
+| Mode | What happens |
+|---|---|
+| Live feed | `GET /api/live` streams a new job every few seconds from a seeded generator (`engine/generate.ts`): rice, maize and passion fruit plots at market prices, and every so often an injection attempt at the wallet. Same seed, same feed, so a session can be replayed. Runs until you stop |
+| Your data | Drop a JSON or CSV file, paste it, or pick a sample. `POST /api/run-custom` validates it, builds the run and streams the same `EngineEvent` values as `/api/run` |
+
+### 9.1 Schema (`engine/schema.ts`)
+
+Validation is Zod. A bad row fails the whole request with the path and the reason (`jobs.2.mu: must be more than 0`). Amounts are yuan, areas mu, distances metres.
+
+| Object | Field | Required | Rule |
+|---|---|---|---|
+| job | `id` | yes | 1 to 40 chars, letters, digits, dot, dash, underscore; unique |
+| job | `title` | yes | 1 to 120 chars |
+| job | `mu` | yes | 0 to 10,000 |
+| job | `pricePerMu` | yes | 0 to 1,000,000 |
+| job | `field` | yes | The geofence name, 1 to 40 chars |
+| job | `window` | no | Free text, default `today`. `08:00-12:00` is read as 240 minutes for the planner |
+| job | `requester` | yes | A farmer's display name, 1 to 60 chars |
+| job | `distanceM` | no | 0 to 50,000, for the planner |
+| flight | `jobId` | yes | Must match a job id |
+| flight | `trackM`, `seconds`, `swathM`, `claimedMu` | yes | Positive; swath at most 50 m, time at most a day |
+| flight | `batteryPct`, `altVar` | no | Default to what the track predicts. Without a flight the engine synthesises an honest log for the job's area |
+| message | `from` | yes | Sender's display name |
+| message | `text` | yes | Up to 64 KiB. With a `jobId` it replaces the generated offer for that job; without one it is an unsolicited message through the gate |
+| policy | `perTxCap`, `dailyCap`, `maxPerHour`, `deviationPct`, `rateBand`, `allowlist`, `contacts`, `geofences` | no | Overrides for `DEFAULT_POLICY`. By default every requester and field in the input is trusted; set `contacts` or `geofences` to see a decline |
+| lease | `total`, `rate`, `floor`, `balance` | `total` | Drone price, instalment share (0.01 to 0.9, default 0.4), reserve rule (default 30), amount still owed (default `total`) |
+| run | `jobs`, `flights`, `messages`, `policy`, `lease`, `lang`, `seed` | `jobs` | 1 to 50 jobs, up to 50 flights and 50 messages, `lang` `en` or `zh`, `seed` for positions and generated logs |
+
+### 9.2 Files (`lib/ingest.ts`, `lib/csv.ts`)
+
+| Input | Shape |
+|---|---|
+| JSON | The run object above, or a bare array of jobs |
+| Jobs CSV | Header row then one job per line. Columns: `job id` (or `id`), `title`, `mu`, `price per mu`, `field`, `window`, `requester`, `distance m`. Header names match loosely: `Price per mu`, `price_per_mu` and `pricePerMu` are the same column. Quoted fields, doubled quotes, CRLF and a BOM are handled |
+| Flights CSV | Optional second file: `job id`, `track m`, `seconds`, `swath m`, `claimed mu`, `battery pct`, `alt var` |
+
+Samples are listed by `GET /api/samples` and appear in the page's dropdown.
+
+### 9.3 Endpoints and limits
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `POST /api/run-custom?lang=en` | `application/json` with the run object, or `multipart/form-data` with `file` (JSON or jobs CSV) and optional `flights` (CSV) | SSE stream of `EngineEvent`; on a bad input `400 { issues: [{ path, reason }] }` |
+| `GET /api/live?scenario=fleet&lang=en` | none | SSE stream that keeps producing jobs until the client closes it |
+| `GET /api/samples` | none | `{ samples: [{ name, path }] }`, each path a static file the page can fetch |
+
+| Limit | Value |
+|---|---|
+| Jobs, flights, messages | 50 each per run |
+| Message text | 64 KiB, the gate's limit |
+| Rate | 10 requests per minute per IP, one open stream per IP |
+| Chain | Simulated unless the request carries the demo token |
+| Storage | None. Rows live for the request. Message text reaches a model only when a model key is set |
+
+## 10. API reference
+
+All routes are dynamic. Limits: 10 requests per minute per IP, one concurrent run per IP (`ratelimit.ts`), `429 { error: "too many requests" }` when exceeded.
+
+| Method, path | Params | Response |
+|---|---|---|
+| `GET /api/run` | query `scenario` (`fleet`, `neighbour`, `attack`; default `fleet`), `fast=1`, `lang` (`en`, `zh`); header `x-zishi-demo` for real chain | `text/event-stream`, each line `data: <EngineEvent>`. Up to 300 s |
+| `POST /api/run-custom` | query `lang`; body JSON run object or multipart `file` plus optional `flights` (section 9) | SSE as above, or `400 { issues }` |
+| `GET /api/live` | query `scenario`, `lang` | SSE, a generated job every few seconds until closed |
+| `GET /api/samples` | none | `{ samples: [{ name, path }] }` |
+| `POST /api/judge` | JSON `{ text }`, text up to 70,000 chars | `{ gate: { action, categories, reason, risk }, framed, understood: { action, payeeName, amount, source, confidence, droppedAddress }, shadow: { intent, decision } \| null, naive: { paid, payee, amount }, model, liveWalletMoved: false }` |
+| `GET /api/attacks` | none | `{ results: AttackRow[], benign: { passed, total }, naive: { fell, total }, ranAt }` |
+| `POST /api/button` | JSON `{ what: "top_up" \| "set_cap", amount, scenario, lang? }` | `{ events: EngineEvent[] }`; `404` when no run exists for that scenario, `400` on an unknown action |
+| `GET /api/metrics` | none | `{ gate, plausibility, ratchet: { baselineProfit, bestProfit, steps, kept, best, baseline, evalSeed, walkSeed }, planner: { method }, chain: "real" \| "sim", model: "real" \| "scripted", computedAt, note }` |
+| `GET /api/ratchet` | query `steps` (default 60) | `{ steps[], best, baseline, baselineProfit, bestProfit, evalSeed, walkSeed, days, offers, ranAt, note }`, cached per `steps` |
+
+`AttackRow`: `{ id, name, nameZh, layer, standard, isolated?, blocked, detail, detailZh?, naive }`. `standard` is one of the five rubric items: injection defense, permission hierarchy, hallucination prevention, intent understanding, task planning.
+
+## 11. Evidence and verify
+
+| Script | Command | Does |
+|---|---|---|
+| `scripts/evidence.ts` | `pnpm evidence` | Runs `fleet` and `neighbour` fast, writes `evidence/run-<stamp>.json` (one row per chain claim: kind, amount, from, to, hash, block, simulated, explorer), `run-<stamp>.state.json` (initial and final machine state, every proof) and `transcripts/run-<stamp>.jsonl` (every model call). `JIXIN_REAL=1` with a funded key anchors on Base Sepolia |
+| `scripts/verify.ts` | `pnpm verify` | Reads the latest run, recomputes the drone's balance from the chain feed and compares it to the final state; for every anchored hash fetches the transaction from Base Sepolia, decodes the calldata and checks kind, amount, from and to. Exit 1 on any mismatch |
+| `engine/selfcheck.ts` | `pnpm test` | Every attack blocked, every benign message passing, a normal instalment allowed, every slash rule has a contract case, removed rules absent, the model layer has no reach into keys or chain, learned metrics at or above their floors |
+
+The Evidence page in the app runs the attack set at request time and reads `/api/metrics`. Nothing on it is typed in.
+
+## 12. Internationalisation
+
+| | |
+|---|---|
+| Dictionaries | `web/src/i18n/en.ts` and `zh.ts`, same keys, Simplified Chinese |
+| UI | Every string through `useLang()` from `LangProvider.tsx`; `LangToggle.tsx` switches |
+| Engine | `engine/i18n.ts`: `tr(lang, key, vars)` and `both(key, vars)`. Policy lines carry `detail` (English) and `detailZh`; attack rows carry `nameZh` and `detailZh` |
+| Routes | `/api/run` and `/api/button` take `lang`; narration and agent messages come back in that language |
+| Rule ids | Always English, stable in the JSON |
+
+Add a key to both files or the build fails the type check.
+
+## 13. Deployment
+
+Vercel, Next.js 16, Node 22, pnpm 10. Root directory `web`. The route `/api/run` sets `maxDuration = 300`.
+
+| Variable | Required | Note |
+|---|---|---|
+| `AI_GATEWAY_API_KEY` | no | Vercel AI Gateway key. Model writes explanations and reads messages. Without it: templates and rules |
+| `ANTHROPIC_API_KEY` | no | Direct Anthropic key, same effect |
+| `SURETY_PRIVATE_KEY` | no | `0x` plus 64 hex. Funded Base Sepolia key that anchors events |
+| `BASE_SEPOLIA_RPC` | no | Default `https://sepolia.base.org` |
+| `DEMO_TOKEN` | no | Real chain only for requests carrying this token. Unset means never real |
+
+Without any variable the app runs fully: scripted explanations, simulated chain, labelled as such. See `web/.env.example`.
+
+## 14. Testing
+
+| Command | Where | Checks |
+|---|---|---|
+| `pnpm lint` | `web` | ESLint, Next.js config |
+| `npx tsc --noEmit` | `web` | Types, including both dictionaries |
+| `pnpm test` | `web` | The engine self check (section 11) |
+| `forge test` | `contracts` | 40 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (24), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
+| `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
+
+CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the Foundry tests on every push and pull request.
+
+## 15. Security boundaries
+
+| Boundary | Rule |
+|---|---|
+| Messages | Data, never instructions. Framed, escaped, gated. Payees, amounts, caps and locations never come from text |
+| Model | No key, no chain, no signing. Writes sentences, reads fields. Numbers are checked against facts |
+| Intents | Typed, signed, nonce, replay checked. Every intent goes to the log and to every party before the policy engine decides |
+| Policy engine | Code, not prompts. Rules are data. The model never sees it |
+| Operator key | Only `set_cap` and `top_up`, only from the button, tier L3 |
+| Real chain | Only with the demo token and a funded key |
+| Public routes | Rate limited per IP, body limits, no storage |
+| Secrets | `.env*` ignored by git; `.env.example` has no values |
+
+### What is simulated
+
+| Layer | Status |
+|---|---|
+| Contracts | Compiled and tested with Foundry. Not deployed. The engine mirrors them |
+| Chain | Simulated by default. Real mode anchors event records on Base Sepolia; it does not call the contracts |
+| Keys | Generated per boot for seven actors. Production: secure element, hardware button, HSMs |
+| Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |
+| Training data | Handwritten corpus and synthetic flights, labelled as such everywhere they appear |
+| Money | Yuan as demo units. Production: bank money on a consortium chain (FISCO BCOS), no public token |
+| Insurance and physical damage | Not in the build. Named as the one human decision path |
+
+Risks, what is built against each and what production would do are in `SELF_ASSESSMENT.md`.

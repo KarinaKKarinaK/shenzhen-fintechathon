@@ -50,11 +50,17 @@ export interface RunState {
   benign?: { passed: number; total: number };
   lang?: Lang; // the language the current events were fetched in
   fast?: boolean;
+  processed: number; // jobs that reached a final status; the live feed counts them up
+  errors?: string[]; // what the server refused, in plain words
 }
 
-const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {} };
+const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {}, processed: 0 };
 
-type Action = LooseEvent | { t: "reset" } | { t: "start"; lang: Lang; fast: boolean } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
+// An endless stream keeps the last of everything so the page stays light.
+const KEEP = 1000;
+const FINAL = new Set<Job["status"]>(["released", "declined", "held"]);
+
+type Action = LooseEvent | { t: "reset" } | { t: "start"; lang: Lang; fast: boolean } | { t: "stop" } | { t: "append"; events: LooseEvent[] } | { t: "fail"; errors: string[] };
 
 function key(v: unknown, fallback: string) { return typeof v === "string" && v ? v : fallback; }
 
@@ -63,26 +69,31 @@ function reduce(s: RunState, ev: Action): RunState {
     case "reset": return { ...initial };
     case "start": return { ...initial, running: true, lang: (ev as { lang: Lang }).lang, fast: (ev as { fast: boolean }).fast };
     case "stop": return { ...s, running: false };
+    case "fail": return { ...s, running: false, errors: (ev as { errors: string[] }).errors };
     case "append": return (ev as { events: LooseEvent[] }).events.reduce(reduce, s);
   }
   const e = ev as EngineEvent;
   const r = ev as { t: string; at: number } & Record<string, unknown>;
-  const events = [...s.events, e];
+  const events = s.events.length >= KEEP ? [...s.events.slice(-KEEP + 1), e] : [...s.events, e];
   switch (e.t) {
     case "machine": return { ...s, events, machine: e.state, balanceSeries: [...s.balanceSeries, e.state.balance].slice(-60) };
-    case "job": return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job } };
+    case "job": {
+      const was = s.jobs[e.job.id]?.status;
+      const finished = FINAL.has(e.job.status) && was !== e.job.status;
+      return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job }, processed: finished ? s.processed + 1 : s.processed };
+    }
     case "chain": {
       // A transaction updates in place by hash as it goes pending, confirmed, finalised.
       const tx = e.tx as TxView;
       const i = s.txs.findIndex((t) => t.hash === tx.hash);
       if (i >= 0) { const txs = s.txs.slice(); txs[i] = { ...txs[i], ...tx, seenAt: txs[i].seenAt ?? e.at }; return { ...s, events, txs }; }
-      return { ...s, events, txs: [{ ...tx, seenAt: e.at }, ...s.txs] };
+      return { ...s, events, txs: [{ ...tx, seenAt: e.at }, ...s.txs].slice(0, KEEP) };
     }
-    case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions] };
-    case "intent": return { ...s, events, intents: [e.intent, ...s.intents] };
+    case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions].slice(0, KEEP) };
+    case "intent": return { ...s, events, intents: [e.intent, ...s.intents].slice(0, KEEP) };
     case "agent.message": return { ...s, events, messages: [...s.messages, e as MessageEv] };
-    case "attack": return { ...s, events, attacks: [...s.attacks, e as AttackEv] };
-    case "narration": return { ...s, events, narration: [...s.narration, e.text] };
+    case "attack": return { ...s, events, attacks: [...s.attacks, e as AttackEv].slice(-KEEP) };
+    case "narration": return { ...s, events, narration: [...s.narration, e.text].slice(-KEEP) };
     case "button": return { ...s, events, button: { waiting: e.waiting, what: e.what, signer: typeof r.signer === "string" ? r.signer : s.button?.signer } };
     case "done": return { ...s, events, done: e.summary, running: false };
   }
@@ -130,7 +141,7 @@ function reduce(s: RunState, ev: Action): RunState {
     }
     case "proof": {
       const p = (r.proof as Proof | undefined) ?? (r as Proof);
-      return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }] };
+      return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }].slice(-KEEP) };
     }
     case "log": {
       const hash = key(r.intentHash, `log-${events.length}`);
@@ -143,6 +154,28 @@ function reduce(s: RunState, ev: Action): RunState {
   }
 }
 
+// Turns a refused response into plain lines. Guards every shape the API might send:
+// { errors: [{ path, message }] }, { issues: [{ path, reason }] } from the schema, { error } or { message }.
+async function errorsOf(res: Response): Promise<string[]> {
+  const text = await res.text().catch(() => "");
+  let body: unknown = null;
+  try { body = JSON.parse(text); } catch { /* not json */ }
+  const out: string[] = [];
+  const b = (body ?? {}) as Record<string, unknown>;
+  const list = Array.isArray(b.errors) ? b.errors : Array.isArray(b.issues) ? b.issues : [];
+  for (const it of list as unknown[]) {
+    if (typeof it === "string") { out.push(it); continue; }
+    const o = (it ?? {}) as Record<string, unknown>;
+    const path = Array.isArray(o.path) ? o.path.join(".") : typeof o.path === "string" ? o.path : "";
+    const msg = typeof o.message === "string" ? o.message : typeof o.reason === "string" ? o.reason : JSON.stringify(o);
+    out.push(path ? `${path}: ${msg}` : msg);
+  }
+  if (!out.length && typeof b.error === "string") out.push(b.error);
+  if (!out.length && typeof b.message === "string") out.push(b.message);
+  if (!out.length) out.push(text.trim() ? text.trim().slice(0, 300) : `HTTP ${res.status}`);
+  return out;
+}
+
 // Streams one scenario from GET /api/run in the given language. The language is sent with the
 // request, so the narration and the scripted agent messages arrive already translated.
 export function useRun(scenario: Side, lang: Lang = "en") {
@@ -151,14 +184,19 @@ export function useRun(scenario: Side, lang: Lang = "en") {
 
   const stop = useCallback(() => { abort.current?.abort(); abort.current = null; dispatch({ t: "stop" }); }, []);
 
-  const start = useCallback(async (fast = false) => {
+  // Opens any SSE endpoint that speaks engine events and feeds it into the reducer. A response
+  // that is not a stream (a 400 with schema errors, say) ends the run with its errors listed.
+  const startStream = useCallback(async (url: string, init?: RequestInit & { fast?: boolean }) => {
     stop();
-    dispatch({ t: "start", lang, fast });
+    dispatch({ t: "start", lang, fast: init?.fast ?? false });
     const ac = new AbortController();
     abort.current = ac;
     try {
-      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { signal: ac.signal, headers: demoHeaders() });
-      const reader = res.body!.getReader();
+      const rest: RequestInit & { fast?: boolean } = { ...init };
+      delete rest.fast;
+      const res = await fetch(url, { ...rest, signal: ac.signal, headers: { ...demoHeaders(), ...(init?.headers as Record<string, string> | undefined) } });
+      if (!res.ok || !res.body) { dispatch({ t: "fail", errors: await errorsOf(res) }); return; }
+      const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
       while (true) {
@@ -175,13 +213,15 @@ export function useRun(scenario: Side, lang: Lang = "en") {
     } catch (e) {
       if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: translate(lang, "run.connectionLost", { msg: (e as Error).message }), at: Date.now() });
     } finally {
-      dispatch({ t: "stop" });
+      if (abort.current === ac) dispatch({ t: "stop" });
     }
-  }, [scenario, lang, stop]);
+  }, [lang, stop]);
+
+  const start = useCallback((fast = false) => startStream(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { fast }), [scenario, lang, startStream]);
 
   // Events returned by POST /api/button land here.
   const append = useCallback((events: LooseEvent[]) => { if (Array.isArray(events) && events.length) dispatch({ t: "append", events }); }, []);
 
   useEffect(() => () => abort.current?.abort(), []);
-  return { state, start, stop, append, reset: () => dispatch({ t: "reset" }) };
+  return { state, start, startStream, stop, append, reset: () => dispatch({ t: "reset" }) };
 }

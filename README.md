@@ -18,7 +18,7 @@ Entry to the 2026 Shenzhen International FinTech Competition, International Trac
 | One agent acting for one human | Two sides with opposite incentives: the drone's agent and the lender's agent, plus the farmer who pays and confirms |
 | Reputation scores | Economic consequences. The vendor bond pays for the agent's mistakes, the pilot bond for the pilot's cheating. The pilot never pays for the AI |
 | Insurance priced from telemetry | Telemetry proves work happened. Nothing prices risk from it |
-| A chatbot over a database | Four contracts, an intent log, EIP-712 signed intents, a policy engine with fourteen rules, and learned components with held out metrics |
+| A chatbot over a database | Four contracts, an intent log, EIP-712 signed intents, a policy engine with its rules as data, checked on every signed intent, and learned components with held out metrics |
 
 ## How one task flows
 
@@ -139,28 +139,54 @@ pnpm dev          # app on localhost:3000
 pnpm test         # attack set blocked, benign set passes, normal flow allowed, learned metrics asserted
 pnpm evidence     # writes a full run and the attack results to evidence/
 pnpm verify       # checks every hash in evidence/ against the chain or the labelled set
-cd ../contracts && forge install foundry-rs/forge-std && forge test
+cd ../contracts && forge test   # 40 tests, forge-std is vendored in contracts/lib
 ```
 
-Environment is optional, see `web/.env.example`.
+Environment is optional, see `web/.env.example`. Full technical documentation in `TECHNICAL.md`, how the app is laid out in `web/README.md`.
 
-## Layout
+## Try it on your data
 
-- `web/src/engine`: policy engine, gate, contract mirrors, agents, model wrapper, planner, ratchet, ml (classifier, plausibility), attack set, scenarios, chain adapter, self check.
-- `web/src/app/api`: `run` streams a scenario as server sent events in either language, `judge`, `attacks`, `button`, `metrics`, `ratchet`.
-- `web/src/components`: scene, panels, stages, graphs, attack accordion, judge console, views.
-- `web/src/i18n`: dictionaries and the language provider.
-- `contracts`: `IBonded`, `IntentLog`, `Bond`, `JobBoard`, `Lease` with Foundry tests.
-- `docs/screenshots`: the images above.
+The scripted scenarios are one way in. The live page runs the same engine on data you bring.
+
+- Open `/app/live` on the live site or locally.
+- Live feed: press Start and a new job arrives every few seconds, with the odd injection attempt, until you stop. Watch the gate, the planner, the policy engine and the oracle react in order.
+- Your data: drop a JSON or CSV of jobs (plus an optional flights CSV), paste it, or pick a sample from the dropdown, and run the same engine over it.
+
+Schema, CSV columns, endpoints (`/api/run-custom`, `/api/live`, `/api/samples`) and limits are in `TECHNICAL.md`, section 9. Nothing you upload is stored.
+
+## Folder map
+
+```
+README.md              this file
+TECHNICAL.md           technical documentation: architecture, data model, rules, contracts, API, BYOD
+SELF_ASSESSMENT.md     security self assessment
+DESIGN.md              product design, economics, demo story
+HACKATHON.md           the competition, rubric, submission
+CONTRIBUTING.md        setup, checks, commit style
+LICENSE                MIT
+web/                   Next.js app: engine, API routes, UI, i18n (map in web/README.md)
+  src/engine/          policy engine, gate, agents, planner, ratchet, oracle, mirrors, chain, ml
+  src/app/api/         run, run-custom, live, samples, judge, attacks, button, metrics, ratchet
+  src/components/      RunView, Panels, Graphs, EvidenceView, DashboardView, LandingView, Learned
+  src/i18n/            en.ts, zh.ts, LangProvider
+  scripts/             evidence.ts, verify.ts
+  src/lib/             csv parser and file ingest for the live page
+  evidence/            committed runs
+contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 40 tests (contracts/README.md)
+docs/screenshots/      the images above
+docs/research/         ideas, field review, competition scan, judge simulation, plan, design fixes, deck text
+.github/workflows/     ci.yml: lint, type check, self check, build, forge test
+```
 
 ## Deliverables
 
 1. Technical documentation: `TECHNICAL.md`
-2. Security self-assessment: `SELF_ASSESSMENT.md`
-3. Deck text: `DECK.md`
+2. Security self assessment: `SELF_ASSESSMENT.md`
+3. Deck text: `docs/research/DECK.md`
 4. Contracts: `contracts/README.md`
-5. Execution evidence: the Evidence page at request time, and `evidence/` from `pnpm evidence`
-6. Design and research: `BONDED_AGENT.md`, `BONDED_AGENT_FIXES.md`, `HACKATHON.md`, `FINAL_IDEAS.md`, `FIELD_REVIEW.md`, `COMPETITION.md`, `JUDGE_REVIEW.md`
+5. Execution evidence: the Evidence page at request time, and `web/evidence/` from `pnpm evidence`
+6. Design: `DESIGN.md`, with the decisions in `docs/research/BONDED_AGENT_FIXES.md`
+7. Research: `docs/research/` (`FINAL_IDEAS.md`, `FIELD_REVIEW.md`, `COMPETITION.md`, `JUDGE_REVIEW.md`, `IDEAS.md`, `CORE_IDEA.md`, `PLAN.md`) and `HACKATHON.md`
 
 ## Status
 
@@ -169,6 +195,7 @@ Environment is optional, see `web/.env.example`.
 - [x] Contracts compiled and tested
 - [x] English and Chinese, light and dark
 - [x] Technical doc, self assessment, deck text
+- [x] Bring your own data: upload or push jobs, flights and messages
 - [ ] Funded key set so every hash is real
 - [ ] Demo video recorded
 - [ ] Deck exported

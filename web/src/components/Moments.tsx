@@ -5,15 +5,16 @@ import { translate, useLang, type Lang } from "@/i18n/LangProvider";
 import { ruleLabel } from "@/engine/i18n";
 
 // The live demo as five moments, in order. Each lights once from the event stream and keeps a one line caption.
+// With recur set, a moment lights again each time it happens, so an endless feed keeps moving.
 export type MomentKey = "declined" | "instalment" | "held" | "slash" | "title";
 export type Moment = { key: MomentKey; label: string; at?: number; text?: string };
 
 const KEYS: MomentKey[] = ["declined", "instalment", "held", "slash", "title"];
 
-export function momentsOf(events: EngineEvent[], lang: Lang = "en"): Moment[] {
+export function momentsOf(events: EngineEvent[], lang: Lang = "en", recur = false): Moment[] {
   const t = (k: Parameters<typeof translate>[1], v?: Parameters<typeof translate>[2]) => translate(lang, k, v);
   const found: Partial<Record<MomentKey, { at: number; text: string }>> = {};
-  const hit = (k: MomentKey, at: number, text: string) => { if (!found[k]) found[k] = { at, text }; };
+  const hit = (k: MomentKey, at: number, text: string) => { if (recur || !found[k]) found[k] = { at, text }; };
   const eco: Record<string, { margin?: number; reserveRule?: number; clears?: boolean }> = {};
   for (const e of events) {
     const r = e as unknown as Record<string, unknown> & { t: string; at: number };

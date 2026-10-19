@@ -4,7 +4,7 @@ Four contracts and two interfaces. The web engine (`web/src/engine/contracts.ts`
 
 | File | What | Status |
 |---|---|---|
-| `IBonded.sol` | The bonded wallet standard: pilot bond and minimum, covers with the floor, slash by proof, top up, vendor bond views | Written per `BONDED_AGENT_FIXES.md` B.2, compiled in CI, not deployed |
+| `IBonded.sol` | The bonded wallet standard: pilot bond and minimum, covers with the floor, slash by proof, top up, vendor bond views | Written per `docs/research/BONDED_AGENT_FIXES.md` B.2, compiled in CI, not deployed |
 | `IntentLog.sol` | Append-only per-job record of intent hashes. The agent commits every intent before the policy engine decides | Written per B.1, compiled and tested in CI, not deployed |
 | `Bond.sol` | Two bonds: pilot bond slashed only for pilot rules, vendor bond slashed only for agent rules with a fixed penalty and a daily cap. Proof checked against the log, the board and the signed intent. Parties only on live jobs, hunters on shadow jobs | Written per B.3, compiled and tested in CI, not deployed |
 | `JobBoard.sol` | One board: fee locks on post, start needs the bond plus floor to cover a quarter of the fee, release only on the verifier's confirmation, split by rule, capped 24 hour hold, cancel after the window, shadow jobs, views for `Bond` | Written per B.4, compiled and tested in CI, not deployed |
@@ -45,7 +45,7 @@ Engine mirror (`web/src/engine/contracts.ts`) still has to follow: the rule set 
 - Payouts in `slashByProof` are push payments. A reverting receiver blocks the slash. Pull payments are the fix.
 - `Bond.worstCase()` returns `perTxCap`, while `JobBoard.start` checks a quarter of the fee. One definition should win.
 - Compensation for money that really left a wallet is out of scope. The policy engine blocks before money moves, so the chain only needs penalties.
-- Collusion (a pilot feeding the agent fake scams to drain the vendor bond) is limited by the daily cap only. The Hard Button rule from `BONDED_AGENT_FIXES.md` A.1 is not built.
+- Collusion (a pilot feeding the agent fake scams to drain the vendor bond) is limited by the daily cap only. The Hard Button rule from `docs/research/BONDED_AGENT_FIXES.md` A.1 is not built.
 - `IntentLog` keys entries by hash alone. Someone who sees an agent's commit in the mempool could commit the same hash first; the proof then fails `not in log` and the agent cannot re-commit. Not an issue on a consortium chain; on a public chain, key entries by agent and hash.
 
 ## Run the tests

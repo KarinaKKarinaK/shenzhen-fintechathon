@@ -1,0 +1,9 @@
+{
+  "jobs": [
+    { "id": "job-1", "title": "Spray 60 mu of rice", "mu": 60, "pricePerMu": 4, "field": "field-north", "window": "today", "requester": "Farmer Lin" },
+    { "id": "job-2", "title": "Spray 20 mu of maize", "mu": -20, "pricePerMu": 3, "field": "field-north", "window": "today" }
+  ],
+  "flights": [
+    { "jobId": "job-9", "trackM": 2400, "seconds": 400, "swathM": 2, "claimedMu": 50 }
+  ]
+}

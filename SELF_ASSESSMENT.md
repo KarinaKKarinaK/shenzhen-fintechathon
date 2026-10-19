@@ -8,7 +8,7 @@ What can go wrong, whether we built the defence, where it lives, and what produc
 |---|---|---|---|
 | Key custody | Partly. Five keys with separate roles, operator key behind a button step, model process holds none. Demo keys are generated at run time. | `agents.ts` sign(), `policy.ts` operator only rule, `Bond.topUp` operator check | Machine key in the secure element, operator key in a hardware device, lender key in the lessor's HSM, vendor key in our HSM. Rotation through `Bond.register` by the operator. |
 | Oracle manipulation | Partly. No single source proves a field was sprayed, so three are layered: the farmer's confirmation (primary; the farmer pays, so has no reason to confirm work not done), the signed flight log with a geometry plausibility check (the faked log is held), and a 24 hour hold where the farmer can flag bad work for a human arbiter. Telemetry is simulated and signed by our keys. | `scenarios.ts` fleet run, tamper branch, `JobBoard.flag` | Secure element signs the track, farmer app signs the confirmation. A lie by one side fails one of three checks. |
-| The pilot pays for the AI's mistakes | Part B of `BONDED_AGENT_FIXES.md`, in this pass. Two bonds: the pilot bond is slashed only by work rules (`FalseConfirmation`, `OutsideGeofence`), the vendor bond only by signing rules (`PayeeNotAllowlisted`, `OverCap`). | `Bond.sol` rule table, `contracts.ts` mirror | Same. In production AI liability insurance sits above the vendor bond. |
+| The pilot pays for the AI's mistakes | Part B of `docs/research/BONDED_AGENT_FIXES.md`, in this pass. Two bonds: the pilot bond is slashed only by work rules (`FalseConfirmation`, `OutsideGeofence`), the vendor bond only by signing rules (`PayeeNotAllowlisted`, `OverCap`). | `Bond.sol` rule table, `contracts.ts` mirror | Same. In production AI liability insurance sits above the vendor bond. |
 | Evidence never leaves the pilot, so nothing is slashed | Part B, in this pass. Every intent hash is committed to `IntentLog` before the policy engine decides; the full intent is delivered to the farmer, the pilot, the lender and the vendor, blocked intents included. Only those parties can report on a live job. | `IntentLog.sol`, `Bond.slashByProof` "not in log" and "not a party" checks | Same. Delivery over the consortium chain's private channels. |
 | The contract believes the reporter | Part B, in this pass. Every fact in a slash is read from the signed intent, `Bond`, `JobBoard` or `Lease`. The reporter only names the rule. | `Bond.slashByProof`, `JobBoard.isConfirmed`, `JobBoard.geofenceOf` | Same. |
 | A pilot drains the vendor bond with fake scams | Partly. Vendor penalties are a fixed amount with a daily cap; the bounty is half of a small penalty; hunters work only on shadow jobs. | `Bond.sol` vendor `penalty` and `dailyCap` | Instructions from the pilot's own channel count as the pilot's. Penalties go to the reporter as a capped bounty only. |
@@ -69,14 +69,14 @@ The hunter runs only against a copy of the agent on shadow jobs, which live in t
 | Built | Strategy ratchet against a frozen eval with the reserve rule as a hard constraint, logged per step |
 | Built | Evidence and verify scripts |
 | Built | Contracts written and tested in CI |
-| In this pass (Part B of `BONDED_AGENT_FIXES.md`) | Two bonds, the per-job intent log, proof checked against `JobBoard` records, party only reporting, hunters on shadow jobs, the starting floor, cover removed |
+| In this pass (Part B of `docs/research/BONDED_AGENT_FIXES.md`) | Two bonds, the per-job intent log, proof checked against `JobBoard` records, party only reporting, hunters on shadow jobs, the starting floor, cover removed |
 | Partly | Chain anchoring: self transfer with the event as calldata, needs a funded key |
 | Partly | Model mode: needs a gateway key, falls back to templates |
 | Not built | Contract deployment and ABI calls from the engine |
 | Not built | Consent federation (accepted contacts, per contact budgets) |
 | Not built | Ratchet against live data or several weeks (the built one runs on one frozen week) |
 | Not built | Retraining the classifier or the anomaly model from real traffic |
-| Not built | Seasonal minimum in `Lease` (decided, see `BONDED_AGENT.md`) |
+| Not built | Seasonal minimum in `Lease` (decided, see `DESIGN.md`) |
 
 ## Logging
 

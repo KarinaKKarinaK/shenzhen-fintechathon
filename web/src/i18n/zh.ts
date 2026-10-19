@@ -6,7 +6,7 @@
 import type { Dict, RuleGroupText, Use } from "./en";
 
 export const zh: Dict = {
-  rail: { home: "首页", dashboard: "控制台", fleet: "机队", evidence: "证据", homeAria: "自食其力首页", sections: "栏目" },
+  rail: { home: "首页", dashboard: "控制台", fleet: "机队", live: "实时", evidence: "证据", homeAria: "自食其力首页", sections: "栏目" },
   theme: { toLight: "切换到浅色主题", toDark: "切换到深色主题", light: "浅色主题", dark: "深色主题" },
   lang: { toZh: "切换到中文", toEn: "Switch to English", short: "中" },
   ticker: {
@@ -122,7 +122,7 @@ export const zh: Dict = {
     details: "详情", hide: "收起详情", meta: "{n} 个事件，{s} 秒，{tx} 笔交易",
     agentsTitle: "智能体对话", policyTitle: "策略引擎，最近五次裁决", attacksInRun: "本次运行中的攻击",
     chainFeed: "链上动态", jobs: "任务", eventStream: "事件流", evidenceLink: "证据",
-    connectionLost: "连接中断：{msg}",
+    connectionLost: "连接中断：{msg}", yourData: "用你的数据运行",
   },
   moments: {
     declined: "任务被拒", instalment: "分期款已付", held: "伪造日志被冻结", slash: "凭证明罚没", title: "所有权已转移",
@@ -252,6 +252,25 @@ export const zh: Dict = {
     titleLabel: "所有权：{who}", operator: "操作员", lenderCaps: "出租方", frozen: "已冻结，不接新任务",
     confirmed: "已验证 CONFIRMED", heldRatio: "已冻结，声称面积是航迹的 {r} 倍", heldLog: "已冻结，日志未通过",
     ownerFlat: "所有者，4A 室", neighbourFlat: "邻居，4B 室",
+  },
+  live: {
+    eyebrow: "实时数据，或你自己的数据", title: "实时", intro: "看引擎实时接收任务，或者带上你自己的任务、飞行日志和消息，让同一条通道在上面运行。",
+    tabsAria: "实时模式", tabFeed: "实时流", tabData: "你的数据",
+    startLive: "开始实时", processed: "已处理 {n} 个任务", feedNote: "每隔几秒一个新任务，直到你停止",
+    bringTitle: "上传文件", dropAria: "拖入 .json 或 .csv 文件，或点击选择", dropHere: "把文件拖到这里", dropHint: ".json 或 .csv，最多 50 个任务", fileSize: "{kb} KB，可以运行",
+    loadSample: "加载示例", pickSample: "请选择", noSamples: "暂无示例", downloadSample: "下载示例",
+    schemaTitle: "文件包含什么", schema: [
+      ["jobs", "至少一个。id、title、mu、pricePerMu、field、window、requester、distanceM"],
+      ["flights", "可选，每个任务一条。jobId、trackM、seconds、swathM、claimedMu、batteryPct、altVar"],
+      ["messages", "可选。from、text，若是某任务的报价则带 jobId"],
+      ["policy", "可选限额。perTxCap、dailyCap、maxPerHour、deviationPct、rateBand、allowlist、contacts、geofences"],
+      ["lease", "可选。total、rate、floor、balance"],
+      ["seed", "可选整数；相同的 seed 得到相同的运行结果"],
+      ["单位", "元、亩和米。CSV 为任务表，列名相同"],
+    ] as [string, string][],
+    pasteTitle: "或粘贴 JSON", pastePlaceholder: "{ \"jobs\": [ { \"id\": \"j1\", \"title\": \"喷洒 30 亩水稻\", \"mu\": 30, \"pricePerMu\": 12, \"field\": \"north-paddy\", \"window\": \"08:00-12:00\", \"requester\": \"Farmer Lin\" } ] }",
+    notAccepted: "未通过校验。请修正后再运行。", run: "用这份数据运行", empty: "没有可运行的数据。请拖入文件、加载示例或粘贴 JSON。",
+    badType: "{name} 不是 .json 或 .csv 文件", badJson: "JSON 无法解析：{msg}", sampleFailed: "示例加载失败：{msg}",
   },
   loading: { title: "正在加载田间视图", body: "需要几秒钟。上方的数字已经是实时的。", posterAlt: "一架正在稻田上喷洒的农业无人机", posterLabel: "手机端为静态视图" },
 };

@@ -5,7 +5,7 @@ export type Use = { who: string; line: string; tag: string; demo?: boolean };
 export type RuleGroupText = { title: string; note: string; rules: [string, string][] };
 
 export const en = {
-  rail: { home: "Home", dashboard: "Dashboard", fleet: "Fleet", evidence: "Evidence", homeAria: "Zishi home", sections: "Sections" },
+  rail: { home: "Home", dashboard: "Dashboard", fleet: "Fleet", live: "Live", evidence: "Evidence", homeAria: "Zishi home", sections: "Sections" },
   theme: { toLight: "Switch to light theme", toDark: "Switch to dark theme", light: "Light theme", dark: "Dark theme" },
   lang: { toZh: "切换到中文", toEn: "Switch to English", short: "EN" },
   ticker: {
@@ -121,7 +121,7 @@ export const en = {
     details: "Details", hide: "Hide details", meta: "{n} events, {s} s, {tx} transactions",
     agentsTitle: "Agents talking", policyTitle: "Policy engine, last five decisions", attacksInRun: "Attacks in this run",
     chainFeed: "Chain feed", jobs: "Jobs", eventStream: "EVENT STREAM", evidenceLink: "evidence",
-    connectionLost: "Connection lost: {msg}",
+    connectionLost: "Connection lost: {msg}", yourData: "Run it on your data",
   },
   moments: {
     declined: "Job declined", instalment: "Instalment paid", held: "Faked log held", slash: "Slash by proof", title: "Title transferred",
@@ -251,6 +251,25 @@ export const en = {
     titleLabel: "TITLE: {who}", operator: "OPERATOR", lenderCaps: "LENDER", frozen: "FROZEN, NO NEW JOBS",
     confirmed: "已验证 CONFIRMED", heldRatio: "HELD, CLAIMED {r}X THE TRACK", heldLog: "HELD, LOG FAILED",
     ownerFlat: "Owner, flat 4A", neighbourFlat: "Neighbour, flat 4B",
+  },
+  live: {
+    eyebrow: "REAL TIME, OR YOUR OWN DATA", title: "Live", intro: "Watch the engine take jobs as they arrive, or bring your own jobs, flight logs and messages and run the same rail over them.",
+    tabsAria: "Live modes", tabFeed: "Live feed", tabData: "Your data",
+    startLive: "Start live", processed: "{n} jobs processed", feedNote: "a new job every few seconds, until you stop",
+    bringTitle: "Bring a file", dropAria: "Drop a .json or .csv file, or click to choose one", dropHere: "Drop a file here", dropHint: ".json or .csv, up to 50 jobs", fileSize: "{kb} KB, ready to run",
+    loadSample: "Load sample", pickSample: "Choose one", noSamples: "No samples yet", downloadSample: "Download sample",
+    schemaTitle: "What the file holds", schema: [
+      ["jobs", "at least one. id, title, mu, pricePerMu, field, window, requester, distanceM"],
+      ["flights", "optional, one per job. jobId, trackM, seconds, swathM, claimedMu, batteryPct, altVar"],
+      ["messages", "optional. from, text, and jobId when it is the offer for that job"],
+      ["policy", "optional caps. perTxCap, dailyCap, maxPerHour, deviationPct, rateBand, allowlist, contacts, geofences"],
+      ["lease", "optional. total, rate, floor, balance"],
+      ["seed", "optional whole number; the same seed gives the same run"],
+      ["units", "yuan, mu and metres. A CSV holds the jobs table with the same column names"],
+    ] as [string, string][],
+    pasteTitle: "Or paste JSON", pastePlaceholder: "{ \"jobs\": [ { \"id\": \"j1\", \"title\": \"Spray 30 mu of rice\", \"mu\": 30, \"pricePerMu\": 12, \"field\": \"north-paddy\", \"window\": \"08:00-12:00\", \"requester\": \"Farmer Lin\" } ] }",
+    notAccepted: "Not accepted. Fix these and run again.", run: "Run on this data", empty: "Nothing to run. Drop a file, load a sample or paste JSON.",
+    badType: "{name} is not a .json or .csv file", badJson: "The JSON does not parse: {msg}", sampleFailed: "Could not load the sample: {msg}",
   },
   loading: { title: "Loading the field view", body: "A few seconds. The numbers above are already live.", posterAlt: "An agricultural drone spraying a rice field", posterLabel: "STILL VIEW ON PHONES" },
 };

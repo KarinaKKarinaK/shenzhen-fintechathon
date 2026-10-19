@@ -1,0 +1,12 @@
+{
+  "lang": "en",
+  "lease": { "total": 55000, "rate": 0.4, "floor": 30, "balance": 20000 },
+  "jobs": [
+    { "id": "honest-1", "title": "Spray 40 mu of rice, field north", "mu": 40, "pricePerMu": 5, "field": "field-north", "window": "today", "requester": "Farmer Lin" },
+    { "id": "faked-1", "title": "Spray 45 mu of maize, field south", "mu": 45, "pricePerMu": 5, "field": "field-south", "window": "today", "requester": "Farmer Chen" }
+  ],
+  "flights": [
+    { "jobId": "honest-1", "trackM": 9068, "seconds": 1511, "swathM": 3, "claimedMu": 40, "batteryPct": 22.4, "altVar": 0.25 },
+    { "jobId": "faked-1", "trackM": 3300, "seconds": 500, "swathM": 3, "claimedMu": 45, "batteryPct": 5.1, "altVar": 0.01 }
+  ]
+}

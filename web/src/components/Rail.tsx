@@ -11,6 +11,7 @@ const items: { href: string; label: TKey }[] = [
   { href: "/", label: "rail.home" },
   { href: "/app", label: "rail.dashboard" },
   { href: "/app/fleet", label: "rail.fleet" },
+  { href: "/app/live", label: "rail.live" },
   { href: "/app/evidence", label: "rail.evidence" },
 ];
 

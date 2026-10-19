@@ -101,6 +101,30 @@ export const T = {
     en: "{tasks} paid flights, one declined job, one faked log held, one slash by proof from the vendor bond{title}. Wallet {balance} yuan, pilot bond {pilot} of {min} yuan, vendor bond {vendor} yuan. The button can top the bond up toward the minimum.",
     zh: "{tasks} 次已付费飞行，一个任务被拒，一份伪造日志被冻结，一次凭证明从供应商保证金罚没{title}。钱包 {balance} 元，飞手保证金 {pilot} 元（门槛 {min} 元），供应商保证金 {vendor} 元。按钮可将保证金补足至门槛。",
   },
+  "done.custom": {
+    en: "{tasks} paid flights, {declined} declined, {held} logs held, {slashes} slashes by proof{title}. Wallet {balance} yuan, pilot bond {pilot} of {min} yuan, vendor bond {vendor} yuan.",
+    zh: "{tasks} 次已付费飞行，{declined} 个任务被拒，{held} 份日志被冻结，{slashes} 次凭证明罚没{title}。钱包 {balance} 元，飞手保证金 {pilot} 元（门槛 {min} 元），供应商保证金 {vendor} 元。",
+  },
+  "done.live": {
+    en: "Live feed closed after {jobs} jobs: {tasks} paid flights, {declined} declined, {slashes} slashes by proof{title}. Wallet {balance} yuan, pilot bond {pilot} of {min} yuan, vendor bond {vendor} yuan.",
+    zh: "实时流在 {jobs} 个任务后关闭：{tasks} 次已付费飞行，{declined} 个任务被拒，{slashes} 次凭证明罚没{title}。钱包 {balance} 元，飞手保证金 {pilot} 元（门槛 {min} 元），供应商保证金 {vendor} 元。",
+  },
+  "n.declinedCustom": {
+    en: "Declined: {title}, {mu} mu at {rate} yuan per mu leaves {margin} yuan, under the {rule} yuan reserve rule. The fee is back with the farmer. The numbers came from tools, the model only explained them.",
+    zh: "已拒绝：{title}，{mu} 亩，每亩 {rate} 元，仅剩 {margin} 元利润，低于 {rule} 元的保留规则。费用已退回农户。数字来自工具计算，模型只负责解释。",
+  },
+  "n.declinedRule": {
+    en: "Declined: {title}. The policy engine refused the job: {rules}. The fee is back with the farmer.",
+    zh: "已拒绝：{title}。策略引擎拒绝了该任务：{rules}。费用已退回农户。",
+  },
+  "n.noProof": {
+    en: "The policy engine blocked it and the intent sits in the log. No job is live yet, so no party can submit proof. The next accepted job brings the lender in.",
+    zh: "策略引擎已拦截，该意图留在日志中。目前没有进行中的任务，因此没有当事方可以提交证明。下一个被接受的任务会让出租方参与进来。",
+  },
+  "n.proofRefused": {
+    en: "The contract refused the proof: {msg}. The intent stays blocked in the log.",
+    zh: "合约拒绝了该证明：{msg}。该意图仍被拦截并留在日志中。",
+  },
   "done.titleMoved": { en: ", title transferred", zh: "，所有权已转移" },
   "done.none": { en: "", zh: "" },
   "log.intent": { en: "Intent {id} for {jobId} is in the log: {desc}. Hash {hash}. Signed by the drone key.", zh: "任务 {jobId} 的意图 {id} 已写入日志：{desc}。哈希 {hash}。由无人机密钥签名。" },

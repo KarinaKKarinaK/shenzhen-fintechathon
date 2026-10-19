@@ -6,6 +6,7 @@ import { keccak256 } from "viem";
 import { ADDR, isKeyed, recoverSigner } from "./keys";
 import type { Actor, Economics, Intent, Job, PolicyDecision, PolicyLine, Tier } from "./types";
 import { both, type TrKey, type TrVars } from "./i18n";
+import { recordDecision } from "./drift/monitor";
 
 export interface Policy {
   allowlist: Record<string, string>; // name -> address
@@ -203,6 +204,7 @@ export class PolicyEngine {
       b.spent = round(b.spent + amt);
       b.recent.push(Date.now());
     }
+    recordDecision(verdict, this.scope);
     return { intentId: intent.id, verdict, lines, signer };
   }
 }
