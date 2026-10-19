@@ -2,6 +2,7 @@
 import { captureDemoToken } from "./demoToken";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import Scene from "./SceneLoader";
 import { useRun } from "./useRun";
 import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PlanCard, PlanTable, PolicyCard, ProofCard, TelemetryCard, VendorBond } from "./Panels";
@@ -145,12 +146,19 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
         <span className="mono text-muted">{t("run.meta", { n: state.events.length, s: elapsed.toFixed(1), tx: state.txs.length })}</span>
       </div>
 
+      {/* The details slide open and closed; the tab content cross-fades. ScrollReveal stays out of it. */}
+      <AnimatePresence initial={false}>
       {open ? (
-        <div id="run-details" className="mt-4">
+        <motion.div key="details" id="run-details" data-no-reveal className="overflow-hidden"
+          initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+          transition={{ height: { duration: 0.5, ease: [0.22, 0.8, 0.24, 1] }, opacity: { duration: 0.3 } }}>
+          <div className="pt-4">
           <div role="tablist" aria-label={R.details} className="flex flex-wrap gap-2">
             {TABS.map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`btn ${tab === k ? "btn-red" : "btn-ghost"}`}>{R.tabs[k]}</button>)}
           </div>
           <p className="mt-2 text-sm text-muted">{R.tabNotes[tab]}</p>
+
+          <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }}>
 
           {tab === "money" ? (
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -183,14 +191,17 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.agentsTitle}</h2><div className="scroll-thin flex max-h-[520px] flex-col overflow-auto pr-1"><AgentFeed messages={state.messages} gates={state.gates} understood={state.understood} frozen={frozen} /></div></section>
               <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.chainFeed}</h2><div className="scroll-thin max-h-[520px] overflow-auto pr-1"><ChainFeed txs={state.txs} /></div></section>
-              <aside className="aurora aurora-black card-dark flex flex-col p-4" style={{ maxHeight: 600 }}>
-                <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">{R.eventStream}</h2><Link href="/app/evidence" className="mono text-white/60 underline decoration-gold">{R.evidenceLink}</Link></div>
-                <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/55 p-3 backdrop-blur-sm"><EventStream events={state.events} dark /></div>
-              </aside>
+              <section className="card flex flex-col p-4">
+                <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold">{R.eventStream}</h2><Link href="/app/evidence" className="link text-xs">{R.evidenceLink}</Link></div>
+                <div className="scroll-thin max-h-[520px] overflow-auto pr-1"><EventStream events={state.events} /></div>
+              </section>
             </div>
           ) : null}
-        </div>
+          </motion.div>
+          </div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

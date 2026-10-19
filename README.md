@@ -1,4 +1,4 @@
-# Zishi 自食其力, the robot that pays for itself
+# Zishi 自食其力, software that lets machines pay for themselves
 
 [![CI](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg)](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml)
 

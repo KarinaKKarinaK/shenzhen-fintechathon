@@ -11,7 +11,7 @@ const chakra = Chakra_Petch({ subsets: ["latin"], variable: "--font-chakra", wei
 
 export const metadata: Metadata = {
   title: "Zishi 自食其力",
-  description: "Zishi (自食其力), the robot that pays for itself. A wallet for machines that earn, pay and post a bond.",
+  description: "Zishi (自食其力), software that lets machines pay for themselves: a wallet for machines that earn, pay and post a bond.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

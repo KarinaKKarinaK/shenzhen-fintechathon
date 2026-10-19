@@ -61,16 +61,11 @@ function GateStrip({ g }: { g: Gate }) {
   const { d } = useLang();
   const P = d.panels;
   return (
-    <div className="mt-1.5 border-t border-line/70 pt-1.5 text-[11px]">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-muted">{P.gate}</span>
-        <span className={`pill !px-1.5 !py-0.5 !text-[9px] ${gateTone(g.action)}`}>{g.action ? (P.gateActions as Record<string, string>)[g.action] ?? g.action : P.pending}</span>
-        {(g.categories ?? []).map((c) => <span key={c} className="rounded-sm bg-paper-2 px-1.5 py-0.5 text-ink-2">{c}</span>)}
-        {g.reason ? <span className="text-muted">{g.reason}</span> : null}
-        {g.framed ? <button type="button" onClick={() => setOpen(!open)} className="ml-auto underline decoration-gold text-ink-2">{open ? P.hide : P.how}</button> : null}
-      </div>
-      {open && g.framed ? <pre className="mono mt-1.5 whitespace-pre-wrap break-all rounded-sm bg-ink p-2 text-[10px] text-white/85">{(g.preamble ? g.preamble + "\n" : "") + g.framed}</pre> : null}
-    </div>
+    <>
+      <span>{P.gate}: <span className={g.action === "pass" ? "text-gold-deep" : "text-red"}>{g.action ? (P.gateActions as Record<string, string>)[g.action] ?? g.action : P.pending}</span></span>
+      {g.framed ? <button type="button" onClick={() => setOpen(!open)} className="underline decoration-gold">{open ? P.hide : P.how}</button> : null}
+      {open && g.framed ? <pre className="mono mt-1 basis-full whitespace-pre-wrap break-all rounded-sm bg-paper-2 p-2 text-[10px] text-ink-2">{(g.preamble ? g.preamble + "\n" : "") + g.framed}</pre> : null}
+    </>
   );
 }
 
@@ -80,74 +75,75 @@ function UnderstoodLine({ u }: { u: Understood }) {
   const by = u.by ?? u.source ?? "rules";
   const addr = u.hadAddress ?? u.addressInText;
   return (
-    <div className="mt-1.5 border-t border-line/70 pt-1.5 text-[11px] text-ink-2">
+    <span className="text-ink-2">
       <span className="font-semibold text-ink">{P.understood}</span> {u.task ?? P.task}{u.window ? `, ${u.window}` : ""}{u.fee !== undefined ? t("panels.fee", { fee: u.fee }) : ""}{u.geofence ? t("panels.geofence", { g: u.geofence }) : ""}
       <span className="ml-1.5 rounded-sm bg-paper-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("panels.by", { who: by === "model" ? P.model : P.rules })}</span>
       {u.payeeName === null && addr ? <span className="ml-1.5 rounded-sm bg-red-soft px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-red">{P.addrIgnored}</span> : null}
-    </div>
+    </span>
   );
 }
 
-// The four facts a judge reads first. The rest sit behind a link; every label is a human word.
-const FACT_FIRST = ["fee", "instalment", "margin", "reserveRule"];
+// The drone's reply is checked against the numbers the engine computed. The mark says so; the numbers open on click.
 function Facts({ m }: { m: MessageEv }) {
-  const { d, t } = useLang();
-  const [more, setMore] = useState(false);
+  const { d } = useLang();
+  const [open, setOpen] = useState(false);
   const P = d.panels;
   const labels = P.factLabels as Record<string, string>;
   const all = Object.entries(m.facts ?? {});
   if (!all.length && m.grounded === undefined) return null;
-  const first = all.filter(([k]) => FACT_FIRST.includes(k)).slice(0, 4);
-  const shown = more ? all : first.length ? first : all.slice(0, 4);
-  const rest = all.length - shown.length;
   const val = (v: string | number | boolean) => (typeof v === "boolean" ? (v ? d.judge.yes : d.judge.no) : String(v));
   return (
-    <div className="mt-1.5 border-t border-white/15 pt-1.5 text-[11px]">
-      <div className="flex flex-wrap items-center gap-1">
-        {shown.map(([k, v]) => <span key={k} className="rounded-sm bg-white/12 px-1.5 py-0.5 text-white/90"><span className="text-white/60">{labels[k] ?? k}</span> {val(v)}</span>)}
-        {rest > 0 || more ? <button type="button" onClick={() => setMore(!more)} className="text-white/60 underline decoration-gold">{more ? P.factsLess : t("panels.factsMore", { n: rest })}</button> : null}
-      </div>
-      <div className="mt-1 flex items-center gap-2 text-white/60">
-        <span>{t("panels.factsFrom", { src: m.source === "model" ? P.model : P.template })}</span>
-        {m.grounded === false ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[10px] uppercase text-white">{P.rejected}</span> : <span className="text-gold" aria-label={P.grounded}>&#10003; {P.grounded}</span>}
-      </div>
-    </div>
+    <>
+      {m.grounded === false ? <span className="text-red">{P.rejected}</span> : <span className="text-gold-deep">&#10003; {P.grounded}</span>}
+      {all.length ? <button type="button" onClick={() => setOpen(!open)} className="underline decoration-gold">{open ? P.factsLess : P.numbers}</button> : null}
+      {open ? <span className="basis-full">{all.map(([k, v]) => <span key={k} className="mr-3 whitespace-nowrap"><span className="text-muted">{labels[k] ?? k}</span> <span className="text-ink">{val(v)}</span></span>)}</span> : null}
+    </>
   );
 }
 
+const roleTone: Record<string, string> = { machine: "text-gold-deep", requester: "text-red", system: "text-muted", lender: "text-ink-2", operator: "text-ink-2", hunter: "text-ink-2", vendor: "text-ink-2" };
+
+// A transcript: who on the left, what they said on the right, one quiet line of checks under it.
+// The log delivers each intent to every party of the job; that shows once, with who received it.
 export function AgentFeed({ messages, gates = {}, understood = {}, frozen = false }: { messages: MessageEv[]; gates?: Record<number, Gate>; understood?: Record<string, Understood>; frozen?: boolean }) {
   const { d, t } = useLang();
   const P = d.panels;
-  const who = P.who as Record<string, string>;
+  const who = P.whoShort as Record<string, string>;
   const roles = P.roles as Record<string, string>;
   const roleOf = (a: string) => roles[a === "requester" ? "farmer" : a === "operator" ? "pilot" : a] ?? a;
   const lastReq = messages.map((m, i) => (m.from === "requester" ? i : -1)).filter((i) => i >= 0).pop();
   const u = understood.last;
-  // The log delivers one intent to every party of the job. Show it once, with who received it.
   const groups: { m: MessageEv; i: number; to: string[] }[] = [];
   messages.forEach((m, i) => {
     const g = groups[groups.length - 1];
     if (g && g.m.from === m.from && g.m.text === m.text) { if (!g.to.includes(m.to)) g.to.push(m.to); return; }
     groups.push({ m, i, to: [m.to] });
   });
+  if (!messages.length) return <div className="text-sm text-muted">{P.noMessages}</div>;
   return (
-    <div className="flex flex-col gap-2">
-      <AnimatePresence initial={false}>
-        {groups.map(({ m, i, to }) => (
-          <motion.div key={`${m.at}-${i}`} initial={{ opacity: 0, x: m.from === "machine" ? 10 : -10 }} animate={{ opacity: 1, x: 0 }} className={`max-w-[94%] rounded-2xl px-3 py-2 text-sm ${m.from === "machine" ? "self-end bg-ink text-white" : "self-start bg-paper-2"}`}>
-            <div className={`mb-0.5 flex items-center gap-2 text-[11px] ${m.from === "machine" ? "text-gold-soft" : "text-muted"}`}>
-              <span>{who[m.from] ?? m.from}{m.untrusted ? P.untrusted : ""}{to.length > 1 ? t("panels.toMany", { who: to.map(roleOf).join(", ") }) : ""}</span>
-              {m.from === "machine" && frozen ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">{P.frozen}</span> : null}
+    <ol className="flex flex-col">
+      {groups.map(({ m, i, to }) => {
+        const sys = m.from === "system";
+        const hasMeta = m.untrusted || m.from === "machine" || (sys && to.length > 1) || (i === lastReq && u);
+        return (
+          <motion.li key={`${m.at}-${i}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-[84px_1fr] gap-3 border-b border-line/60 py-2.5 last:border-b-0">
+            <span className={`pt-0.5 text-[11px] font-semibold uppercase tracking-wide ${roleTone[m.from] ?? "text-ink-2"}`}>{who[m.from] ?? m.from}</span>
+            <div className="min-w-0">
+              <p className={sys ? "text-xs leading-relaxed text-muted" : "text-sm leading-relaxed text-ink"}>{m.text}{m.from === "machine" && frozen ? <span className="ml-2 rounded-sm bg-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">{P.frozen}</span> : null}</p>
+              {hasMeta ? (
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
+                  {m.untrusted ? <span>{P.untrustedShort}</span> : null}
+                  {m.untrusted && gates[i] ? <GateStrip g={gates[i]} /> : null}
+                  {i === lastReq && u ? <UnderstoodLine u={{ ...u, hadAddress: u.hadAddress ?? /0x[a-fA-F0-9]{40}/.test(m.text) }} /> : null}
+                  {m.from === "machine" ? <Facts m={m} /> : null}
+                  {sys && to.length > 1 ? <span>{t("panels.toMany", { who: to.map(roleOf).join(", ") }).replace(/^[ ，,]+/, "")}</span> : null}
+                </div>
+              ) : null}
             </div>
-            {m.text}
-            {m.untrusted && gates[i] ? <GateStrip g={gates[i]} /> : null}
-            {i === lastReq && u ? <UnderstoodLine u={{ ...u, hadAddress: u.hadAddress ?? /0x[a-fA-F0-9]{40}/.test(m.text) }} /> : null}
-            {m.from === "machine" ? <Facts m={m} /> : null}
-          </motion.div>
-        ))}
-      </AnimatePresence>
-      {messages.length === 0 ? <div className="text-sm text-muted">{P.noMessages}</div> : null}
-    </div>
+          </motion.li>
+        );
+      })}
+    </ol>
   );
 }
 

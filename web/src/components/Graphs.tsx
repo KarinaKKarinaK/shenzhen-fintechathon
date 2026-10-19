@@ -138,39 +138,50 @@ export function UnitEconomics({ eco, title }: { eco?: Econ; title?: string }) {
   );
 }
 
-const typeTone: Record<string, string> = { chain: "bg-gold-soft text-red-deep", policy: "bg-paper-2 text-slate", intent: "bg-gold-soft text-ink", "agent.message": "bg-paper-2 text-ink-2", machine: "bg-paper-2 text-ink-2", job: "bg-gold-soft text-ink", attack: "bg-red-soft text-red", narration: "bg-paper-2 text-muted", button: "bg-red text-white", done: "bg-ink text-white", gate: "bg-ink text-gold", proof: "bg-red text-white", plan: "bg-gold text-ink", economics: "bg-gold-soft text-ink", solvency: "bg-gold-soft text-ink", telemetry: "bg-paper-2 text-slate", understood: "bg-paper-2 text-ink" };
+const typeTone: Record<string, string> = { chain: "text-gold-deep", policy: "text-ink-2", intent: "text-ink-2", "agent.message": "text-muted", machine: "text-muted", job: "text-ink-2", attack: "text-red", narration: "text-muted", button: "text-red", done: "text-ink", gate: "text-ink-2", proof: "text-red", plan: "text-gold-deep", economics: "text-gold-deep", solvency: "text-gold-deep", telemetry: "text-ink-2", understood: "text-ink-2", log: "text-muted" };
 
-// The raw event line. Event types, ids and field names are code and stay English.
+const money = (v?: number) => (typeof v === "number" ? `¥${Number(v.toFixed(2)).toLocaleString("en-US")}` : "");
+
+// One readable line per event. Ids and field names stay English; amounts read as money.
 function lineFor(e: EngineEvent): string {
   switch (e.t) {
-    case "chain": return `${e.tx.kind} ${e.tx.amount} ${e.tx.hash.slice(0, 10)} blk ${e.tx.block}${e.tx.simulated ? " sim" : ""}`;
-    case "policy": return `${e.decision.intentId} ${e.decision.verdict} ${e.decision.lines.filter(l => !l.ok).map(l => l.rule).join(",") || "all rules pass"}`;
-    case "intent": return `${e.intent.id} ${e.intent.kind} ${e.intent.actor} ${e.intent.amount ?? ""} ${e.intent.signature.slice(0, 12)}`;
-    case "agent.message": return `${e.from}>${e.to} ${e.untrusted ? "[untrusted] " : ""}${e.text.slice(0, 70)}`;
-    case "machine": return `${e.state.id} ${e.state.status} bal ${e.state.balance.toFixed(1)} bond ${e.state.bond.toFixed(0)} lease ${e.state.leaseBalance.toFixed(1)} pos ${e.state.position.x.toFixed(1)},${e.state.position.z.toFixed(1)}`;
-    case "job": return `${e.job.id} ${e.job.status} fee ${e.job.fee}`;
-    case "attack": return `${e.blocked ? "BLOCKED" : "PASSED"} ${e.where} ${e.name.slice(0, 50)}`;
-    case "button": return `${e.waiting ? "WAIT" : "PRESSED"} ${e.what}`;
-    case "done": return e.summary.slice(0, 90);
-    case "narration": return e.text.slice(0, 90);
+    case "chain": return `${e.tx.kind.replace(/_/g, " ")} ${e.tx.kind === "title" ? "" : money(e.tx.amount)} · block ${e.tx.block}${e.tx.simulated ? " · sim" : ""}`.replace("  ", " ");
+    case "policy": return `${e.decision.intentId} ${e.decision.verdict}${e.decision.lines.some((l) => !l.ok) ? `: ${e.decision.lines.filter((l) => !l.ok).map((l) => l.rule).join(", ")}` : ""}`;
+    case "intent": return `${e.intent.id} signed: ${e.intent.kind.replace(/_/g, " ")} ${money(e.intent.amount)}`.trim();
+    case "agent.message": return `${e.from} to ${e.to}: ${e.text}`;
+    case "machine": return `${e.state.status}, balance ${money(e.state.balance)}, bond ${money(e.state.bond)}`;
+    case "job": return `${e.job.id} ${e.job.status}, fee ${money(e.job.fee)}`;
+    case "attack": return `${e.blocked ? "blocked" : "got through"}: ${e.name}`;
+    case "button": return `${e.waiting ? "waiting for" : "pressed"}: ${e.what.replace(/_/g, " ")}`;
+    case "done": return e.summary;
+    case "narration": return e.text;
     default: {
       const r = e as unknown as Record<string, unknown>;
       const { t: _t, at: _at, ...rest } = r; void _t; void _at;
-      return JSON.stringify(rest).slice(0, 90);
+      return JSON.stringify(rest);
     }
   }
 }
 
-export function EventStream({ events, dark = false }: { events: EngineEvent[]; dark?: boolean }) {
+// Newest first. A transaction is logged as it is sent, confirmed and finalised; it shows once.
+export function EventStream({ events }: { events: EngineEvent[]; dark?: boolean }) {
   const { d } = useLang();
-  const last = events.slice(-60).reverse();
+  const seen = new Set<string>();
+  const last = events.slice(-120).reverse().filter((e) => {
+    if (e.t !== "chain") return true;
+    if (seen.has(e.tx.hash)) return false;
+    seen.add(e.tx.hash); return true;
+  }).slice(0, 60);
   return (
-    <ul className="mono flex flex-col gap-1">
-      {last.map((e, i) => {
-        const ts = new Date(e.at).toISOString().slice(11, 23);
-        return (<li key={`${e.at}-${i}`} className="flex items-start gap-2 leading-snug"><span className={`shrink-0 ${dark ? "text-white/40" : "text-muted"}`}>{ts}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeTone[e.t] ?? "bg-paper-2"}`}>{e.t}</span><span className={`break-all ${dark ? "text-white/85" : "text-ink-2"}`}>{lineFor(e)}</span></li>);
-      })}
-      {!last.length ? <li className={dark ? "text-white/50" : "text-muted"}>{d.graphs.waiting}</li> : null}
+    <ul className="flex flex-col text-xs">
+      {last.map((e, i) => (
+        <li key={`${e.at}-${i}`} className="grid grid-cols-[58px_74px_1fr] items-baseline gap-2 border-b border-line/50 py-1.5 last:border-b-0">
+          <span className="mono text-muted">{new Date(e.at).toISOString().slice(11, 19)}</span>
+          <span className={`truncate font-semibold ${typeTone[e.t] ?? "text-ink-2"}`}>{e.t.replace("agent.", "")}</span>
+          <span className="truncate text-ink-2" title={lineFor(e)}>{lineFor(e)}</span>
+        </li>
+      ))}
+      {!last.length ? <li className="text-muted">{d.graphs.waiting}</li> : null}
     </ul>
   );
 }

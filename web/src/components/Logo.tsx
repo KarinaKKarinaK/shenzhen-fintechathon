@@ -8,7 +8,7 @@ export function Wordmark({ h = 22 }: { h?: number }) {
   return (
     <span className="flex flex-col leading-tight" style={{ fontSize: h * 0.8 }}>
       <span className="font-bold text-ink">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
-      <span className="text-[12px] text-ink-2"><span lang="zh-Hans" className="cjk-serif">自食其力</span>, the robot that pays for itself</span>
+      <span className="text-[12px] text-ink-2"><span lang="zh-Hans" className="cjk-serif">自食其力</span>, software that lets machines pay for themselves</span>
     </span>
   );
 }
