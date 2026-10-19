@@ -142,7 +142,7 @@ function Tower({ pos, label, color = INK, value }: { pos: [number, number, numbe
       <mesh position={[0, 2.0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.7, 6]} /><meshStandardMaterial color={INK} /></mesh>
       <mesh position={[0, 2.4, 0]}><sphereGeometry args={[0.14, 14, 14]} /><meshStandardMaterial color={TURQ_SOFT} emissive={TURQ} emissiveIntensity={2.5} /></mesh>
       <pointLight ref={l} position={[0, 2.4, 0]} color={TURQ} distance={7} intensity={2.5} />
-      <Html position={[0, 3.1, 0]} center distanceFactor={11} style={{ pointerEvents: "none" }}>
+      <Html position={[0, 3.1, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ background: "rgba(255,255,255,0.92)", color: INK, padding: "6px 10px", borderRadius: 12, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", border: "1px solid rgba(27,42,42,0.08)" }}>
           <div style={{ fontWeight: 700 }}>{label}</div>{value ? <div style={{ color: "#45585a" }}>{value}</div> : null}
         </div>
@@ -265,7 +265,7 @@ function Flat({ pos, label, active, windows }: { pos: [number, number, number]; 
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[3.4, 2.6]} /><meshStandardMaterial color={active ? "#d6ece7" : "#efe8d6"} roughness={0.9} /></mesh>
       <mesh position={[0.9, 0.3, -0.6]} castShadow><boxGeometry args={[1.1, 0.6, 0.7]} /><meshStandardMaterial color={active ? TURQ_SOFT : "#cbbfa3"} roughness={0.7} /></mesh>
       <mesh position={[-0.9, 0.45, 0.4]} castShadow><cylinderGeometry args={[0.28, 0.28, 0.9, 16]} /><meshStandardMaterial color="#d8cfb8" roughness={0.8} /></mesh>
-      <Html position={[0, 2.6, 0]} center distanceFactor={11} style={{ pointerEvents: "none" }}>
+      <Html position={[0, 2.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
         <div style={{ background: active ? TURQ : "rgba(255,255,255,0.92)", color: active ? "white" : INK, padding: "5px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)" }}>{label}</div>
       </Html>
     </group>
