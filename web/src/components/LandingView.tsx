@@ -30,7 +30,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
     [L.holds.chain, L.holds.chainLine],
   ];
   const stats = [String(attackN), "3", "0", "2"];
-  // Marks the page so globals.css can drop main's padding and stop the overscroll bounce.
+  // Marks the page so globals.css can drop main's padding (the build drops html:has rules).
   useEffect(() => {
     document.documentElement.classList.add("on-landing");
     return () => document.documentElement.classList.remove("on-landing");

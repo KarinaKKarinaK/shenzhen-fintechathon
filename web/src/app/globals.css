@@ -319,22 +319,20 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 @media (max-width: 480px) { .topbar .links a span { display: none; } .topbar .links a { padding: 0 0.7rem; } }
 
 /* Standard top navigation. The landing pulls up under it; every other page starts below it. */
-.page-main { padding: 5.5rem 1rem 1.5rem; }
-@media (min-width: 768px) { .page-main { padding: 6rem 1.5rem 1.5rem; } }
+.page-main { padding: 5rem 1rem 1.5rem; }
+@media (min-width: 768px) { .page-main { padding: 5.5rem 1.5rem 1.5rem; } }
 
 
 /* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
 body:has(.landing-root) .page-main { padding: 0 !important; }
-/* Pulling past the top of the landing must never show the cream page base above the photo (macOS
-   rubber band). No bounce, and whatever does show behind the page is the photo's own dark.
+/* A bounce shows the page base, the same colour as the top bar, so it is seamless in both themes.
    LandingView sets html.on-landing; the build drops html:has() and body:has() rules. */
-html.on-landing { background: #1f1a17; overscroll-behavior-y: none; }
-html.on-landing body { background-color: var(--color-paper); overscroll-behavior-y: none; }
+html.on-landing body { background-color: var(--color-paper); }
 html.on-landing .page-main { padding: 0; }
 html.on-landing .landing-root { margin: 0; }
 /* Fallback where :has is missing: pull the landing out over main's padding, edge to edge. */
-.landing-root { margin: -5.5rem -1rem -1.5rem; }
-@media (min-width: 768px) { .landing-root { margin: -6rem -1.5rem -1.5rem; } }
+.landing-root { margin: -5rem -1rem -1.5rem; }
+@media (min-width: 768px) { .landing-root { margin: -5.5rem -1.5rem -1.5rem; } }
 body:has(.landing-root) .landing-root { margin: 0; }
 .landing-root > .duotone:first-child { min-height: 100svh; width: 100%; }
 /* The photo fades into the page instead of ending on a hard edge. Same token in light and dark. */
@@ -352,17 +350,20 @@ body:has(.landing-root) .landing-root { margin: 0; }
 .btn-red:hover { transform: translateY(-1px); }
 
 
-/* Floating top bar: glass in the theme's own colour, the same over the photo and on every page. */
-.navbar-glass { background: rgba(251,250,247,0.94); backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); box-shadow: 0 10px 30px -18px rgba(31,26,23,0.55), inset 0 0 0 1px rgba(201,162,39,0.35); }
-:root[data-theme="dark"] .navbar-glass { background: rgba(20,18,16,0.9); box-shadow: 0 10px 30px -14px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(201,162,39,0.28); }
-.navbar-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, var(--color-seal), var(--color-gold)); transition: transform 80ms linear; }
-.navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.4rem 0.85rem; }
-.navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
-.navbar nav a[aria-current="page"] { color: #fff; }
-.navbar nav a[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8); }
-.navbar nav a:not([aria-current="page"]):hover::before { opacity: 0.14; transform: scale(1); background: var(--color-gold); }
+/* Top bar, after the reference site: full width, the page's own base colour (near white in light,
+   near black in dark) so a bounce above it is seamless, hairline underneath, small uppercase links
+   that darken (or brighten) when active, a gradient progress line on the bottom edge. */
+.navbar { background: var(--color-paper); border-bottom: 1px solid rgba(31,26,23,0.1); transform: translateZ(0); will-change: transform; }
+:root[data-theme="dark"] .navbar { border-bottom-color: rgba(255,255,255,0.09); }
+.navbar .navlink { font-size: 11.5px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-muted); transition: color 150ms; }
+.navbar .navlink:hover, .navbar .navlink[aria-current="page"] { color: var(--color-ink); }
+.navbar .navbar-brand { color: var(--color-ink); }
+.navbar-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, var(--color-seal), var(--color-gold)); transition: transform 80ms linear; }
 .navbar .cjk-serif { letter-spacing: 0.04em; }
-@media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding: 0.35rem 0.5rem; font-size: 13px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 32px; height: 32px; } }
+.navbar-right .lang-toggle, .navbar-right .theme-toggle { height: 34px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--color-line); }
+.navbar-right .lang-toggle { width: auto; padding: 0 0.7rem; }
+.navbar-right .theme-toggle { width: 34px; }
+@media (max-width: 640px) { .navbar nav { gap: 0.9rem; justify-content: flex-start; } }
 
 /* Scroll reveal (components/ScrollReveal.tsx): rise and fade in once, siblings in turn. */
 .rv { opacity: 0; transform: translateY(22px); transition: opacity 650ms cubic-bezier(.2,.7,.2,1), transform 750ms cubic-bezier(.2,.7,.2,1); }
