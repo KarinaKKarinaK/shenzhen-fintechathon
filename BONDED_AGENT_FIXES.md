@@ -130,6 +130,16 @@ Already good:
 
 `slashByProof` takes the signed `intentHash` and, separately, an `evidence` blob chosen by the submitter. It checks that the agent signed the hash, then checks the rule against the evidence, but never checks that the evidence is what the agent signed. So anyone holding any genuine signed intent, even a perfectly legal payment, can submit it with made-up evidence (a payee off the allowlist, `confirmed = false`, `cover = false`) and slash the bond. Each intent can be used once, so every signed intent the agent ever makes is one free slash for an attacker. This is exactly "anyone can just say this never happened". Fix: the evidence must be the intent itself. The submitter passes the full typed intent, the contract hashes it, checks the hash matches the signature and the log, and reads payee, amount and fence from that intent. Claims about confirmation or cover must be read from `JobBoard` state, never taken from the submitter.
 
+Two sources of truth, both already on chain, and the submitter supplies neither:
+
+| What is checked | Read from |
+|---|---|
+| What the agent tried to do: payee, amount, job id, location | The signed intent itself |
+| What was allowed: allowlist, caps, geofence, fee, verifier, window | The agreement on chain: the job registered in `JobBoard` between the requester, the operator and the agent, plus the agent's rules in `Bond` |
+| What actually happened: confirmed, released, instalment paid | `JobBoard` and `Lease` state |
+
+The submitter only points: "intent 57 against job 12". The contract compares the two records itself. A violation is a mismatch between what the agent signed and what the agreement allowed.
+
 ### 11. New: a new machine can never start
 
 `Bond.covers` requires the balance to be at least the minimum. A new machine's bond starts at zero and only fills from confirmed jobs, but `JobBoard.start` refuses any job until `covers` is true. So with a minimum above zero, nothing ever starts. Fix: drop the minimum from `covers` and let the exposure check alone scale job size, with a small floor, and keep the minimum only for being listed on the board or for a better rate.
