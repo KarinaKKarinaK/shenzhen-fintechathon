@@ -5,15 +5,15 @@ import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
 
 const uses = [
-  { who: "Delivery fleets", line: "A thousand drones with automatic repayment and a compliance proof per machine.", tag: "Fleet" },
-  { who: "Small factories", line: "A robot arm that repays its lease per verified part. Frozen on tampered data.", tag: "Factory" },
-  { who: "Agricultural drone pilots", line: "A drone that pays for itself one mu at a time. 200,000 pilots with nothing to pledge but the machine.", tag: "Demo" },
-  { who: "A household with a humanoid", line: "Lend the robot to the neighbour. The fee locks, the fence holds, the bond pays if a rule breaks.", tag: "Individual" },
-  { who: "Software agents", line: "An agent must post a bond before it may pay. Jailbroken means slashed.", tag: "Agent" },
+  { who: "Delivery fleets", line: "A thousand drones, automatic repayment.", tag: "Fleet" },
+  { who: "Small factories", line: "A robot arm that repays per verified part.", tag: "Factory" },
+  { who: "Agricultural drone pilots", line: "A drone that pays for itself one mu at a time.", tag: "Demo" },
+  { who: "A household with a humanoid", line: "Lend the robot next door. The bond pays if a rule breaks.", tag: "Individual" },
+  { who: "Software agents", line: "No bond, no payment. Jailbroken means slashed.", tag: "Agent" },
 ];
-const requirements = ["Permission hierarchy: four tiers, a physical button on top", "Injection defense: every message is data, a judge gate, payees never from text", "Hallucination prevention: every number from a tool", "Intent understanding: plain language to a signed typed intent", "Task planning: price, route, schedule, reserve rule", "On-chain execution: bond, job and lease contracts, one hash per step"];
-const scoring = [["40", "Task completion", "Paid work end to end, no human, one hash per step"], ["30", "Security", "Bond slashed by proof, gate, policy engine, 20 attacks live"], ["30", "Innovation", "Machines that earn, pay and own themselves"], ["+5", "On-chain", "Three contracts on a public testnet"]];
-const firsts = ["An agent that loses its own money on proof of a violation", "Two agents with opposite incentives transacting", "A machine as the borrower, title transfer on chain", "The bond is earned, not posted", "Proof of solvency read from chain before every task", "A physical button as the top permission tier"];
+const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Plans its own work", "Price, route, schedule, reserve rule"], ["One hash per step", "Bond, job and lease contracts"]];
+const pillars = [["Finishes the job", "End to end, no human in the loop"], ["Holds under attack", "Slashed by proof, 20 attacks live"], ["Nothing like it", "Machines that own themselves"], ["Real on chain", "Three contracts, verifiable hashes"]];
+const firsts = ["An agent that loses its own money on proof", "Two agents with opposite incentives", "A machine as the borrower", "A bond that is earned, not posted", "Solvency proven before every task", "A physical button on top"];
 
 export default function Home() {
   return (
@@ -27,7 +27,7 @@ export default function Home() {
           <div className="pointer-events-auto max-w-2xl bg-white/85 p-6 backdrop-blur-md md:p-8" style={{ borderLeft: "4px solid #c8102e" }}>
             <div className="tech mb-3 text-[11px] tracking-[0.25em] text-red">机信 MACHINE CREDIT</div>
             <h1 className="display text-4xl md:text-6xl">Machines that earn, pay and post a bond.</h1>
-            <p className="mt-4 max-w-md text-base text-ink-2">A wallet standard for drones, humanoids and agents. Paid per verified unit of work, slashed on proof, owned once the lease is paid.</p>
+            <p className="mt-4 max-w-md text-base text-ink-2">Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.</p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link href="/app/fleet" className="btn btn-red">Watch a drone pay off its lease</Link>
               <Link href="/app/evidence" className="btn btn-ghost">Verify it yourself</Link>
@@ -42,7 +42,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-3 text-center">
           <Mark size={84} />
           <div className="display text-3xl md:text-4xl">JiXin, machine credit</div>
-          <p className="max-w-lg text-sm text-white/80">A wallet that puts the machine's own money at risk, so a lender can trust a drone, a robot or an agent with a loan. Built for the WeBank panel in WeBank's own vocabulary.</p>
+          <p className="max-w-md text-sm text-white/80">The machine's own money at risk, so a lender can trust it with a loan.</p>
         </div>
       </section>
 
@@ -57,17 +57,17 @@ export default function Home() {
 
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="card p-5">
-          <h2 className="display text-2xl">What the competition requires</h2>
-          <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">{requirements.map((r) => <li key={r} className="cut-sm bg-paper-2 px-3 py-2 text-sm text-ink-2">{r}</li>)}</ul>
+          <h2 className="display text-2xl">Safe by design</h2>
+          <ul className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">{strengths.map(([t, b]) => <li key={t} className="cut-sm hover-lift bg-paper-2 px-3 py-2"><div className="text-sm font-bold">{t}</div><div className="text-xs text-ink-2">{b}</div></li>)}</ul>
         </div>
         <div className="aurora aurora-gold card p-5 text-ink">
-          <h2 className="display text-2xl">How it scores</h2>
-          <ul className="mt-3 grid grid-cols-2 gap-2">{scoring.map(([w, n, h]) => <li key={n} className="cut-sm bg-white/88 p-3 backdrop-blur"><div className="kpi text-red">{w}</div><div className="mt-1 text-sm font-bold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
+          <h2 className="display text-2xl">Why it holds up</h2>
+          <ul className="mt-3 grid grid-cols-2 gap-2">{pillars.map(([n, h], i) => <li key={n} className="cut-sm hover-lift bg-white/88 p-3 backdrop-blur"><div className="tech text-[10px] tracking-[0.2em] text-red">{String(i + 1).padStart(2, "0")}</div><div className="mt-1 text-sm font-bold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
         </div>
       </section>
 
       <section className="aurora card-dark cut mt-4 p-6 text-white">
-        <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="display text-2xl">What no other entry has</h2><span className="tech text-[11px] tracking-[0.2em] text-white/70">ABOUT 150 PUBLIC ENTRIES READ</span></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="display text-2xl">Only here</h2><span className="tech text-[11px] tracking-[0.2em] text-white/70">SIX THINGS NOBODY ELSE BUILT</span></div>
         <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">{firsts.map((f) => <li key={f} className="cut-sm bg-white/10 px-3 py-2 text-sm backdrop-blur">{f}</li>)}</ul>
         <div className="mt-5 flex gap-2"><Link href="/app" className="btn btn-gold">Open mission control</Link><a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "white" }}>Design and research</a></div>
       </section>

@@ -76,7 +76,7 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; }
 .rail a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
 .rail a[aria-current="page"] { background: var(--color-red); color: white; }
 .rail a[aria-current="page"]::after { content: ""; position: absolute; right: -14px; top: 50%; width: 6px; height: 6px; transform: translateY(-50%) rotate(45deg); background: var(--color-gold); }
-.rail a .tip { position: absolute; left: 56px; top: 50%; transform: translateY(-50%); background: var(--color-ink); color: white; font-size: 11px; padding: 4px 8px; border-radius: 2px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 120ms; font-family: var(--font-tech); letter-spacing: 0.05em; text-transform: uppercase; }
+.rail a .tip { position: absolute; z-index: 80; left: 60px; top: 50%; transform: translateY(-50%); background: var(--color-ink); color: white; font-size: 11px; padding: 4px 8px; border-radius: 2px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 120ms; font-family: var(--font-tech); letter-spacing: 0.05em; text-transform: uppercase; }
 .rail a:hover .tip, .rail a:focus-visible .tip { opacity: 1; }
 
 .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; font-weight: 700; font-size: 0.85rem; font-family: var(--font-tech); letter-spacing: 0.04em; text-transform: uppercase; transition: transform 120ms, background 160ms, box-shadow 160ms; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
@@ -144,3 +144,10 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; }
 .card.aurora, .card-dark.aurora { background: transparent; }
 .aurora-gold { color: var(--color-ink); }
 .aurora-gold .text-muted, .aurora-cream .text-muted { color: var(--color-ink-2); }
+
+.tile, .card { transition: transform 160ms ease, box-shadow 160ms ease; }
+a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -18px rgba(200,16,46,0.35); }
+.stage { position: relative; }
+.stage[data-on="true"] { background: var(--color-red); color: white; }
+.stage[data-on="true"] .mono, .stage[data-on="true"] .text-muted, .stage[data-on="true"] .text-ink-2 { color: rgba(255,255,255,0.8); }
+.stage[data-done="true"]::after { content: ""; position: absolute; right: 8px; top: 8px; width: 8px; height: 8px; background: var(--color-gold); transform: rotate(45deg); }

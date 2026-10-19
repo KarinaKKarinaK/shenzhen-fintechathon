@@ -114,13 +114,13 @@ export async function* neighbour(opts: { fast?: boolean } = {}): AsyncGenerator<
 }
 
 export async function* fleet(opts: { fast?: boolean } = {}): AsyncGenerator<EngineEvent> {
-  const d = opts.fast ? 60 : 800;
+  const d = opts.fast ? 60 : 1500;
   const chain = makeChain();
   const bond = new BondContract(30, 12, 0.5, chain);
-  const lease = new LeaseContract(54, 0.4, chain);
+  const lease = new LeaseContract(40, 0.4, chain);
   const board = new JobBoard(chain);
   const policy = new PolicyEngine();
-  const m = baseMachine("drone", "Agras unit A7", 54, 30);
+  const m = baseMachine("drone", "Agras unit A7", 40, 30);
   m.bond = 30; bond.balance = 30;
   const emitM = (): EngineEvent => ({ t: "machine", state: { ...m, position: { ...m.position } }, at: now() });
 
@@ -155,7 +155,7 @@ export async function* fleet(opts: { fast?: boolean } = {}): AsyncGenerator<Engi
     for (let i = 0; i <= steps; i++) {
       m.position = { x: job.from.x + (job.to.x - job.from.x) * i / steps, y: 1.5 + Math.sin(i / steps * Math.PI) * 0.4, z: job.from.z + (job.to.z - job.from.z) * i / steps };
       m.heading = Math.atan2(job.to.x - job.from.x, job.to.z - job.from.z);
-      yield emitM(); await wait(d / 4);
+      yield emitM(); await wait(d / 5);
     }
     if (f.tamper) {
       yield { t: "narration", text: "Flight log says 5 mu covered in 40 seconds at a 2 metre swath. Distance against time fails the plausibility check. The fee is held and the lender is alerted. The monthly minimum still applies.", at: now() };

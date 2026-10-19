@@ -133,22 +133,117 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
   })}</>;
 }
 
-function Tower({ pos, label, color = INK, value }: { pos: [number, number, number]; label: string; color?: string; value?: string }) {
-  const l = useRef<THREE.PointLight>(null);
-  useFrame(({ clock }) => { if (l.current) l.current.intensity = 2.2 + Math.sin(clock.elapsedTime * 2 + pos[0]) * 0.8; });
+function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
+  return (
+    <Html position={[pos[0], y, pos[2]]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+      <div style={{ background: "rgba(255,255,255,0.95)", color: INK, padding: "5px 9px", borderRadius: 2, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-tech)", letterSpacing: "0.04em" }}>
+        <div style={{ fontWeight: 700, textTransform: "uppercase", fontSize: 10 }}>{title}</div>{value ? <div style={{ color: "#3d3d3d", fontFamily: "var(--font-sans)", letterSpacing: 0 }}>{value}</div> : null}
+      </div>
+    </Html>
+  );
+}
+
+// The lender: a small bank hall with columns, a red roof and a gold plaque. Instalments fly here.
+function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; paid: number; total: number; windows: THREE.Texture }) {
+  const pct = total > 0 ? Math.min(1, paid / total) : 0;
   return (
     <group position={pos}>
-      <mesh position={[0, 0.9, 0]} castShadow><cylinderGeometry args={[0.22, 0.38, 1.8, 8]} /><meshStandardMaterial color={color} roughness={0.5} metalness={0.3} /></mesh>
-      <mesh position={[0, 2.0, 0]}><cylinderGeometry args={[0.04, 0.04, 0.7, 6]} /><meshStandardMaterial color={INK} /></mesh>
-      <mesh position={[0, 2.4, 0]}><sphereGeometry args={[0.14, 14, 14]} /><meshStandardMaterial color={TURQ_SOFT} emissive={TURQ} emissiveIntensity={2.5} /></mesh>
-      <pointLight ref={l} position={[0, 2.4, 0]} color={TURQ} distance={7} intensity={2.5} />
-      <Html position={[0, 3.1, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ background: "rgba(255,255,255,0.94)", color: INK, padding: "6px 10px", borderRadius: 2, borderLeft: "3px solid #c8102e", fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", border: "1px solid rgba(27,42,42,0.08)" }}>
-          <div style={{ fontWeight: 700 }}>{label}</div>{value ? <div style={{ color: "#45585a" }}>{value}</div> : null}
-        </div>
-      </Html>
+      <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[3.4, 0.3, 2.6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
+      <mesh position={[0, 1.2, -0.3]} castShadow receiveShadow><boxGeometry args={[2.8, 1.8, 1.8]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
+      {[-1.1, -0.37, 0.37, 1.1].map((x) => <mesh key={x} position={[x, 1.2, 0.85]} castShadow><cylinderGeometry args={[0.1, 0.12, 1.8, 10]} /><meshStandardMaterial color="#f4efe3" roughness={0.6} /></mesh>)}
+      <mesh position={[0, 2.35, 0]} castShadow><boxGeometry args={[3.5, 0.5, 2.9]} /><meshStandardMaterial color="#8e0e22" roughness={0.7} /></mesh>
+      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.2, 0.8, 4]} /><meshStandardMaterial color="#c8102e" roughness={0.7} /></mesh>
+      <mesh position={[0, 1.6, 0.95]}><boxGeometry args={[1.2, 0.3, 0.05]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={0.8} metalness={0.6} roughness={0.3} /></mesh>
+      <mesh position={[-1.5 + pct * 3, 0.36, 1.2]}><boxGeometry args={[0.08, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
+      <mesh position={[0, 0.33, 1.2]}><boxGeometry args={[3, 0.04, 0.12]} /><meshStandardMaterial color="#bdb5a3" /></mesh>
+      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#8e0e22" y={3.9} />
     </group>
   );
+}
+
+// The bond contract: a glass vault with a gold liquid level that rises with the bond and drops on a slash.
+function Vault({ pos, bond, min, slashed }: { pos: [number, number, number]; bond: number; min: number; slashed: boolean }) {
+  const liquid = useRef<THREE.Mesh>(null);
+  const cap = Math.max(min * 1.6, 1);
+  useFrame((_, dt) => {
+    if (!liquid.current) return;
+    const h = Math.max(0.02, (Math.min(bond, cap) / cap) * 1.6);
+    liquid.current.scale.y = THREE.MathUtils.lerp(liquid.current.scale.y, h, dt * 3);
+    liquid.current.position.y = 0.25 + liquid.current.scale.y / 2;
+  });
+  const low = bond < min;
+  return (
+    <group position={pos}>
+      <mesh position={[0, 0.12, 0]} receiveShadow><cylinderGeometry args={[1.3, 1.4, 0.24, 24]} /><meshStandardMaterial color="#2a2a2a" metalness={0.6} roughness={0.4} /></mesh>
+      <mesh position={[0, 1.05, 0]}><boxGeometry args={[1.5, 1.7, 1.5]} /><meshPhysicalMaterial color="#ffffff" transmission={0.9} thickness={0.6} roughness={0.08} transparent opacity={0.5} /></mesh>
+      <lineSegments position={[0, 1.05, 0]}><edgesGeometry args={[new THREE.BoxGeometry(1.5, 1.7, 1.5)]} /><lineBasicMaterial color={low ? CORAL : TURQ} /></lineSegments>
+      <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#c8102e" : "#d4a017"} emissive={low ? "#c8102e" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
+      <mesh position={[0, 0.25 + (Math.min(min, cap) / cap) * 1.6, 0]}><boxGeometry args={[1.55, 0.02, 1.55]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1.5} /></mesh>
+      <mesh position={[0, 2.05, 0]}><torusGeometry args={[0.45, 0.05, 10, 40]} /><meshStandardMaterial color={TURQ} metalness={0.8} roughness={0.2} emissive={slashed ? CORAL : TURQ} emissiveIntensity={slashed ? 2 : 0.4} /></mesh>
+      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
+    </group>
+  );
+}
+
+// The farm: a house with a notice board where jobs are posted and the fee is held.
+function Farmhouse({ pos, windows, roof, job }: { pos: [number, number, number]; windows: THREE.Texture; roof: THREE.Texture; job?: Job }) {
+  return (
+    <group position={pos}>
+      <mesh position={[0, 0.9, 0]} castShadow receiveShadow><boxGeometry args={[2.4, 1.8, 2]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
+      <mesh position={[0, 2.2, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[1.9, 0.9, 4]} /><meshStandardMaterial map={roof} roughness={0.9} /></mesh>
+      <group position={[1.9, 0, 0.4]}>
+        <mesh position={[0, 0.7, 0]} castShadow><boxGeometry args={[0.06, 1.4, 0.06]} /><meshStandardMaterial color={INK} /></mesh>
+        <mesh position={[0, 1.35, 0]} castShadow><boxGeometry args={[1.1, 0.7, 0.05]} /><meshStandardMaterial color="#f6f3ea" roughness={0.9} /></mesh>
+        <mesh position={[0, 1.35, 0.03]}><boxGeometry args={[0.9, 0.5, 0.01]} /><meshStandardMaterial color={job ? (job.status === "held" ? CORAL : TURQ) : "#d9d2c0"} emissive={job ? (job.status === "held" ? CORAL : TURQ) : "#000"} emissiveIntensity={job ? 0.6 : 0} /></mesh>
+      </group>
+      <Label pos={pos} title="Farmer, job board" value={job ? `${job.title}, fee ${job.fee} ${job.status}` : "no job posted"} accent="#d4a017" y={3.4} />
+    </group>
+  );
+}
+
+// Launch pad with a charging post. Energy is paid here.
+function Pad({ pos }: { pos: [number, number, number] }) {
+  const ring = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => { if (ring.current) (ring.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 2) * 0.4; });
+  return (
+    <group position={pos}>
+      <mesh position={[0, 0.03, 0]} receiveShadow><cylinderGeometry args={[1.4, 1.4, 0.06, 32]} /><meshStandardMaterial color="#2b2b2b" roughness={0.8} /></mesh>
+      <mesh ref={ring} position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.05, 1.2, 48]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={1} side={THREE.DoubleSide} /></mesh>
+      <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.1, 0.16, 24]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1} side={THREE.DoubleSide} /></mesh>
+      <mesh position={[1.6, 0.5, 0]} castShadow><boxGeometry args={[0.3, 1, 0.3]} /><meshStandardMaterial color={INK} roughness={0.5} /></mesh>
+      <mesh position={[1.6, 1.05, 0]}><boxGeometry args={[0.2, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
+      <Label pos={pos} title="Launch pad" value="charging, energy by time of day" accent="#121212" y={1.9} />
+    </group>
+  );
+}
+
+// Work made visible: a darker, wet stripe grows across the field as the drone covers it.
+function SprayedStrip({ job, machine }: { job?: Job; machine?: MachineState }) {
+  if (!job || !machine || (job.status !== "locked" && job.status !== "running" && job.status !== "released" && job.status !== "held")) return null;
+  const dx = job.to.x - job.from.x, dz = job.to.z - job.from.z;
+  const len = Math.hypot(dx, dz) || 1;
+  const done = job.status === "released" || job.status === "held" ? 1 : Math.max(0, Math.min(1, ((machine.position.x - job.from.x) * dx + (machine.position.z - job.from.z) * dz) / (len * len)));
+  const ang = Math.atan2(dx, dz);
+  return (
+    <group position={[job.from.x + dx * done / 2, 0.06, job.from.z + dz * done / 2]} rotation={[0, ang, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[1.2, Math.max(0.01, len * done)]} /><meshStandardMaterial color={job.status === "held" ? "#c8102e" : "#5a4a1a"} transparent opacity={job.status === "held" ? 0.35 : 0.45} roughness={1} /></mesh>
+    </group>
+  );
+}
+
+function Sticker({ job, kind }: { job: Job; kind: "seal" | "flag" }) {
+  return (
+    <Html position={[job.to.x, 1.2, job.to.z]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>已验证 CONFIRMED</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>HELD, LOG FAILED</div>}
+    </Html>
+  );
+}
+
+function Halo({ machine }: { machine?: MachineState }) {
+  const r = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }, dt) => { if (!r.current || !machine) return; r.current.position.lerp(new THREE.Vector3(machine.position.x, machine.position.y + 0.6, machine.position.z), dt * 4); r.current.rotation.y += dt * 1.5; (r.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5 + Math.sin(clock.elapsedTime * 4) * 0.8; });
+  if (!machine?.owned) return null;
+  return <mesh ref={r} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.8, 0.04, 12, 48]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} metalness={0.8} roughness={0.2} /></mesh>;
 }
 
 function Spray({ active, parent }: { active: boolean; parent: React.RefObject<THREE.Group | null> }) {
@@ -337,14 +432,18 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
   }, [machine, side]);
   const origin = useMemo(() => new THREE.Vector3(side === "fleet" ? 0 : -3, 0.8, 0), [side]);
   const lenderPos: [number, number, number] = side === "fleet" ? [6.5, 0, -5] : [6, 0, -3];
-  const bondPos: [number, number, number] = side === "fleet" ? [0, 0, 5.2] : [0, 0, 3.6];
+  const bondPos: [number, number, number] = side === "fleet" ? [2.5, 0, 5.6] : [0, 0, 3.6];
   const boardPos: [number, number, number] = side === "fleet" ? [-6.5, 0, -5] : [3, 0.1, 0];
-  const padPos: [number, number, number] = [-6.5, 0, 5];
+  const padPos: [number, number, number] = [-5.5, 0, 4.6];
   const targets = useMemo(() => {
     const v = (p: [number, number, number]) => new THREE.Vector3(p[0], 1.2, p[2]);
     return { default: v(lenderPos), instalment: v(lenderPos), title: v(lenderPos), fee_in: v(boardPos), lock: v(boardPos), release: v(boardPos), refund: v(boardPos), bond_fill: v(bondPos), slash: v(bondPos), bounty: v(bondPos), top_up: v(bondPos), cover: v(padPos), energy: v(padPos) };
   }, [side]); // eslint-disable-line react-hooks/exhaustive-deps
   const activeJob = Object.values(jobs).find((j) => j.status === "locked" || j.status === "running");
+  const jobList = Object.values(jobs);
+  const lastJob = activeJob ?? jobList[jobList.length - 1];
+  const [recent, setRecent] = useState(false);
+  useEffect(() => { if (lastJob?.status === "released") { setRecent(true); const t = setTimeout(() => setRecent(false), 2600); return () => clearTimeout(t); } }, [lastJob?.id, lastJob?.status]);
   const m = machine;
   return (
     <>
@@ -358,13 +457,17 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
         <Fields rows={tex.rows} rice={tex.rice} />
         <Trees />
         <Village windows={tex.windows} roof={tex.roof} />
-        <Fence center={[0, 0, 0]} size={[12, 7.5]} breached={!!breached} height={3.2} />
+        <Fence center={[0, 0, 0]} size={[12, 7.5]} breached={!!breached} height={2.4} />
         <Sparkles count={120} scale={[14, 4, 9]} position={[0, 1.6, 0]} size={2} speed={0.3} color={TURQ_SOFT} />
         <Drone state={m} trail={trail} />
         <Drone trail={[]} ambient={{ r: 9.5, speed: 0.22, phase: 1.2, y: 3.2 }} />
         {!live ? <Drone trail={[]} ambient={{ r: 7, speed: -0.17, phase: 3.9, y: 2.6 }} /> : null}
-        <Tower pos={boardPos} label="Farmer, job board" value={activeJob ? `${activeJob.title}` : "idle"} />
-        <Tower pos={padPos} label="Charging pad" color="#45585a" value="energy by time of day" />
+        <Farmhouse pos={boardPos} windows={tex.windows} roof={tex.roof} job={lastJob} />
+        <Pad pos={padPos} />
+        <SprayedStrip job={lastJob} machine={m} />
+        {lastJob && lastJob.status === "released" && recent ? <Sticker job={lastJob} kind="seal" /> : null}
+        {lastJob && lastJob.status === "held" ? <Sticker job={lastJob} kind="flag" /> : null}
+        <Halo machine={m} />
       </>) : (<>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow><planeGeometry args={[40, 40]} /><meshStandardMaterial map={tex.tiles} roughness={0.95} /></mesh>
         <mesh position={[0, 3.2, -8]} receiveShadow castShadow><boxGeometry args={[18, 6.4, 3]} /><meshStandardMaterial map={tex.windows} roughness={0.85} /></mesh>
@@ -378,13 +481,12 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
         <Humanoid state={m} />
         <Float speed={1.5} rotationIntensity={0} floatIntensity={0.6}><mesh position={[3, 2.2, 0]}><torusGeometry args={[1.3, 0.015, 8, 64]} /><meshStandardMaterial color={breached ? CORAL : TURQ} emissive={breached ? CORAL : TURQ} emissiveIntensity={1.5} /></mesh></Float>
       </>)}
-      <Tower pos={lenderPos} label="Lender, lease contract" color={TURQ_DEEP} value={m ? `${(m.leaseTotal - m.leaseBalance).toFixed(1)} of ${m.leaseTotal} paid` : undefined} />
-      <Tower pos={bondPos} label="Bond contract" color={PLUM} value={m ? `${m.bond.toFixed(0)} locked, min ${m.bondMin}` : undefined} />
+      <Bank pos={lenderPos} paid={m ? m.leaseTotal - m.leaseBalance : 0} total={m?.leaseTotal ?? 1} windows={tex.windows} />
+      <Vault pos={bondPos} bond={m?.bond ?? 0} min={m?.bondMin ?? 0} slashed={!!breached} />
       <MoneyDots txs={txs} from={origin} to={targets} />
     </>
   );
 }
-const TURQ_DEEP = "#8e0e22";
 
 export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean }) {
   return (

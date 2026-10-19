@@ -24,8 +24,8 @@ export default function Page() {
       </div>
       <div className="mt-4"><Ticker /></div>
       <ol className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        {[["Lock", "A request becomes a signed intent. The fee locks on the job contract."], ["Check", "The policy engine runs every rule. Allow, deny or the button."], ["Work", "The machine flies. Its secure element proves where and for how long."], ["Confirm", "The farmer confirms. The fee releases and splits by rule."], ["Repay", "The instalment goes to the lender. The balance ticks down."], ["Own", "At zero the title moves on chain. The machine belongs to the operator."]].map(([t, b], i) => (
-          <li key={t} className="tile"><div className="tech text-[10px] tracking-[0.2em] text-red">{String(i + 1).padStart(2, "0")}</div><div className="mt-1 font-bold">{t}</div><div className="mt-1 text-xs text-ink-2">{b}</div></li>
+        {[["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]].map(([t, b], i) => (
+          <li key={t} className="tile hover-lift"><div className="tech text-[10px] tracking-[0.2em] text-red">{String(i + 1).padStart(2, "0")}</div><div className="mt-1 font-bold">{t}</div><div className="mt-1 text-xs text-ink-2">{b}</div></li>
         ))}
       </ol>
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.4fr]">

@@ -4,6 +4,8 @@ import Scene from "./SceneLoader";
 import { useRun } from "./useRun";
 import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PolicyCard } from "./Panels";
 import { BondHistory, CashFlow, EventRate, EventStream, RuleHits } from "./Graphs";
+import { Stages } from "./Stages";
+import { CountUp } from "./CountUp";
 import type { Side } from "@/engine/types";
 
 export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">; title: string; intro: string }) {
@@ -15,10 +17,10 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
   const blocked = state.attacks.filter((a) => a.blocked).length;
   const chainMode = state.txs[0]?.simulated === false ? "Base Sepolia" : "simulated";
 
-  const kpis = [
-    { label: "Balance", value: (m?.balance ?? 0).toFixed(1) },
-    { label: "Bond", value: `${(m?.bond ?? 0).toFixed(0)} / ${m?.bondMin ?? 0}` },
-    { label: "Lease left", value: (m?.leaseBalance ?? 0).toFixed(1) },
+  const kpis: Array<{ label: string; value: React.ReactNode }> = [
+    { label: "Balance", value: <CountUp value={m?.balance ?? 0} /> },
+    { label: "Bond", value: <><CountUp value={m?.bond ?? 0} decimals={0} /> / {m?.bondMin ?? 0}</> },
+    { label: "Lease left", value: <CountUp value={m?.leaseBalance ?? 0} /> },
     { label: "Tasks paid", value: String(m?.tasksDone ?? 0) },
     { label: "Transactions", value: String(state.txs.length) },
     { label: "Attacks blocked", value: `${blocked} / ${state.attacks.length}` },
@@ -43,6 +45,8 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
         {kpis.map((k) => (<div key={k.label} className="tile"><div className="text-xs text-muted">{k.label}</div><div className="kpi mt-1 tabular-nums">{k.value}</div></div>))}
       </div>
+
+      <div className="mb-4"><Stages events={state.events} /></div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
         <section className="aurora aurora-cream card cut relative" style={{ minHeight: 560 }}>
