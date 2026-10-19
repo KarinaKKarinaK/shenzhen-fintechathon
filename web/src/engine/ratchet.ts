@@ -6,10 +6,17 @@
 
 import { economics } from "./agents";
 import { DEMO } from "./policy";
+import { solve } from "./economics/mdp";
 
 export interface Strategy { reserveRule: number; minMarginPerMu: number; maxJobsPerCharge: number; acceptLowFeeIfIdle: boolean }
 export interface Step { step: number; proposal: Strategy; change: string; profit: number; kept: boolean; violation?: string }
-export interface RatchetResult { steps: Step[]; best: Strategy; baseline: Strategy; baselineProfit: number; bestProfit: number; evalSeed: number; walkSeed: number; days: number; offers: number }
+export type Horizon = "week" | "season";
+// season: mean profit over the MDP's seeded 26 week seasons for the MDP policy under the
+// baseline knobs, under the best knobs, and for the greedy rule under the best knobs, all on
+// the same seeds. Only reserveRule and minMarginPerMu reach the MDP; the per charge knobs are
+// below its week resolution.
+export interface SeasonFigures { baselineProfit: number; bestProfit: number; greedyMeanProfit: number; seed: number; seasons: number }
+export interface RatchetResult { steps: Step[]; best: Strategy; baseline: Strategy; baselineProfit: number; bestProfit: number; evalSeed: number; walkSeed: number; days: number; offers: number; horizon: Horizon; season: SeasonFigures }
 
 export const EVAL_SEED = 4242;
 export const WALK_SEED = 99;
@@ -78,6 +85,14 @@ export function evaluate(s: Strategy): { profit: number; violation?: string } {
   return { profit: round(profit) };
 }
 
+// The season eval: the MDP's expected profit under the strategy's two shared knobs. The same
+// violations apply, so the lender's floor is a hard constraint at either horizon.
+export function evaluateSeason(s: Strategy): { profit: number; violation?: string } {
+  const week = evaluate(s);
+  if (week.violation) return week;
+  return { profit: solve({ reserveRule: s.reserveRule, minMarginPerMu: s.minMarginPerMu }).expectedProfit };
+}
+
 function propose(r: () => number, s: Strategy): { next: Strategy; change: string } {
   const pick = Math.floor(r() * 4);
   const choice = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
@@ -99,18 +114,22 @@ export function cached(steps: number): RatchetResult {
   return r;
 }
 
-export function run(steps = 60): RatchetResult {
+export function run(steps = 60, horizon: Horizon = "week"): RatchetResult {
   const r = rng(WALK_SEED);
-  const baselineProfit = evaluate(BASELINE).profit;
+  const evalFn = horizon === "season" ? evaluateSeason : evaluate;
+  const baselineProfit = evalFn(BASELINE).profit;
   let best = { ...BASELINE };
   let bestProfit = baselineProfit;
   const log: Step[] = [];
   for (let i = 1; i <= steps; i++) {
     const { next, change } = propose(r, best);
-    const e = evaluate(next);
+    const e = evalFn(next);
     const kept = e.profit > bestProfit;
     log.push({ step: i, proposal: next, change, profit: e.profit === -Infinity ? -1e9 : e.profit, kept, violation: e.violation });
     if (kept) { best = next; bestProfit = e.profit; }
   }
-  return { steps: log, best, baseline: BASELINE, baselineProfit, bestProfit, evalSeed: EVAL_SEED, walkSeed: WALK_SEED, days: DAYS, offers: WEEK.reduce((s, d) => s + d.length, 0) };
+  const base = solve({ reserveRule: BASELINE.reserveRule, minMarginPerMu: BASELINE.minMarginPerMu });
+  const top = solve({ reserveRule: best.reserveRule, minMarginPerMu: best.minMarginPerMu });
+  const season: SeasonFigures = { baselineProfit: base.comparison.mdp.meanProfit, bestProfit: top.comparison.mdp.meanProfit, greedyMeanProfit: top.comparison.greedy.meanProfit, seed: top.params.seed, seasons: top.params.seasons };
+  return { steps: log, best, baseline: BASELINE, baselineProfit, bestProfit, evalSeed: EVAL_SEED, walkSeed: WALK_SEED, days: DAYS, offers: WEEK.reduce((s, d) => s + d.length, 0), horizon, season };
 }

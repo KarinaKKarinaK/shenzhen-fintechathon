@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">Lender loss given default, p95, as instalment skips rise</text>
+<text x="72" y="44" fill="#8a8a8a">2000 seeded seasons per point, 3 skips in a season is a default, drone resale at 55% decaying 0.5% a week</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">10,000</text>
+<line x1="72" x2="736" y1="289" y2="289" stroke="#ececec"/>
+<text x="64" y="293" text-anchor="end" fill="#8a8a8a">15,000</text>
+<line x1="72" x2="736" y1="214" y2="214" stroke="#ececec"/>
+<text x="64" y="218" text-anchor="end" fill="#8a8a8a">20,000</text>
+<line x1="72" x2="736" y1="139" y2="139" stroke="#ececec"/>
+<text x="64" y="143" text-anchor="end" fill="#8a8a8a">25,000</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">30,000</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">2%</text>
+<line x1="182.66666666666666" x2="182.66666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="182.66666666666666" y="382" text-anchor="middle" fill="#8a8a8a">4%</text>
+<line x1="293.33333333333326" x2="293.33333333333326" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="293.33333333333326" y="382" text-anchor="middle" fill="#8a8a8a">6%</text>
+<line x1="403.99999999999994" x2="403.99999999999994" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="403.99999999999994" y="382" text-anchor="middle" fill="#8a8a8a">8%</text>
+<line x1="514.6666666666666" x2="514.6666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="514.6666666666666" y="382" text-anchor="middle" fill="#8a8a8a">10%</text>
+<line x1="625.3333333333333" x2="625.3333333333333" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="625.3333333333333" y="382" text-anchor="middle" fill="#8a8a8a">12%</text>
+<line x1="736" x2="736" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="736" y="382" text-anchor="middle" fill="#8a8a8a">14%</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">chance a working week's instalment is skipped</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">p95 loss given default, yuan</text>
+<polyline fill="none" stroke="#b9b9b9" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="72.0,127.7 182.7,130.1 293.3,131.9 404.0,127.9 514.7,126.9 625.3,122.9 736.0,119.7"/>
+<polyline fill="none" stroke="#c8102e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="72.0,214.3 182.7,217.9 293.3,221.5 404.0,215.4 514.7,212.6 625.3,207.0 736.0,205.2"/>
+<circle cx="72.0" cy="127.7" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="182.7" cy="130.1" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="293.3" cy="131.9" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="404.0" cy="127.9" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="514.7" cy="126.9" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="625.3" cy="122.9" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="736.0" cy="119.7" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="72.0" cy="214.3" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="182.7" cy="217.9" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="293.3" cy="221.5" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="404.0" cy="215.4" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="514.7" cy="212.6" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="625.3" cy="207.0" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="736.0" cy="205.2" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<rect x="573.2" y="49" width="12" height="3" fill="#c8102e" rx="1"/>
+<text x="590.2" y="55" fill="#1a1a1a">pilot and vendor bonds</text>
+<rect x="490.00000000000006" y="49" width="12" height="3" fill="#b9b9b9" rx="1"/>
+<text x="507.00000000000006" y="55" fill="#1a1a1a">no bonds</text>
+<text x="72.0" y="358.0" text-anchor="start" fill="#8a8a8a" font-weight="600">default 1%</text>
+<text x="182.7" y="358.0" text-anchor="middle" fill="#8a8a8a" font-weight="600">default 5%</text>
+<text x="293.3" y="358.0" text-anchor="middle" fill="#8a8a8a" font-weight="600">default 13%</text>
+<text x="404.0" y="358.0" text-anchor="middle" fill="#8a8a8a" font-weight="600">default 23%</text>
+<text x="514.7" y="358.0" text-anchor="middle" fill="#8a8a8a" font-weight="600">default 35%</text>
+<text x="625.3" y="358.0" text-anchor="middle" fill="#8a8a8a" font-weight="600">default 47%</text>
+<text x="736.0" y="358.0" text-anchor="end" fill="#8a8a8a" font-weight="600">default 57%</text>
+</svg>

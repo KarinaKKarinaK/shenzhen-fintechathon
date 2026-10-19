@@ -6,10 +6,19 @@ import { yuan } from "./money";
 // Shapes from GET /api/metrics and GET /api/ratchet. Every field is optional so the cards render
 // a quiet placeholder until the engine ships the number.
 export type GateMetrics = { trainN?: number; testN?: number; accuracy?: number; precision?: number; recall?: number; f1?: number; falseAlarmRate?: number; seed?: number };
-export type PlausMetrics = { n?: number; tampered?: number; detectionRate?: number; falseAlarmRate?: number; threshold?: number; seed?: number };
+export type PlausMetrics = {
+  n?: number; tampered?: number; detectionRate?: number; falseAlarmRate?: number; threshold?: number; seed?: number;
+  targetFalseAlarm?: number; achievedFalseAlarm?: number; calibrationN?: number; trackSmoothingGainPct?: number; rawFalseAlarmRate?: number; smoothedFalseAlarmRate?: number;
+};
 export type RatchetStep = { step?: number; proposal?: unknown; profit?: number | null; kept?: boolean };
 export type RatchetRun = { steps?: RatchetStep[]; best?: unknown; baselineProfit?: number | null; bestProfit?: number | null };
-export type Metrics = { gate?: GateMetrics; plausibility?: PlausMetrics; ratchet?: { baselineProfit?: number | null; bestProfit?: number | null; steps?: number }; planner?: { method?: string }; chain?: string; model?: string };
+export type ConformalMetrics = { threshold?: number; targetFalseAlarm?: number; achievedFalseAlarm?: number; coverage?: number; calibrationN?: number };
+export type CreditMetrics = { path?: number[]; p?: number; tier?: string; credibility?: number; n?: number; parts?: { confirm?: number; instalment?: number; clean?: number }; rateBps?: number; bandBps?: [number, number]; prior?: { strength?: number } };
+export type StressMetrics = { seasons?: number; defaultProbability?: number; pilotBondBelowMinAfterReaching?: number; expectedVendorDrawdown?: number; lgdWithoutBonds?: { mean?: number; p95?: number }; lgdWithBonds?: { mean?: number; p95?: number }; bondCover?: number };
+export type Metrics = {
+  gate?: GateMetrics; plausibility?: PlausMetrics; conformal?: ConformalMetrics; credit?: CreditMetrics; economics?: { stress?: StressMetrics };
+  ratchet?: { baselineProfit?: number | null; bestProfit?: number | null; steps?: number }; planner?: { method?: string }; chain?: string; model?: string;
+};
 
 const GOLD = "#b8860b", BAD = "#c8102e", GRID = "#efe9d8", INK = "#121212", MUTED = "#7a7a76";
 
@@ -116,6 +125,85 @@ function RatchetCard({ summary }: { summary?: Metrics["ratchet"] }) {
   );
 }
 
+// The credit score along the fixed sequence: a dot per outcome, the line in gold.
+function CreditPath({ path, label }: { path: number[]; label: string }) {
+  const W = 320, H = 56, pad = 6;
+  const lo = Math.min(...path) - 0.02, hi = Math.max(...path) + 0.02, range = hi - lo || 1;
+  const x = (i: number) => pad + (i / Math.max(path.length - 1, 1)) * (W - pad * 2);
+  const y = (v: number) => H - pad - ((v - lo) / range) * (H - pad * 2);
+  const line = path.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" role="img" aria-label={label}>
+      <line x1={pad} x2={W - pad} y1={H - pad} y2={H - pad} stroke={GRID} />
+      <path d={line} fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
+      {path.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r={3} fill={i === path.length - 1 ? BAD : GOLD}><title>{v.toFixed(3)}</title></circle>)}
+    </svg>
+  );
+}
+
+function FusionCard({ p, c, quiet }: { p?: PlausMetrics; c?: ConformalMetrics; quiet: string }) {
+  const { d, t } = useLang();
+  const L = d.learned;
+  return (
+    <Card title={L.fusion} sub={L.fusionSub} pill={fin(p?.trackSmoothingGainPct) ? t("learned.fusionPill", { pct: p?.trackSmoothingGainPct }) : undefined}>
+      {p && c ? (
+        <>
+          <Bars rows={[[L.rawFa, p.rawFalseAlarmRate, BAD], [L.filteredFa, p.smoothedFalseAlarmRate, GOLD], [L.targetFa, c.targetFalseAlarm, MUTED], [L.achievedFa, c.achievedFalseAlarm, GOLD]]} />
+          <div className="mt-2 text-[11px] text-muted">{t("learned.fusionNote", { z: c.threshold ?? "?", n: c.calibrationN ?? "?", target: pct(c.targetFalseAlarm) ?? "?", cov: pct(c.coverage) ?? "?" })}</div>
+        </>
+      ) : <Quiet text={quiet} />}
+    </Card>
+  );
+}
+
+function CreditCard({ c, quiet }: { c?: CreditMetrics; quiet: string }) {
+  const { d, t } = useLang();
+  const L = d.learned;
+  const band = c?.bandBps ?? [0, 0];
+  return (
+    <Card title={L.credit} sub={L.creditSub} pill={c?.tier ? t("learned.creditTier", { tier: c.tier }) : undefined}>
+      {c ? (
+        <>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+            <div><div className="text-muted">{L.creditP}</div><div className="tech text-lg font-bold text-gold-deep">{fin(c.p) ? c.p.toFixed(3) : "?"}</div></div>
+            <div><div className="text-muted">{L.creditCred}</div><div className="tech text-lg font-bold">{pct(c.credibility) ?? "?"}</div></div>
+            <div><div className="text-muted">{L.creditRate}</div><div className="tech text-lg font-bold">{fin(c.rateBps) ? `${c.rateBps}` : "?"}</div></div>
+          </div>
+          <div className="mt-0.5 text-[11px] text-muted">{t("learned.creditBps", { bps: c.rateBps ?? "?", lo: band[0], hi: band[1] })}</div>
+          {c.path?.length ? <CreditPath path={c.path} label={L.creditSeq} /> : null}
+          <div className="text-[11px] text-muted">{L.creditSeq}</div>
+          <Bars rows={[[L.creditConfirm, c.parts?.confirm], [L.creditInstalment, c.parts?.instalment], [L.creditClean, c.parts?.clean]]} />
+          <div className="mt-2 text-[11px] text-muted">{t("learned.creditNote", { k: c.prior?.strength ?? "?" })}</div>
+        </>
+      ) : <Quiet text={quiet} />}
+    </Card>
+  );
+}
+
+function Money({ label, v, tone }: { label: string; v?: number; tone?: string }) {
+  return <div><div className="text-[11px] text-muted">{label}</div><div className={`tech text-lg font-bold ${tone ?? ""}`}>{fin(v) ? yuan(v) : "?"}</div></div>;
+}
+
+function StressCard({ s, quiet }: { s?: StressMetrics; quiet: string }) {
+  const { d, t } = useLang();
+  const L = d.learned;
+  return (
+    <Card title={L.stress} sub={s ? t("learned.stressSub", { n: s.seasons ?? "?" }) : undefined} pill={fin(s?.defaultProbability) ? t("learned.stressDefault", { p: pct(s?.defaultProbability) }) : undefined}>
+      {s ? (
+        <>
+          <div className="mt-2 flex flex-col gap-2">
+            <Money label={L.stressVendor} v={s.expectedVendorDrawdown} />
+            <Money label={L.stressLgdBare} v={s.lgdWithoutBonds?.p95} tone="text-red" />
+            <Money label={L.stressLgdBonded} v={s.lgdWithBonds?.p95} tone="text-gold-deep" />
+          </div>
+          <div className="mt-2 text-[11px] text-muted">{t("learned.stressCover", { pct: pct(s.bondCover) ?? "?" })}. {t("learned.stressBelow", { p: pct(s.pilotBondBelowMinAfterReaching) ?? "?" })}.</div>
+          <div className="mt-1 text-[11px] text-muted">{L.stressNote}</div>
+        </>
+      ) : <Quiet text={quiet} />}
+    </Card>
+  );
+}
+
 export function LearnedComponents() {
   const { d, t } = useLang();
   const L = d.learned;
@@ -137,10 +225,15 @@ export function LearnedComponents() {
           <>
             <Bars rows={[[L.detection, p.detectionRate], [L.falseAlarm, p.falseAlarmRate, BAD]]} />
             <div className="mt-2 text-[11px] text-muted">{L.anomalyNote}</div>
+            {fin(p.targetFalseAlarm) && fin(p.achievedFalseAlarm) ? <div className="mt-1 text-[11px] text-muted">{t("learned.conformal", { target: pct(p.targetFalseAlarm), achieved: pct(p.achievedFalseAlarm), n: p.calibrationN ?? "?" })}</div> : null}
+            {fin(p.trackSmoothingGainPct) ? <div className="mt-1 text-[11px] text-muted">{t("learned.smoothing", { raw: pct(p.rawFalseAlarmRate), smooth: pct(p.smoothedFalseAlarmRate), pct: p.trackSmoothingGainPct })}</div> : null}
           </>
         ) : <Quiet text={quiet} />}
       </Card>
       <RatchetCard summary={metrics?.ratchet} />
+      <CreditCard c={metrics?.credit} quiet={quiet} />
+      <FusionCard p={p} c={metrics?.conformal} quiet={quiet} />
+      <StressCard s={metrics?.economics?.stress} quiet={quiet} />
     </div>
   );
 }

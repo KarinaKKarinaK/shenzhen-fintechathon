@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">Largest robust z per flight, honest against tampered</text>
+<text x="72" y="44" fill="#8a8a8a">428 honest and 72 tampered flights held out; flights past 12 are shown in the last bin</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">0</text>
+<line x1="72" x2="736" y1="304" y2="304" stroke="#ececec"/>
+<text x="64" y="308" text-anchor="end" fill="#8a8a8a">30</text>
+<line x1="72" x2="736" y1="244" y2="244" stroke="#ececec"/>
+<text x="64" y="248" text-anchor="end" fill="#8a8a8a">60</text>
+<line x1="72" x2="736" y1="184" y2="184" stroke="#ececec"/>
+<text x="64" y="188" text-anchor="end" fill="#8a8a8a">90</text>
+<line x1="72" x2="736" y1="124" y2="124" stroke="#ececec"/>
+<text x="64" y="128" text-anchor="end" fill="#8a8a8a">120</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">150</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">0</text>
+<line x1="182.66666666666666" x2="182.66666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="182.66666666666666" y="382" text-anchor="middle" fill="#8a8a8a">2</text>
+<line x1="293.3333333333333" x2="293.3333333333333" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="293.3333333333333" y="382" text-anchor="middle" fill="#8a8a8a">4</text>
+<line x1="404" x2="404" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="404" y="382" text-anchor="middle" fill="#8a8a8a">6</text>
+<line x1="514.6666666666666" x2="514.6666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="514.6666666666666" y="382" text-anchor="middle" fill="#8a8a8a">8</text>
+<line x1="625.3333333333334" x2="625.3333333333334" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="625.3333333333334" y="382" text-anchor="middle" fill="#8a8a8a">10</text>
+<line x1="736" x2="736" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="736" y="382" text-anchor="middle" fill="#8a8a8a">12</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">largest absolute robust z over five features</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">flights</text>
+<rect x="86.8" y="354.0" width="11.8" height="10.0" fill="#b9b9b9" rx="2"/>
+<rect x="100.7" y="322.0" width="11.8" height="42.0" fill="#b9b9b9" rx="2"/>
+<rect x="114.5" y="204.0" width="11.8" height="160.0" fill="#b9b9b9" rx="2"/>
+<rect x="128.3" y="114.0" width="11.8" height="250.0" fill="#b9b9b9" rx="2"/>
+<rect x="142.2" y="152.0" width="11.8" height="212.0" fill="#b9b9b9" rx="2"/>
+<rect x="156.0" y="312.0" width="11.8" height="52.0" fill="#b9b9b9" rx="2"/>
+<rect x="169.8" y="324.0" width="11.8" height="40.0" fill="#b9b9b9" rx="2"/>
+<rect x="183.7" y="328.0" width="11.8" height="36.0" fill="#b9b9b9" rx="2"/>
+<rect x="197.5" y="344.0" width="11.8" height="20.0" fill="#b9b9b9" rx="2"/>
+<rect x="211.3" y="340.0" width="11.8" height="24.0" fill="#b9b9b9" rx="2"/>
+<rect x="225.2" y="356.0" width="11.8" height="8.0" fill="#b9b9b9" rx="2"/>
+<rect x="239.0" y="362.0" width="11.8" height="2.0" fill="#b9b9b9" rx="2"/>
+<rect x="86.8" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="100.7" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="114.5" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="128.3" y="350.0" width="11.8" height="14.0" fill="#c8102e" rx="2"/>
+<rect x="142.2" y="358.0" width="11.8" height="6.0" fill="#c8102e" rx="2"/>
+<rect x="197.5" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="239.0" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="308.2" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="363.5" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="446.5" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="460.3" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="474.2" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="488.0" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="543.3" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="557.2" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="571.0" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="584.8" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="598.7" y="362.0" width="11.8" height="2.0" fill="#c8102e" rx="2"/>
+<rect x="612.5" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="626.3" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="640.2" y="360.0" width="11.8" height="4.0" fill="#c8102e" rx="2"/>
+<rect x="723.2" y="300.0" width="11.8" height="64.0" fill="#c8102e" rx="2"/>
+<line x1="215.70066666666668" x2="215.70066666666668" y1="64" y2="364" stroke="#d4a017" stroke-width="2" />
+<line x1="293.3333333333333" x2="293.3333333333333" y1="64" y2="364" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="4 4"/>
+<rect x="669.2" y="44" width="12" height="12" fill="#8a8a8a" rx="1"/>
+<text x="686.2" y="55" fill="#1a1a1a">fixed 4</text>
+<rect x="547.6" y="44" width="12" height="12" fill="#d4a017" rx="1"/>
+<text x="564.6" y="55" fill="#1a1a1a">conformal 2.60</text>
+<rect x="464.40000000000003" y="44" width="12" height="12" fill="#c8102e" rx="1"/>
+<text x="481.40000000000003" y="55" fill="#1a1a1a">tampered</text>
+<rect x="394" y="44" width="12" height="12" fill="#b9b9b9" rx="1"/>
+<text x="411" y="55" fill="#1a1a1a">honest</text>
+</svg>

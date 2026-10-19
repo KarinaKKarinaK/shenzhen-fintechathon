@@ -5,7 +5,15 @@ import { LastRun, useAttackSet } from "./EvidenceLab";
 import { AttackGrid, naiveFell, type AttackResult } from "./AttackGrid";
 import { useLang } from "@/i18n/LangProvider";
 import { LearnedComponents } from "./Learned";
+import { Monitors } from "./Monitors";
 
+// Base Sepolia, block 48335911, source verified on Sourcify. Same values in contracts/deployments/base-sepolia.json.
+const DEPLOYED: Record<string, string> = {
+  IntentLog: "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
+  Bond: "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754",
+  JobBoard: "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A",
+  Lease: "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
+};
 const CONTRACT_NAMES = ["Bond", "IntentLog", "JobBoard", "Lease"];
 const API_LINES: [string, string][] = [["GET", "/api/attacks"], ["GET", "/api/run?scenario=fleet&fast=1&lang=zh"], ["POST", "/api/judge"]];
 
@@ -54,10 +62,11 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
 
       <section className="card mt-4">
         <Row title={E.learnedTitle} open><p className="mb-3 text-xs text-muted">{E.learnedNote}</p><LearnedComponents /></Row>
+        <Row title={E.monitorsTitle}><p className="mb-3 text-xs text-muted">{E.monitorsNote}</p><Monitors /></Row>
         <Row title={E.contractsTitle}>
           <p className="mb-3 text-xs text-muted">{E.contractsStatus}</p>
           <ul className="flex flex-col divide-y divide-line">
-            {E.contracts.map((what, i) => <li key={CONTRACT_NAMES[i]} className="flex gap-3 py-2"><span className="mono w-20 shrink-0 text-red">{CONTRACT_NAMES[i]}</span><span className="text-ink-2">{what}</span></li>)}
+            {E.contracts.map((what, i) => <li key={CONTRACT_NAMES[i]} className="flex flex-wrap gap-x-3 gap-y-1 py-2"><span className="mono w-20 shrink-0 text-red">{CONTRACT_NAMES[i]}</span><span className="min-w-0 flex-1 text-ink-2">{what}</span><a className="link shrink-0 text-xs" href={`https://sepolia.basescan.org/address/${DEPLOYED[CONTRACT_NAMES[i]]}`} target="_blank" rel="noreferrer">{E.onBasescan}</a></li>)}
           </ul>
           <p className="mt-2 text-xs text-muted">{E.contractsGap}</p>
         </Row>

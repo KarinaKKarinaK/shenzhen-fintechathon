@@ -1,0 +1,15 @@
+{
+  "chainId": 84532,
+  "network": "Base Sepolia",
+  "deployer": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59",
+  "block": 48335911,
+  "deployedAt": "2026-10-19T20:05:00Z",
+  "verified": "sourcify exact_match",
+  "contracts": {
+    "IntentLog": { "address": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51", "tx": "0xb43b1cfa02f6a6978edfa682e495be9534e0295c1b08bb27598c15dcab6367e9", "gasUsed": 197751 },
+    "Bond": { "address": "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754", "tx": "0xfc3dc2b9ce33c71caabfdbe96e262f371a26c42ceb226e9cc548439cc6ea74eb", "gasUsed": 1931237, "args": { "treasury": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59", "log": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51", "startFloor": "200 ether" } },
+    "Lease": { "address": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2", "tx": "0xeaa13a7628e427b6043ef95172856bd536cb72a749f4872a8ef54b03405d5fdb", "gasUsed": 800050 },
+    "JobBoard": { "address": "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A", "tx": "0xda8db76f1842f0cbe203c1049029411c5a6f0c3ce8fb4cc853c4ed0a34059742", "gasUsed": 1517852, "args": { "bond": "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754", "lease": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2", "rail": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59" } }
+  },
+  "setBoardTx": "0x291c603036ea12821dd289e3fe4ab35b977a152264e9c5ba846b7826f6182508"
+}

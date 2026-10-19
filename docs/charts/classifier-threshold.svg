@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">Message classifier on the held out set at every threshold</text>
+<text x="72" y="44" fill="#8a8a8a">100 of 401 messages held out by seed 20251020; 0.5 labels, 0.8 is where the gate holds a message for the operator</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">0%</text>
+<line x1="72" x2="736" y1="304" y2="304" stroke="#ececec"/>
+<text x="64" y="308" text-anchor="end" fill="#8a8a8a">20%</text>
+<line x1="72" x2="736" y1="244" y2="244" stroke="#ececec"/>
+<text x="64" y="248" text-anchor="end" fill="#8a8a8a">40%</text>
+<line x1="72" x2="736" y1="184" y2="184" stroke="#ececec"/>
+<text x="64" y="188" text-anchor="end" fill="#8a8a8a">60%</text>
+<line x1="72" x2="736" y1="124" y2="124" stroke="#ececec"/>
+<text x="64" y="128" text-anchor="end" fill="#8a8a8a">80%</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">100%</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">0</text>
+<line x1="204.8" x2="204.8" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="204.8" y="382" text-anchor="middle" fill="#8a8a8a">0.2</text>
+<line x1="337.6" x2="337.6" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="337.6" y="382" text-anchor="middle" fill="#8a8a8a">0.4</text>
+<line x1="404" x2="404" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="404" y="382" text-anchor="middle" fill="#8a8a8a">0.5</text>
+<line x1="470.4" x2="470.4" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="470.4" y="382" text-anchor="middle" fill="#8a8a8a">0.6</text>
+<line x1="603.2" x2="603.2" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="603.2" y="382" text-anchor="middle" fill="#8a8a8a">0.8</text>
+<line x1="736" x2="736" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="736" y="382" text-anchor="middle" fill="#8a8a8a">1</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">threshold on the attack probability</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">rate</text>
+<polyline fill="none" stroke="#c8102e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="105.2,64.0 121.8,64.0 138.4,64.0 155.0,64.0 171.6,64.0 188.2,64.0 204.8,64.0 221.4,64.0 238.0,64.0 254.6,64.0 271.2,64.0 287.8,64.0 304.4,64.0 321.0,64.0 337.6,64.0 354.2,70.8 370.8,77.6 387.4,77.6 404.0,77.6 420.6,77.6 437.2,77.6 453.8,77.6 470.4,84.5 487.0,91.3 503.6,111.7 520.2,125.4 536.8,139.0 553.4,145.8 570.0,145.8 586.6,145.8 603.2,152.6 619.8,166.3 636.4,179.9 653.0,200.4 669.6,207.2 686.2,227.6 702.8,248.1"/>
+<polyline fill="none" stroke="#d4a017" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="105.2,136.0 121.8,118.0 138.4,109.0 155.0,109.0 171.6,103.0 188.2,103.0 204.8,94.0 221.4,91.0 238.0,85.0 254.6,85.0 271.2,82.0 287.8,82.0 304.4,79.0 321.0,79.0 337.6,79.0 354.2,82.0 370.8,82.0 387.4,79.0 404.0,79.0 420.6,79.0 437.2,79.0 453.8,79.0 470.4,82.0 487.0,82.0 503.6,91.0 520.2,94.0 536.8,100.0 553.4,103.0 570.0,103.0 586.6,103.0 603.2,103.0 619.8,109.0 636.4,115.0 653.0,124.0 669.6,127.0 686.2,136.0 702.8,145.0"/>
+<polyline fill="none" stroke="#b9b9b9" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="105.2,235.4 121.8,267.6 138.4,283.6 155.0,283.6 171.6,294.4 188.2,294.4 204.8,310.4 221.4,315.8 238.0,326.5 254.6,326.5 271.2,331.9 287.8,331.9 304.4,337.2 321.0,337.2 337.6,337.2 354.2,337.2 370.8,342.6 387.4,347.9 404.0,347.9 420.6,347.9 437.2,347.9 453.8,347.9 470.4,347.9 487.0,353.3 503.6,353.3 520.2,358.6 536.8,358.6 553.4,358.6 570.0,358.6 586.6,358.6 603.2,364.0 619.8,364.0 636.4,364.0 653.0,364.0 669.6,364.0 686.2,364.0 702.8,364.0"/>
+<line x1="404" x2="404" y1="64" y2="364" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="603.2" x2="603.2" y1="64" y2="364" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="2 3"/>
+<rect x="643.6" y="49" width="12" height="3" fill="#b9b9b9" rx="1"/>
+<text x="660.6" y="55" fill="#1a1a1a">benign held</text>
+<rect x="560.4" y="49" width="12" height="3" fill="#d4a017" rx="1"/>
+<text x="577.4" y="55" fill="#1a1a1a">accuracy</text>
+<rect x="438.79999999999995" y="49" width="12" height="3" fill="#c8102e" rx="1"/>
+<text x="455.79999999999995" y="55" fill="#1a1a1a">attacks caught</text>
+</svg>

@@ -4,6 +4,7 @@
 // filter before the knapsack: a job below it is declined whatever the budget says.
 
 import type { Economics, PlanItem } from "./types";
+import { contend, secondPrice, type AuctionResult } from "./economics/pricing";
 
 export const MIN_PER_MU = 0.8; // spraying time per mu at the demo speed and swath
 export const TRAVEL_MS = 6; // metres per second to and from the field
@@ -20,7 +21,9 @@ export interface PlanInput {
   eco: (fee: number, mu: number) => Economics;
   reason: (key: PlanReason, vars: Record<string, number>) => string;
 }
-export interface PlanResult { items: PlanItem[]; budgetMu: number; usedMu: number; charges: number; chargesUsed: number; totalMargin: number; usedMinutes: number; method: "knapsack" }
+// auctions: one record per pair of neighbouring accepted jobs that contend for the same flying
+// time, settled by a sealed bid second price auction (economics/pricing.ts).
+export interface PlanResult { items: PlanItem[]; budgetMu: number; usedMu: number; charges: number; chargesUsed: number; totalMargin: number; usedMinutes: number; method: "knapsack"; auctions: AuctionResult[] }
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
@@ -60,8 +63,18 @@ export function plan(input: PlanInput): PlanResult {
   for (let i = n - 1; i >= 0; i--) {
     if (take[i][bm * H + bs]) { chosen.add(eligible[i].j.id); bm -= Math.ceil(eligible[i].j.mu); bs -= Math.ceil(eligible[i].min / SLOT_MIN); }
   }
-  // Accepted jobs fly in order of margin per mu, the best use of a charge first.
-  const accepted = rows.filter((r) => chosen.has(r.j.id)).sort((a, b) => b.eco.margin / b.j.mu - a.eco.margin / a.j.mu);
+  // Accepted jobs fly in order of margin per mu, the best use of a charge first. Each pair is
+  // ordered by a sealed bid second price auction: the bid is the margin per mu the wallet
+  // computes, the higher bid flies first, and where the two contend for the same flying time
+  // the winner's priority price is the runner up's bid. A stated fee inflated to win a slot
+  // only buys it at the rival's margin, so the plan is truthful about margin.
+  const bidOf = (r: (typeof rows)[number]) => ({ id: r.j.id, bid: round(r.eco.margin / r.j.mu), mu: r.j.mu });
+  const accepted = rows.filter((r) => chosen.has(r.j.id)).sort((a, b) => (secondPrice([bidOf(a), bidOf(b)]).winner === a.j.id ? -1 : 1));
+  const auctions: AuctionResult[] = [];
+  for (let i = 0; i + 1 < accepted.length; i++) {
+    const a = accepted[i], b = accepted[i + 1];
+    if (contend({ minutes: a.min, windowMin: a.j.windowMin }, { minutes: b.min, windowMin: b.j.windowMin })) auctions.push(secondPrice([bidOf(a), bidOf(b)]));
+  }
   const orderOf = new Map(accepted.map((r, i) => [r.j.id, i + 1]));
   const items: PlanItem[] = rows
     .map(({ j, eco, min }) => {
@@ -75,5 +88,5 @@ export function plan(input: PlanInput): PlanResult {
     .sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || b.marginPerMu - a.marginPerMu);
   const usedMu = accepted.reduce((s, r) => s + r.j.mu, 0);
   const usedMinutes = accepted.reduce((s, r) => s + r.min, 0);
-  return { items, budgetMu: input.budgetMu, usedMu, charges: input.charges, chargesUsed: Math.ceil(usedMu / input.budgetMu), totalMargin: round(best), usedMinutes, method: "knapsack" };
+  return { items, budgetMu: input.budgetMu, usedMu, charges: input.charges, chargesUsed: Math.ceil(usedMu / input.budgetMu), totalMargin: round(best), usedMinutes, method: "knapsack", auctions };
 }

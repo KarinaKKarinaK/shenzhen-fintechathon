@@ -1,0 +1,12 @@
+{
+  "seed": 20251020,
+  "shiftAt": 500,
+  "delay": 6,
+  "quietAlarms": 0,
+  "params": {
+    "target": 0.1,
+    "k": 0.25,
+    "h": 2
+  },
+  "note": "alarm 6 observations after the shift, 0 false alarms in 600 benign scores, synthetic scores on seed 20251020"
+}

@@ -1,0 +1,12 @@
+{
+  "trainN": 301,
+  "testN": 100,
+  "accuracy": 0.95,
+  "precision": 0.933,
+  "recall": 0.955,
+  "f1": 0.944,
+  "falseAlarmRate": 0.054,
+  "seed": 20251020,
+  "threshold": 0.8,
+  "heldOut": "100 of 401 messages held out by seed 20251020, never trained on"
+}

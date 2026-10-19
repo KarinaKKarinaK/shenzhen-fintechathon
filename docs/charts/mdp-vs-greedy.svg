@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">Mean season profit after instalments, MDP policy against the greedy rule</text>
+<text x="72" y="44" fill="#8a8a8a">200 seeded seasons of 26 weeks per point, common random numbers, value iteration over 46,800 states at the 12,000 yuan balance</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">4,500</text>
+<line x1="72" x2="736" y1="348.2105263157895" y2="348.2105263157895" stroke="#ececec"/>
+<text x="64" y="352.2105263157895" text-anchor="end" fill="#8a8a8a">5,000</text>
+<line x1="72" x2="736" y1="332.42105263157896" y2="332.42105263157896" stroke="#ececec"/>
+<text x="64" y="336.42105263157896" text-anchor="end" fill="#8a8a8a">5,500</text>
+<line x1="72" x2="736" y1="316.63157894736844" y2="316.63157894736844" stroke="#ececec"/>
+<text x="64" y="320.63157894736844" text-anchor="end" fill="#8a8a8a">6,000</text>
+<line x1="72" x2="736" y1="300.8421052631579" y2="300.8421052631579" stroke="#ececec"/>
+<text x="64" y="304.8421052631579" text-anchor="end" fill="#8a8a8a">6,500</text>
+<line x1="72" x2="736" y1="285.0526315789474" y2="285.0526315789474" stroke="#ececec"/>
+<text x="64" y="289.0526315789474" text-anchor="end" fill="#8a8a8a">7,000</text>
+<line x1="72" x2="736" y1="269.2631578947369" y2="269.2631578947369" stroke="#ececec"/>
+<text x="64" y="273.2631578947369" text-anchor="end" fill="#8a8a8a">7,500</text>
+<line x1="72" x2="736" y1="253.4736842105263" y2="253.4736842105263" stroke="#ececec"/>
+<text x="64" y="257.4736842105263" text-anchor="end" fill="#8a8a8a">8,000</text>
+<line x1="72" x2="736" y1="237.68421052631578" y2="237.68421052631578" stroke="#ececec"/>
+<text x="64" y="241.68421052631578" text-anchor="end" fill="#8a8a8a">8,500</text>
+<line x1="72" x2="736" y1="221.89473684210526" y2="221.89473684210526" stroke="#ececec"/>
+<text x="64" y="225.89473684210526" text-anchor="end" fill="#8a8a8a">9,000</text>
+<line x1="72" x2="736" y1="206.10526315789474" y2="206.10526315789474" stroke="#ececec"/>
+<text x="64" y="210.10526315789474" text-anchor="end" fill="#8a8a8a">9,500</text>
+<line x1="72" x2="736" y1="190.3157894736842" y2="190.3157894736842" stroke="#ececec"/>
+<text x="64" y="194.3157894736842" text-anchor="end" fill="#8a8a8a">10,000</text>
+<line x1="72" x2="736" y1="174.5263157894737" y2="174.5263157894737" stroke="#ececec"/>
+<text x="64" y="178.5263157894737" text-anchor="end" fill="#8a8a8a">10,500</text>
+<line x1="72" x2="736" y1="158.73684210526315" y2="158.73684210526315" stroke="#ececec"/>
+<text x="64" y="162.73684210526315" text-anchor="end" fill="#8a8a8a">11,000</text>
+<line x1="72" x2="736" y1="142.94736842105263" y2="142.94736842105263" stroke="#ececec"/>
+<text x="64" y="146.94736842105263" text-anchor="end" fill="#8a8a8a">11,500</text>
+<line x1="72" x2="736" y1="127.15789473684211" y2="127.15789473684211" stroke="#ececec"/>
+<text x="64" y="131.1578947368421" text-anchor="end" fill="#8a8a8a">12,000</text>
+<line x1="72" x2="736" y1="111.36842105263159" y2="111.36842105263159" stroke="#ececec"/>
+<text x="64" y="115.36842105263159" text-anchor="end" fill="#8a8a8a">12,500</text>
+<line x1="72" x2="736" y1="95.57894736842104" y2="95.57894736842104" stroke="#ececec"/>
+<text x="64" y="99.57894736842104" text-anchor="end" fill="#8a8a8a">13,000</text>
+<line x1="72" x2="736" y1="79.78947368421052" y2="79.78947368421052" stroke="#ececec"/>
+<text x="64" y="83.78947368421052" text-anchor="end" fill="#8a8a8a">13,500</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">14,000</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">6,000</text>
+<line x1="238" x2="238" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="238" y="382" text-anchor="middle" fill="#8a8a8a">9,000</text>
+<line x1="404" x2="404" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="404" y="382" text-anchor="middle" fill="#8a8a8a">12,000</text>
+<line x1="570" x2="570" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="570" y="382" text-anchor="middle" fill="#8a8a8a">15,000</text>
+<line x1="736" x2="736" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="736" y="382" text-anchor="middle" fill="#8a8a8a">18,000</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">lease balance still owed at the start of the season, yuan</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">mean profit, yuan</text>
+<polyline fill="none" stroke="#b9b9b9" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="72.0,87.7 238.0,182.2 404.0,270.2 570.0,324.3 736.0,334.0"/>
+<polyline fill="none" stroke="#c8102e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="72.0,86.4 238.0,180.8 404.0,268.0 570.0,317.9 736.0,327.2"/>
+<circle cx="72.0" cy="87.7" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="238.0" cy="182.2" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="404.0" cy="270.2" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="570.0" cy="324.3" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="736.0" cy="334.0" r="3.5" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="72.0" cy="86.4" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="238.0" cy="180.8" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="404.0" cy="268.0" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="570.0" cy="317.9" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="736.0" cy="327.2" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<rect x="650" y="49" width="12" height="3" fill="#c8102e" rx="1"/>
+<text x="667" y="55" fill="#1a1a1a">MDP policy</text>
+<rect x="547.6" y="49" width="12" height="3" fill="#b9b9b9" rx="1"/>
+<text x="564.6" y="55" fill="#1a1a1a">greedy rule</text>
+<text x="72.0" y="76.4" text-anchor="start" fill="#c8102e" font-weight="600">+41 yuan</text>
+<text x="238.0" y="170.8" text-anchor="middle" fill="#c8102e" font-weight="600">+44 yuan</text>
+<text x="404.0" y="258.0" text-anchor="middle" fill="#c8102e" font-weight="600">+69 yuan</text>
+<text x="570.0" y="307.9" text-anchor="middle" fill="#c8102e" font-weight="600">+203 yuan</text>
+<text x="736.0" y="317.2" text-anchor="end" fill="#c8102e" font-weight="600">+215 yuan</text>
+</svg>

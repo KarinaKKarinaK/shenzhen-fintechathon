@@ -4,11 +4,11 @@ Four contracts and two interfaces. The web engine (`web/src/engine/contracts.ts`
 
 | File | What | Status |
 |---|---|---|
-| `IBonded.sol` | The bonded wallet standard: pilot bond and minimum, covers with the floor, slash by proof, top up, vendor bond views | Written per `docs/research/BONDED_AGENT_FIXES.md` B.2, compiled in CI, not deployed |
-| `IntentLog.sol` | Append-only per-job record of intent hashes. The agent commits every intent before the policy engine decides | Written per B.1, compiled and tested in CI, not deployed |
-| `Bond.sol` | Two bonds: pilot bond slashed only for pilot rules, vendor bond slashed only for agent rules with a fixed penalty and a daily cap. Proof checked against the log, the board and the signed intent. Parties only on live jobs, hunters on shadow jobs | Written per B.3, compiled and tested in CI, not deployed |
-| `JobBoard.sol` | One board: fee locks on post, start needs the bond plus floor to cover a quarter of the fee, release only on the verifier's confirmation, split by rule, capped 24 hour hold, cancel after the window, shadow jobs, views for `Bond` | Written per B.4, compiled and tested in CI, not deployed |
-| `Lease.sol` | Hire purchase: instalment per released fee, freeze by the lender, title at zero, rate changes by the operator inside the band. Gained `lenderOf` | Written, compiled in CI, not deployed |
+| `IBonded.sol` | The bonded wallet standard: pilot bond and minimum, covers with the floor, slash by proof, top up, vendor bond views | Written per `docs/research/BONDED_AGENT_FIXES.md` B.2, compiled in CI |
+| `IntentLog.sol` | Append-only per-job record of intent hashes. The agent commits every intent before the policy engine decides | Written per B.1, compiled and tested in CI, deployed |
+| `Bond.sol` | Two bonds: pilot bond slashed only for pilot rules, vendor bond slashed only for agent rules with a fixed penalty and a daily cap. Proof checked against the log, the board and the signed intent. Parties only on live jobs, hunters on shadow jobs | Written per B.3, compiled and tested in CI, deployed |
+| `JobBoard.sol` | One board: fee locks on post, start needs the bond plus floor to cover a quarter of the fee, release only on the verifier's confirmation, split by rule, capped 24 hour hold, cancel after the window, shadow jobs, views for `Bond` | Written per B.4, compiled and tested in CI, deployed |
+| `Lease.sol` | Hire purchase: instalment per released fee, freeze by the lender, title at zero, rate changes by the operator inside the band. Gained `lenderOf` | Written, compiled in CI |
 
 ## Rules and bonds
 
@@ -55,4 +55,26 @@ curl -L https://foundry.paradigm.xyz | bash && foundryup
 cd contracts && forge install foundry-rs/forge-std && forge test
 ```
 
-CI runs the same command. To deploy: `forge create` to Base Sepolia in the order above, verify on the explorer, and put the addresses in `web/.env`. The engine's chain adapter currently anchors events as self transfers with calldata; ABI calls against deployed addresses are the next step.
+CI runs the same command.
+
+## Deployment
+
+Deployed on Base Sepolia (chain 84532) in block 48,335,911 from the demo wallet, source verified on Sourcify with an exact match. Addresses and deploy transactions are in `contracts/deployments/base-sepolia.json`; the script is `contracts/script/Deploy.s.sol`.
+
+| Contract | Address |
+|---|---|
+| IntentLog | `0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51` |
+| Bond | `0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754` |
+| Lease | `0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2` |
+| JobBoard | `0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A` |
+
+Redeploy pending: the deployed Bond predates the collusion fix. In the source, a vendor rule broken on a live job now pays the whole penalty to the treasury, where the deployed Bond pays half of it to the agent's operator (the pilot). The pilot is a party of the job and can submit proof, so the old payout let a pilot stage a fake scam and collect half the vendor's penalty. Until a redeploy, the Bond source here differs from the verified contract at the address above; IntentLog, Lease and JobBoard are unchanged.
+
+Deploy and verify:
+
+```
+forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --private-key $SURETY_PRIVATE_KEY --broadcast
+forge verify-contract --chain 84532 --verifier sourcify <address> src/<Name>.sol:<Name>
+```
+
+The deployer stands in for the treasury and the rail on the testnet. The engine's chain adapter anchors events as self transfers with calldata; ABI calls against these addresses are the next step.

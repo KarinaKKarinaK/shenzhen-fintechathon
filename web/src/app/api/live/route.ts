@@ -4,11 +4,14 @@ import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // the Vercel hobby plan allows at most 300 seconds
+// Hosting caps a function at 300 seconds, so one connection runs for up to 290 seconds and the page
+// reconnects with the next seed segment. The feed looks endless to the viewer.
+export const maxDuration = 300;
+const SEGMENT_MS = 290_000;
 
 // GET /api/live?scenario=fleet&lang=zh&every=8&seed=42&fast=1
 // A feed of seeded jobs through the wallet, one every `every` seconds, until the client goes
-// away or 5 minutes pass (the hosting limit). Same seed, same jobs. One connection per IP.
+// away or the segment ends. Same seed, same jobs. One connection per IP.
 export async function GET(req: Request) {
   const ip = ipOf(req);
   if (!allow(ip)) return tooMany();
@@ -27,7 +30,7 @@ export async function GET(req: Request) {
     async start(controller) {
       const send = (ev: unknown) => { try { controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`)); } catch { ctrl.abort(); } };
       try {
-        for await (const ev of live({ fast, real, lang, signal: ctrl.signal, every: Number.isFinite(every) ? every : 8, seed: seed !== undefined && Number.isFinite(seed) ? Math.floor(Math.abs(seed)) : undefined })) {
+        for await (const ev of live({ fast, real, lang, signal: ctrl.signal, maxMs: SEGMENT_MS, every: Number.isFinite(every) ? every : 8, seed: seed !== undefined && Number.isFinite(seed) ? Math.floor(Math.abs(seed)) : undefined })) {
           if (ctrl.signal.aborted) break;
           send(ev);
         }

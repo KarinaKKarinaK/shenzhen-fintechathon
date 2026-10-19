@@ -33,6 +33,12 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
     if (q === "feed" || q === "data") setMode(q); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
   const switchMode = (next: Mode) => { if (next === mode) return; stop(); reset(); setMode(next); };
+  // One hosting function lasts up to 290 seconds; the feed chains segments with a rolling seed so it never stops.
+  const segRef = useRef(0);
+  const startFeed = (seg: number) => {
+    segRef.current = seg;
+    startStream(`/api/live?scenario=fleet&lang=${lang}&seed=${42 + seg}`, undefined, () => { if (segRef.current === seg) startFeed(seg + 1); });
+  };
   const R = d.run;
   const title = side === "fleet" ? d.fleet.title : d.neighbour.title;
   const intro = side === "fleet" ? d.fleet.intro : d.neighbour.intro;
@@ -116,7 +122,7 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
           ) : mode === "feed" ? (
             <>
               <span className="pill bg-gold-soft text-ink">{t("live.processed", { n: state.processed })}</span>
-              {!state.running ? <button className="btn btn-red" onClick={() => startStream(`/api/live?scenario=fleet&lang=${lang}`)}>{d.live.startLive}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
+              {!state.running ? <button className="btn btn-red" onClick={() => startFeed(0)}>{d.live.startLive}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
             </>
           ) : null}
         </div>

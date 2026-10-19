@@ -2,7 +2,7 @@
 
 Zishi (自食其力) is a wallet for a machine. An agricultural spraying drone on hire purchase earns per mu sprayed, pays its lender from every fee, keeps a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. The model explains; code decides. Everything below is grounded in `web/src/engine` and `contracts/`.
 
-Companion documents: `SELF_ASSESSMENT.md` (security risks and what is built), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
+Companion documents: `docs/Zishi_Technical_Document.docx` (this material on the official submission template, with appendices), `docs/JUDGES_GUIDE.md` (ten minutes in order), `SELF_ASSESSMENT.md` (security risks and what is built), `docs/EXECUTION_EVIDENCE.md` (a real run checked against the chain), `docs/RED_TEAM.md` (the attack set, run at generation time), `docs/EVALUATION.md` (held out results, raw values in `docs/results/`), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
 
 ## 1. Problem
 
@@ -22,14 +22,14 @@ flowchart LR
     T[useRun: EventSource over SSE]
   end
   subgraph NextJS["Next.js 16 API routes"]
-    R[/api/run]
-    C[/api/run-custom]
-    LV[/api/live]
-    J[/api/judge]
-    A[/api/attacks]
-    B[/api/button]
-    M[/api/metrics]
-    RA[/api/ratchet]
+    R["/api/run"]
+    C["/api/run-custom"]
+    LV["/api/live"]
+    J["/api/judge"]
+    A["/api/attacks"]
+    B["/api/button"]
+    M["/api/metrics"]
+    RA["/api/ratchet"]
   end
   subgraph Engine["web/src/engine"]
     S[scenarios.ts: async generator of EngineEvent]
@@ -87,7 +87,7 @@ flowchart LR
 | Ratchet | `ratchet.ts` | Hill climbing over the acceptance strategy against a frozen week |
 | Keys | `keys.ts` | One secp256k1 key per actor, generated at boot. EIP-712 domain `Zishi` v1, chain 84532 |
 | Chain | `chain.ts` | `SimChain` or `RealChain` behind one `Chain` interface |
-| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 40 tests |
+| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 43 tests, deployed on Base Sepolia |
 
 ## 3. Data model
 
@@ -248,18 +248,63 @@ Every inbound message is escaped and wrapped in a `relay-message` block with `re
 
 The classifier can only turn a pass into a hold. The rules keep the last word on refuse.
 
-### 6.2 Learned components
+### 6.2 Learned and optimising components
 
-Each one has a fixed seed and a held out set the agent cannot edit. `pnpm test` prints the numbers; `/api/metrics` serves them; the Evidence page shows them.
+Each one has a fixed seed and a held out set the agent cannot edit. `pnpm test` prints the numbers, `pnpm bench` prints the before and after table below, `/api/metrics` serves them, and the Evidence page shows them under Learned components and Monitors.
 
-| Component | File | Method | Data | Held out result |
+| Component | File | Borrowed from | Method | Data and seed | Held out result |
+|---|---|---|---|---|---|
+| Message classifier | `ml/gate.ts`, `ml/corpus.ts` | Text classification | Logistic regression on hashed character 1, 2 and 3-grams, 2^14 buckets, trained at module load, adds a risk score the rule gate can only turn into a hold | 401 messages in English and Chinese, 100 held out, seed 20251020 | accuracy 0.95, precision 0.93, recall 0.96, F1 0.94, false alarm 0.054 |
+| GPS fusion | `fusion/kalman.ts` | Aerospace, the Kalman filter | Constant velocity Kalman filter with a Rauch Tung Striebel smoother over 1 Hz GPS samples; measurement noise estimated per flight; innovation gating rejects outliers; an FNV hash of the innovation sequence detects a replayed track | the same 2,000 synthetic flights, each with a noisy track | at matched full detection the raw track length false alarms on 13.8 percent of honest flights, the smoothed length on 0.0 percent |
+| Anomaly threshold | `fusion/conformal.ts` | Statistics, split conformal prediction | The flag threshold is the calibration set quantile for a 2 percent target false alarm rate, so the guarantee is stated and checked rather than hand set | 634 honest calibration flights, 500 held out, seed 7331 | threshold z 2.60, held out false alarm 3.0 percent, coverage 97 percent, detection 100 percent on all five tamper classes |
+| Telemetry anomaly model | `ml/plausibility.ts` | Robust statistics | Robust z (median and MAD) over area ratio, speed, battery per mu, altitude variance and GPS innovation, fitted on 750 flights | 2,000 flights, 15 percent tampered across inflated area, replayed track, impossible speed, low battery and teleport jump | 72 of 72 tampered flights caught |
+| Pilot credit score | `credit/score.ts` | Actuarial science, Buhlmann credibility | A Beta posterior per component (confirmations, instalments on time, clean record) weighted n to n plus k against the fleet prior; the score moves the instalment share inside the policy band and is emitted as a `credit` event | fleet prior strength 8 | 0.912 to 0.936 after three confirmed jobs, 0.882 after a held log; tier B at 2,815 bps |
+| Day planner | `planner.ts`, `economics/pricing.ts` | Operations research and mechanism design | Bounded knapsack over mu per charge, charges and minutes; overlapping jobs settle by a second price comparison so an inflated stated fee cannot buy priority | the day's candidate jobs | exact; a maize job that inflates its bid to 5 wins at 4.2 and loses 0.7 in utility |
+| Lease MDP | `economics/mdp.ts` | Operations research, dynamic programming | Finite horizon Markov decision process over lease balance, bond, weather and offer class, 46,800 states, value iteration over 26 weeks, compared against the greedy rule with common random numbers | 200 seeded seasons, seed 2026 | 7,540 versus 7,471 yuan mean profit, same weeks to title |
+| Strategy ratchet | `ratchet.ts` | The autoresearch loop | Hill climbing over four acceptance knobs against a frozen simulated week, keeping a change only if profit after instalments rises and the reserve rule holds | seed 4242, walk seed 99 | 60 steps, 5 kept, 246 to 926 yuan |
+| Bond stress test | `economics/stress.ts` | Bank risk, Monte Carlo | 2,000 seeded seasons with tamper attempts, slashes and skipped instalments; reports default probability, bond drawdowns and lender loss given default | seed in `STRESS_DEFAULTS` | default 9 percent; p95 loss 25,593 yuan without bonds, 19,739 with, bonds absorb 23 percent |
+| Drift monitor | `drift/cusum.ts`, `drift/monitor.ts` | Manufacturing, statistical process control | One sided CUSUM on the classifier's risk scores and on the policy deny rate, alarm resets, 120 point history for the sparklines | synthetic shift at observation 500, seed 20251020 | alarm 6 observations after the shift, 0 false alarms in 600 benign scores |
+| Replay log | `replay/log.ts` | Financial ledgers, event sourcing | Every event of a run appended to a hash chain with volatile fields dropped from the canonical form; `GET /api/replay` lists and verifies | two seeded fast runs | identical chain head over 293 events, a tampered entry caught at its position |
+
+What they are not: not trained on live traffic or real drone logs. The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet and the MDP only move acceptance knobs inside the policy band. The credit score only recommends a rate inside the band. Nothing here signs, pays or changes a cap.
+
+### 6.4 Measured improvement
+
+`pnpm charts` (`web/scripts/charts.ts`) redraws nine SVG charts in `docs/charts` from the same seeds: the detection curve, the robust z histogram, conformal calibration, lender loss against skip rate, MDP against greedy across balances, the ratchet walk, three credit trajectories, the CUSUM trace and the classifier across thresholds. The README shows them.
+
+`pnpm bench` recomputes every row from the frozen seeds. Nothing in this table is pasted.
+
+| Component | Before | After | Before result | After result |
 |---|---|---|---|---|
-| Message classifier | `ml/gate.ts`, `ml/corpus.ts` | Logistic regression on hashed character 3-grams, 2^14 buckets, trained at module load | 401 messages: 52 attack texts, attack paraphrases and benign messages in English and Chinese | 100 held out: accuracy 0.95, F1 0.944, false alarm rate 0.054 |
-| Telemetry anomaly model | `ml/plausibility.ts` | Robust z (median and MAD) over area ratio, speed, battery per mu, altitude variance; flag at z 4 | 2,000 synthetic flights from physical rules with noise, 15 percent tampered | 500 held out: detection 1.00, false alarm rate 0.00 |
-| Strategy ratchet | `ratchet.ts` | Hill climbing over `{ reserveRule, minMarginPerMu, maxJobsPerCharge, acceptLowFeeIfIdle }` against a frozen week; the reserve rule is a hard constraint | One week of offers from seed 4242, walk seed 99 | 60 steps, 5 kept, profit 246 to 926 yuan |
-| Day planner | `planner.ts` | Bounded knapsack by dynamic programming over fee, mu, distance and window, subject to mu per charge, charges and minutes | The day's candidate jobs | Exact, not learned. The reserve rule is still checked per job after the plan |
+| Message gate | rules only (regex) | rules plus learned classifier | 52 of 52 scripted attacks, no score on paraphrases | held out 100 messages: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
+| Telemetry check | raw GPS length | Kalman smoothed | false alarm 13.8% at full detection | false alarm 0.0% at full detection, cut 100% |
+| Anomaly threshold | fixed |z| 4 | conformal |z| 2.60 (2% target) | false alarm 0.0%, detection 100.0% | false alarm 3.0%, detection 100.0% |
+| Lease strategy | greedy rule | MDP policy (26 weeks, value iteration) | 7,471 yuan mean, title 84.0% | 7,540 yuan mean, title 84.0% |
+| Acceptance knobs | baseline | ratchet, 5 of 60 steps kept | 246 yuan | 926 yuan |
+| Lender loss given default, p95 | no bonds | pilot and vendor bonds | 25,593 yuan | 19,739 yuan, bonds absorb 23.0% (default 9.0%) |
+| Pilot credit | flat rate band | Buhlmann credibility | no change with history | p 0.936 after 3 confirmed, 0.882 after a held log |
+| Drift detection | none | CUSUM on classifier risk | never | alarm 6 observations after the shift, 0 false alarms in 600 |
+| Run integrity | no log | hash chained event log | not verifiable | two seeded runs, head 0x68c3abcf, equal true |
 
-What they are not: not trained on live traffic or real drone logs. The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet only moves four numbers inside the reserve rule. None of them moves money.
+How to read it. The Kalman row holds detection at 100 percent on the track features and compares false alarms, which is the cost a pilot feels. The conformal row trades a hand set threshold that happened to be safe on this data for one with a stated target and a measured held out rate. The MDP and ratchet rows are profit on a frozen simulated season and week, not on real farms. The stress row is the lender's view: the bonds take about a quarter of the tail loss, and the title takes the rest.
+
+```mermaid
+flowchart LR
+  G[GPS samples 1 Hz] --> K[Kalman smoother]
+  K --> F[Features: area ratio, speed, battery per mu, altitude, innovation]
+  F --> Z[Robust z]
+  Z --> C{over conformal threshold or replay or teleport}
+  C -->|no| OK[Flight plausible, fee releases]
+  C -->|yes| H[Fee held, lender alerted]
+  M[Inbound message] --> R[Rule gate]
+  M --> L[Learned classifier risk]
+  R --> D{pass, redact, hold, refuse}
+  L --> D
+  L --> S[CUSUM drift monitor]
+  D --> E[Engine events] --> X[Hash chained replay log]
+  E --> B[Credit score] --> RB[Rate inside the band]
+  J[Candidate jobs] --> P[Knapsack planner with second price tie break] --> E
+```
 
 ### 6.3 Model (`model.ts`)
 
@@ -272,7 +317,16 @@ With `AI_GATEWAY_API_KEY` or `ANTHROPIC_API_KEY` the model writes explanations a
 
 ## 7. Contracts
 
-Solidity 0.8.26, Foundry, 40 tests in `contracts/test`. Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
+Solidity 0.8.26, Foundry, 43 tests in `contracts/test`, three of them fuzz tests over the slash path (amount inside the cap never slashes, any amount over the cap slashes exactly the penalty, any payee off the allowlist slashes). Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
+
+Deployed on Base Sepolia (chain 84532) in block 48,335,911 from the demo wallet, source verified on Sourcify with an exact match. Addresses and deploy transactions are in `contracts/deployments/base-sepolia.json`; the script is `contracts/script/Deploy.s.sol`.
+
+| Contract | Address |
+|---|---|
+| IntentLog | `0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51` |
+| Bond | `0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754` |
+| Lease | `0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2` |
+| JobBoard | `0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A` |
 
 ### 7.1 IntentLog
 
@@ -350,9 +404,11 @@ Revert order: `unknown agent`, `proof already used`, `not the agent's signature`
 | Mode | When | What a transaction is |
 |---|---|---|
 | Simulated | Default | `SimChain`: keccak hash of the event, `simulated: true` on every tx, labelled in the UI |
-| Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...`, explorer link, confirmed at one receipt, finalised at two more blocks |
+| Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: every signed intent is `IntentLog.commit(jobId, intentHash)` on the deployed contract (69,288 gas); every money event is a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...` (28,880 gas). Explorer link on both, confirmed at one receipt, finalised at two more blocks |
 
-The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). Contract calls through the ABI against deployed addresses are the next step; today events are anchored, not executed, on chain.
+The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). The four contracts are deployed on Base Sepolia (section 7). In real mode every signed intent is committed to the deployed IntentLog by a contract call (`RealChain.commit`, emitted as a `chain` event of kind `log` with the explorer link); a hash the log already holds falls back to a calldata anchor and says so. Money events are anchored as calldata, and the Bond, JobBoard and Lease rules run in the mirrors; their calls are the next step.
+
+One wallet signs for the whole demo, and a run sends transactions a few hundred milliseconds apart, so `RealChain` sends one at a time through an in-memory queue, fetches the pending nonce for each, and retries up to three times on a nonce clash from another instance on the same key (`nonce too low`, `replacement transaction underpriced`). A commit is simulated first (`simulateContract`), so a hash the log already holds costs no gas and is anchored with the reason in its label. A full real run of the fleet scenario is 15 commits and about 30 anchors, 0.000013 ETH at 0.006 gwei.
 
 ## 9. Bring your own data
 
@@ -408,13 +464,13 @@ Samples are listed by `GET /api/samples` and appear in the page's dropdown.
 |---|---|
 | Jobs, flights, messages | 50 each per run |
 | Message text | 64 KiB, the gate's limit |
-| Rate | 10 requests per minute per IP, one open stream per IP |
+| Rate | Best effort, per server instance: 10 requests per minute per IP, one open stream per IP |
 | Chain | Simulated unless the request carries the demo token |
 | Storage | None. Rows live for the request. Message text reaches a model only when a model key is set |
 
 ## 10. API reference
 
-All routes are dynamic. Limits: 10 requests per minute per IP, one concurrent run per IP (`ratelimit.ts`), `429 { error: "too many requests" }` when exceeded.
+All routes are dynamic. Limits: 10 requests per minute per IP and one concurrent run per IP (`ratelimit.ts`), `429 { error: "too many requests" }` when exceeded. The counters live in the memory of one server instance, so on a serverless host they are best effort; the funded key is guarded by the demo token, not by this limiter. `/api/metrics` is served from the CDN for a minute.
 
 | Method, path | Params | Response |
 |---|---|---|
@@ -463,6 +519,7 @@ Vercel, Next.js 16, Node 22, pnpm 10. Root directory `web`. The route `/api/run`
 | `SURETY_PRIVATE_KEY` | no | `0x` plus 64 hex. Funded Base Sepolia key that anchors events |
 | `BASE_SEPOLIA_RPC` | no | Default `https://sepolia.base.org` |
 | `DEMO_TOKEN` | no | Real chain only for requests carrying this token. Unset means never real |
+| `ZISHI_INTENT_LOG` | no | IntentLog address for real mode. Default: the Base Sepolia deployment in `contracts/deployments/base-sepolia.json` |
 
 Without any variable the app runs fully: scripted explanations, simulated chain, labelled as such. See `web/.env.example`.
 
@@ -472,8 +529,11 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 |---|---|---|
 | `pnpm lint` | `web` | ESLint, Next.js config |
 | `npx tsc --noEmit` | `web` | Types, including both dictionaries |
-| `pnpm test` | `web` | The engine self check (section 11) |
-| `forge test` | `contracts` | 40 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (24), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
+| `pnpm test` | `web` | The engine self check (section 11), including every learned metric assertion |
+| `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
+| `pnpm charts` | `web` | The nine charts in `docs/charts`, redrawn from the seeds |
+| `pnpm report` | `web` | `docs/EXECUTION_EVIDENCE.md` from the latest captured real run and the chain, `docs/RED_TEAM.md` from the attack set, `docs/EVALUATION.md` and `docs/results/` from the learned components |
+| `forge test` | `contracts` | 43 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (27, three fuzzed), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 
 CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the Foundry tests on every push and pull request.
@@ -488,15 +548,15 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 | Policy engine | Code, not prompts. Rules are data. The model never sees it |
 | Operator key | Only `set_cap` and `top_up`, only from the button, tier L3 |
 | Real chain | Only with the demo token and a funded key |
-| Public routes | Rate limited per IP, body limits, no storage |
+| Public routes | Best effort rate limit per instance, body limits, no storage; the demo token guards the funded key |
 | Secrets | `.env*` ignored by git; `.env.example` has no values |
 
 ### What is simulated
 
 | Layer | Status |
 |---|---|
-| Contracts | Compiled and tested with Foundry. Not deployed. The engine mirrors them |
-| Chain | Simulated by default. Real mode anchors event records on Base Sepolia; it does not call the contracts |
+| Contracts | Tested with Foundry, deployed and source verified on Base Sepolia. In real mode the engine calls IntentLog; Bond, JobBoard and Lease run in the mirrors |
+| Chain | Simulated by default. Real mode commits every intent hash to the deployed IntentLog and anchors money events as calldata on Base Sepolia |
 | Keys | Generated per boot for seven actors. Production: secure element, hardware button, HSMs |
 | Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |
 | Training data | Handwritten corpus and synthetic flights, labelled as such everywhere they appear |
@@ -504,3 +564,21 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 | Insurance and physical damage | Not in the build. Named as the one human decision path |
 
 Risks, what is built against each and what production would do are in `SELF_ASSESSMENT.md`.
+
+## 16. By the numbers
+
+Measured on 2026-10-20 from the self check, the bench, the charts script and Base Sepolia receipts.
+
+| Measure | Value | Source |
+|---|---|---|
+| Fleet scenario, simulated, fast | 293 events in 1.3 s: 15 signed intents, 15 policy decisions over 113 rule lines, 25 transactions, 7 gate verdicts, 3 flight logs scored, 1 proof | `scenarios.ts` |
+| Fleet scenario, real chain | 15 `IntentLog.commit` calls, about 30 anchors, 0.000013 ETH | Base Sepolia receipts |
+| Contract deployment | 4 contracts, 4,491,890 gas, block 48,335,911 | `contracts/deployments/base-sepolia.json` |
+| Foundry | 43 tests, 3 fuzzed at 256 runs | `forge test` |
+| Attack set | 52 cases, 7 benign, naive baseline falls to 51 of 52 | `attacks.ts` |
+| Classifier | 401 messages, 124 of them paraphrases, 100 held out, 2^14 hashed buckets | `ml/gate.ts`, `ml/corpus.ts` |
+| Oracle | 2,000 flights, 312 tampered, 750 fit, 634 honest calibration, 500 held out | `ml/plausibility.ts` |
+| MDP | 46,800 states, 26 weeks, 200 seasons | `economics/mdp.ts` |
+| Stress test | 2,000 seasons, 7 skip rates on the chart | `economics/stress.ts` |
+| Drift | 500 benign then 100 attack scores, 600 quiet | `drift/eval.ts` |
+| Code | 10,294 lines: engine 4,921, interface 3,179, Solidity 593, API routes 300, dictionaries 1,300 | `wc -l` |

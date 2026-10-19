@@ -15,6 +15,9 @@ export type TxExtra = Partial<Pick<ChainTx, "rule" | "bond">>;
 export interface Chain {
   readonly simulated: boolean;
   send(kind: ChainTx["kind"], label: string, from: string, to: string, amount: number, extra?: TxExtra): Promise<ChainTx>;
+  // Commit an intent hash to the IntentLog contract. Only the real chain has one; the simulated
+  // chain's log lives in the engine mirror, so the method is absent there.
+  commit?(jobId: string, intentHash: string, label: string): Promise<ChainTx>;
   confirm(tx: ChainTx): Promise<ChainTx>;
   finalise(tx: ChainTx): Promise<ChainTx>;
 }
@@ -44,6 +47,10 @@ export class SimChain implements Chain {
 // hash as soon as the node accepts it. The label says "anchor" because the demo units are
 // not moved on chain, the record of the event is. Contract calls through the ABI are the
 // next step once the contracts in /contracts are deployed and their addresses are in the env.
+// The IntentLog deployed on Base Sepolia (contracts/deployments/base-sepolia.json).
+export const INTENT_LOG = (process.env.ZISHI_INTENT_LOG || "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51") as `0x${string}`;
+const INTENT_LOG_ABI = [{ type: "function", name: "commit", stateMutability: "nonpayable", inputs: [{ name: "jobId", type: "bytes32" }, { name: "intentHash", type: "bytes32" }], outputs: [] }] as const;
+
 export class RealChain implements Chain {
   readonly simulated = false;
   private ready = false;
@@ -58,12 +65,36 @@ export class RealChain implements Chain {
     this.client = createWalletClient({ account, chain: baseSepolia, transport: http(this.rpc) }).extend(publicActions);
     this.ready = true;
   }
+  // One wallet, many events in quick succession: sends go out one at a time with an explicit
+  // pending nonce, and a nonce clash from another instance on the same key is retried.
+  private queue: Promise<unknown> = Promise.resolve();
+  private serial<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(fn, fn);
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+  private async withNonce(fn: (nonce: number) => Promise<`0x${string}`>): Promise<`0x${string}`> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = this.client as any;
+    let last: unknown;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const nonce: number = await c.getTransactionCount({ address: c.account.address, blockTag: "pending" });
+        return await fn(nonce);
+      } catch (e) {
+        last = e;
+        if (!/nonce|underpriced|replacement|already known/i.test(String((e as Error).message))) throw e;
+        await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+      }
+    }
+    throw last;
+  }
   async send(kind: ChainTx["kind"], label: string, from: string, to: string, amount: number, extra: TxExtra = {}): Promise<ChainTx> {
     await this.init();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = this.client as any;
     const data = toHex(JSON.stringify({ kind, label, from, to, amount, currency: CURRENCY, ...extra }));
-    const hash: `0x${string}` = await c.sendTransaction({ to: c.account.address, value: BigInt(0), data });
+    const hash = await this.serial(() => this.withNonce((nonce) => c.sendTransaction({ to: c.account.address, value: BigInt(0), data, nonce })));
     return {
       hash,
       label: `anchor: ${label}`,
@@ -79,6 +110,27 @@ export class RealChain implements Chain {
       explorer: `https://sepolia.basescan.org/tx/${hash}`,
       ...extra,
     };
+  }
+  // IntentLog.commit(jobId, intentHash) as a real contract call. The job id is hashed to
+  // bytes32 the same way the contracts tests do for string ids. A hash the log already holds
+  // (the same intent from an earlier run on this key) reverts on chain, so that case falls
+  // back to a calldata anchor and says so in the label.
+  async commit(jobId: string, intentHash: string, label: string): Promise<ChainTx> {
+    await this.init();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = this.client as any;
+    const base = { kind: "log" as const, amount: 0, currency: CURRENCY, from: c.account.address as string, to: INTENT_LOG as string, block: 0, simulated: false, status: "pending" as const };
+    try {
+      const args = [keccak256(toHex(jobId)), intentHash as `0x${string}`] as const;
+      // Simulate first so a revert (a hash already in the log) costs no gas and names itself.
+      await c.simulateContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args });
+      const hash = await this.serial(() => this.withNonce((nonce) => c.writeContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args, nonce })));
+      return { ...base, hash, label: `IntentLog.commit: ${label}`, sentAt: Date.now(), explorer: `https://sepolia.basescan.org/tx/${hash}` };
+    } catch (e) {
+      const msg = String((e as Error).message ?? "");
+      const why = msg.includes("already committed") ? "already in the log" : `commit refused (${msg.split("\n")[0].slice(0, 60)})`;
+      return this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0);
+    }
   }
   async confirm(tx: ChainTx): Promise<ChainTx> {
     if (tx.status !== "pending") return tx;

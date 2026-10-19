@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">Conformal threshold: stated false alarm rate against the held out rate</text>
+<text x="72" y="44" fill="#8a8a8a">634 honest calibration flights set the threshold; 428 held out honest flights test it; detection stays at 100% at every target</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">0%</text>
+<line x1="72" x2="736" y1="289" y2="289" stroke="#ececec"/>
+<text x="64" y="293" text-anchor="end" fill="#8a8a8a">5%</text>
+<line x1="72" x2="736" y1="214" y2="214" stroke="#ececec"/>
+<text x="64" y="218" text-anchor="end" fill="#8a8a8a">10%</text>
+<line x1="72" x2="736" y1="139.00000000000003" y2="139.00000000000003" stroke="#ececec"/>
+<text x="64" y="143.00000000000003" text-anchor="end" fill="#8a8a8a">15%</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">20%</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">0.0%</text>
+<line x1="279.5" x2="279.5" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="279.5" y="382" text-anchor="middle" fill="#8a8a8a">5%</text>
+<line x1="487" x2="487" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="487" y="382" text-anchor="middle" fill="#8a8a8a">10%</text>
+<line x1="694.5" x2="694.5" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="694.5" y="382" text-anchor="middle" fill="#8a8a8a">15%</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">target false alarm rate</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">held out false alarm rate</text>
+<polyline fill="none" stroke="#b9b9b9" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 4" points="72.0,364.0 736.0,124.0"/>
+<polyline fill="none" stroke="#c8102e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="92.8,350.0 113.5,346.5 155.0,318.4 196.5,307.9 279.5,290.4 383.3,234.3 487.0,216.8 694.5,136.2"/>
+<circle cx="92.8" cy="350.0" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="113.5" cy="346.5" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="155.0" cy="318.4" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="196.5" cy="307.9" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="279.5" cy="290.4" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="383.3" cy="234.3" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="487.0" cy="216.8" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="694.5" cy="136.2" r="3.5" fill="#c8102e" stroke="#c8102e" stroke-width="1.5"/>
+<circle cx="155.0" cy="318.4" r="6" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<rect x="586" y="44" width="12" height="12" fill="#d4a017" rx="1"/>
+<text x="603" y="55" fill="#1a1a1a">the 2% target in use</text>
+<rect x="502.8" y="49" width="12" height="3" fill="#c8102e" rx="1"/>
+<text x="519.8" y="55" fill="#1a1a1a">measured</text>
+<rect x="330" y="49" width="12" height="3" fill="#b9b9b9" rx="1"/>
+<text x="347" y="55" fill="#1a1a1a">stated equals measured</text>
+<text x="155.0" y="306.4" text-anchor="start" fill="#1a1a1a" font-weight="600">3.0% at a 2% target</text>
+</svg>
