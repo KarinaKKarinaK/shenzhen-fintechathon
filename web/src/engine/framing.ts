@@ -21,7 +21,7 @@ export function frame(from: string, relation: "owner" | "counterparty" | "unknow
 export type JudgeVerdict = { action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string };
 
 const PATTERNS: Array<[RegExp, string]> = [
-  [/ignore (all |your |the )?(previous|prior|above) (instructions|rules)/i, "override"],
+  [/(ignore|disregard|forget|override) (all |your |the |any |every )?(previous |prior |above |existing |current |earlier )?(instructions|rules|policy|policies|limits|guidelines)/i, "override"],
   [/(system|admin|operator) (override|mode|message)/i, "impersonation"],
   [/^\s*(system|admin|operator|owner)\s*:/im, "impersonation"],
   [/\b(as|this is|i am|i'm) the (owner|operator|admin)\b/i, "impersonation"],
