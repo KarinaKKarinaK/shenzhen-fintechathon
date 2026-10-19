@@ -4,7 +4,7 @@
 import { METRICS as gate } from "@/engine/ml/gate";
 import { METRICS as plausibility } from "@/engine/ml/plausibility";
 import { cached } from "@/engine/ratchet";
-import { realChainAvailable } from "@/engine/chain";
+import { realChainFunded } from "@/engine/chain";
 import { hasKey } from "@/engine/model";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function GET() {
     plausibility,
     ratchet: { baselineProfit: r.baselineProfit, bestProfit: r.bestProfit, steps: r.steps.length, kept: r.steps.filter((s) => s.kept).length, best: r.best, baseline: r.baseline, evalSeed: r.evalSeed, walkSeed: r.walkSeed },
     planner: { method: "knapsack" as const },
-    chain: realChainAvailable() ? "real" : "sim",
+    chain: (await realChainFunded()).funded ? "real" : "sim",
     model: hasKey() ? "real" : "scripted",
     computedAt: new Date().toISOString(),
     note: "held out: every metric is measured on data split off by a fixed seed before training, never on the training rows",

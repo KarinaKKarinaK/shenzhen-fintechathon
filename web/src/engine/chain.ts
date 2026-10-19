@@ -103,6 +103,28 @@ export function realChainAvailable(): boolean {
   return !!pk && pk.startsWith("0x") && pk.length === 66;
 }
 
+// Real mode is only honest when the demo wallet holds testnet ETH. Checked at most once a minute.
+let fundedCache: { at: number; funded: boolean; balanceWei: bigint } | null = null;
+export async function realChainFunded(): Promise<{ funded: boolean; balanceEth: number; address?: string }> {
+  if (!realChainAvailable()) return { funded: false, balanceEth: 0 };
+  const now = Date.now();
+  if (fundedCache && now - fundedCache.at < 60_000) return { funded: fundedCache.funded, balanceEth: Number(fundedCache.balanceWei) / 1e18 };
+  try {
+    const { privateKeyToAccount } = await import("viem/accounts");
+    const address = privateKeyToAccount(process.env.SURETY_PRIVATE_KEY as `0x${string}`).address;
+    const rpc = process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(rpc, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getBalance", params: [address, "latest"] }), signal: ctrl.signal });
+    clearTimeout(t);
+    const j = (await res.json()) as { result?: string };
+    const wei = BigInt(j.result ?? "0x0");
+    fundedCache = { at: now, funded: wei > BigInt(0), balanceWei: wei };
+    return { funded: wei > BigInt(0), balanceEth: Number(wei) / 1e18, address };
+  } catch {
+    return { funded: false, balanceEth: 0 };
+  }
+}
+
 // A request is allowed real mode only when it carries the demo token.
 export function demoAuthorised(headers: Headers): boolean {
   const token = process.env.DEMO_TOKEN;
