@@ -65,12 +65,36 @@ export class RealChain implements Chain {
     this.client = createWalletClient({ account, chain: baseSepolia, transport: http(this.rpc) }).extend(publicActions);
     this.ready = true;
   }
+  // One wallet, many events in quick succession: sends go out one at a time with an explicit
+  // pending nonce, and a nonce clash from another instance on the same key is retried.
+  private queue: Promise<unknown> = Promise.resolve();
+  private serial<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(fn, fn);
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+  private async withNonce(fn: (nonce: number) => Promise<`0x${string}`>): Promise<`0x${string}`> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = this.client as any;
+    let last: unknown;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const nonce: number = await c.getTransactionCount({ address: c.account.address, blockTag: "pending" });
+        return await fn(nonce);
+      } catch (e) {
+        last = e;
+        if (!/nonce|underpriced|replacement|already known/i.test(String((e as Error).message))) throw e;
+        await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+      }
+    }
+    throw last;
+  }
   async send(kind: ChainTx["kind"], label: string, from: string, to: string, amount: number, extra: TxExtra = {}): Promise<ChainTx> {
     await this.init();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = this.client as any;
     const data = toHex(JSON.stringify({ kind, label, from, to, amount, currency: CURRENCY, ...extra }));
-    const hash: `0x${string}` = await c.sendTransaction({ to: c.account.address, value: BigInt(0), data });
+    const hash = await this.serial(() => this.withNonce((nonce) => c.sendTransaction({ to: c.account.address, value: BigInt(0), data, nonce })));
     return {
       hash,
       label: `anchor: ${label}`,
@@ -97,13 +121,15 @@ export class RealChain implements Chain {
     const c = this.client as any;
     const base = { kind: "log" as const, amount: 0, currency: CURRENCY, from: c.account.address as string, to: INTENT_LOG as string, block: 0, simulated: false, status: "pending" as const };
     try {
-      const hash: `0x${string}` = await c.writeContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args: [keccak256(toHex(jobId)), intentHash as `0x${string}`] });
+      const args = [keccak256(toHex(jobId)), intentHash as `0x${string}`] as const;
+      // Simulate first so a revert (a hash already in the log) costs no gas and names itself.
+      await c.simulateContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args });
+      const hash = await this.serial(() => this.withNonce((nonce) => c.writeContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args, nonce })));
       return { ...base, hash, label: `IntentLog.commit: ${label}`, sentAt: Date.now(), explorer: `https://sepolia.basescan.org/tx/${hash}` };
     } catch (e) {
-      const msg = (e as Error).message ?? "";
-      const why = msg.includes("already committed") ? "already in the log" : "commit refused";
-      const anchored = await this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0);
-      return anchored;
+      const msg = String((e as Error).message ?? "");
+      const why = msg.includes("already committed") ? "already in the log" : `commit refused (${msg.split("\n")[0].slice(0, 60)})`;
+      return this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0);
     }
   }
   async confirm(tx: ChainTx): Promise<ChainTx> {
