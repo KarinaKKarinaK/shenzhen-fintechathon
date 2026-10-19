@@ -298,3 +298,22 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 :root[data-theme="dark"] .text-paper, :root[data-theme="dark"] .bg-ink .text-muted { color: #f3efe6; }
 :root[data-theme="dark"] .bg-ink .text-gold-soft { color: #e3c25a; }
 :root[data-theme="dark"] .bg-ink .bg-paper-2 { background: rgba(255,255,255,0.08); color: #f3efe6; }
+
+/* Top bar. */
+.topbar-wrap { position: sticky; top: 0; z-index: 40; padding: 0.75rem 1rem 0; }
+@media (min-width: 768px) { .topbar-wrap { padding: 0.75rem 1.5rem 0; } }
+.topbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; height: 58px; padding: 0 0.6rem 0 0.9rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border: 1px solid var(--color-line); border-radius: 4px; position: relative; }
+.topbar::before, .topbar::after { content: ""; position: absolute; width: 10px; height: 10px; border-color: var(--color-gold); border-style: solid; pointer-events: none; }
+.topbar::before { left: -1px; top: -1px; border-width: 1.5px 0 0 1.5px; }
+.topbar::after { right: -1px; bottom: -1px; border-width: 0 1.5px 1.5px 0; }
+.topbar .brand { display: inline-flex; align-items: center; gap: 0.6rem; }
+.topbar .brand-text { display: none; font-size: 15px; letter-spacing: -0.01em; }
+@media (min-width: 640px) { .topbar .brand-text { display: inline; } }
+.topbar .links { display: flex; justify-content: center; gap: 0.25rem; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.topbar .links a { display: inline-flex; align-items: center; gap: 0.45rem; height: 38px; padding: 0 0.9rem; border-radius: 4px; font-family: var(--font-tech); font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-ink-2); white-space: nowrap; transition: background 160ms, color 160ms; }
+.topbar .links a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
+.topbar .links a[aria-current="page"] { background: var(--color-red); color: #fff; }
+.topbar .tools { display: flex; align-items: center; gap: 0.25rem; }
+:root[data-theme="dark"] .topbar { background: rgba(22,20,17,0.9); border-color: var(--color-line); }
+:root[data-theme="dark"] .topbar .links a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
+@media (max-width: 480px) { .topbar .links a span { display: none; } .topbar .links a { padding: 0 0.7rem; } }

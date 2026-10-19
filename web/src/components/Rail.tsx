@@ -13,19 +13,25 @@ const items: { href: string; label: TKey; icon: React.ReactNode }[] = [
   { href: "/app/evidence", label: "rail.evidence", icon: <><path d="M7 4h7l4 4v12H7z" /><path d="M14 4v4h4M9.5 13h5M9.5 16h5" /></> },
 ];
 
+// Top bar: seal and name on the left, written links in the middle, language and theme on the right.
 export function Rail() {
   const path = usePathname();
   const { t } = useLang();
   return (
-    <nav className="rail flex h-full w-full flex-col items-center gap-1.5 py-4" aria-label={t("rail.sections")}>
-      <Link href="/" className="mb-5 !bg-transparent !shadow-none" aria-label={t("rail.homeAria")} style={{ background: "transparent" }}><Mark size={34} /></Link>
-      {items.map((it) => (
-        <Link key={it.href} href={it.href} aria-current={path === it.href ? "page" : undefined} aria-label={t(it.label)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{it.icon}</svg>
-          <span className="tip">{t(it.label)}</span>
-        </Link>
-      ))}
-      <div className="mt-auto flex flex-col items-center gap-2"><LangToggle /><ThemeToggle /><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>自食其力 ZISHI</span><span className="h-6 w-px bg-gold" /></div>
+    <nav className="topbar" aria-label={t("rail.sections")}>
+      <Link href="/" className="brand" aria-label={t("rail.homeAria")}>
+        <Mark size={32} />
+        <span className="brand-text"><span className="font-bold text-ink">Zishi</span><span lang="zh-Hans" className="cjk-serif text-ink"> 自食其力</span></span>
+      </Link>
+      <div className="links">
+        {items.map((it) => (
+          <Link key={it.href} href={it.href} aria-current={path === it.href ? "page" : undefined}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{it.icon}</svg>
+            <span>{t(it.label)}</span>
+          </Link>
+        ))}
+      </div>
+      <div className="tools"><LangToggle /><ThemeToggle /></div>
     </nav>
   );
 }

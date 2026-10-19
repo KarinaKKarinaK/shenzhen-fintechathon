@@ -22,10 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <LangProvider>
-          <div className="flex min-h-screen">
-            <aside className="sticky top-0 z-40 h-screen w-[84px] shrink-0 px-4 py-5"><div className="card flex h-full flex-col items-center bg-white"><Rail /></div></aside>
-            <main className="min-w-0 flex-1 py-5 pr-5">{children}</main>
-          </div>
+          <header className="topbar-wrap"><Rail /></header>
+          <main className="min-w-0 px-4 pb-6 pt-4 md:px-6">{children}</main>
         </LangProvider>
       </body>
     </html>
