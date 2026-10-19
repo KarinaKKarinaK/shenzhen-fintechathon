@@ -360,9 +360,59 @@ Inclusion angle. None directly.
 
 Build risk. Medium. Risky as a main entry because it is meta. Sharpest statement of where the field is going.
 
+## 26. Sparring: a red team in the loop (layer, any topic)
+
+The pitch. Before every real transaction, an adversarial model runs the full attack suite against a shadow copy of the agent with the same context. If any attack gets through the policy engine in the shadow run, the real run is blocked and the attack is added to the test set. Continuous self red teaming.
+
+Why it matters. Nearly every entry in the field defends with a regex. This is structural and it finds attacks nobody wrote in advance.
+
+Demo moment. The agent is about to pay. The shadow run shows an attack slipping past a loose rule. The real payment blocks, the rule tightens, the attack joins the suite. All on screen in ten seconds.
+
+Build risk. Low to medium. Two model calls per action and the attack suite we already planned. A layer that lifts the security score on any pick.
+
+## 27. Reverse Auction: banks bid for you (Topic B, C or E)
+
+The pitch. The user's agent broadcasts a need (an FX conversion, a loan, a policy) with signed proof of eligibility. Bank agents reply with binding signed quotes. The user's agent picks under the mandate. The human stops shopping.
+
+Why Shenzhen. Banks compete hard for the same customers. Showing a bank panel what it looks like when customers stop coming to them is provocative in the right way.
+
+Demo moment. Three bank agents bid on a tuition transfer. The quotes drop twice. The user's agent accepts the best one under its mandate and the quote is binding because it was signed.
+
+Security story. Quotes are signed, so a bank agent cannot change terms after acceptance. Eligibility proof is an attestation, not raw data. The user's mandate caps what the agent may accept.
+
+Build risk. Medium. Comparison sites exist, binding agent quotes do not. Many to one in the other direction from Pin Cover.
+
+## 28. Sovereign Agent: an agent that pays for itself (Topic F)
+
+The pitch. The agent has its own wallet. It earns a success fee only when it saves the user money, pays its own model API bills, its bond and its insurance from that income, and shuts down if it cannot. The agent's own profit and loss on a dashboard. The fullest reading of the theme and the natural extension of Bonded Agent.
+
+Demo moment. The agent's balance sheet. Fees in, API bills and premium out, bond locked. One bad decision, the slash hits, the agent is in the red and refuses new work until it recovers.
+
+Security story. The agent's incentives line up with the user's because mistakes cost it money.
+
+Build risk. Medium. Abstract unless one concrete task sits underneath.
+
+## 29. Debt Shield: the borrower's agent negotiates with the lender's agent (Topic A)
+
+The pitch. Young people in China carry online lending debt across several platforms. The agent consolidates the debts, negotiates repayment plans with each lender's collection agent, and shields the user from harassment. Agent against agent where the counterparty is a bank.
+
+Why Shenzhen. Consumer debt stress is a national issue. Nobody in the field touches debt.
+
+Demo moment. Three lender agents, one borrower agent, three repayment plans agreed in two minutes with the total interest shown before and after.
+
+Security story. The borrower agent cannot commit to a plan above the user's cap. Lender messages are untrusted. Every agreed plan is signed by both sides.
+
+Build risk. Medium. Awkward in front of a lender unless framed as better recovery through structured negotiation, which banks want.
+
+## 30. Ensemble Veto (layer, any topic)
+
+The pitch. Three models from different vendors must agree on any L2 action. One cheap line of defense against a single model being jailbroken.
+
+Build risk. Very low. A layer, not an entry.
+
 ## If we swing for Best Innovation
 
-Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage. Minimal Disclosure is the alternative innovation pick if we want the academic board on our side. Hard Button can be added to any pick in one evening.
+Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage. Minimal Disclosure is the alternative innovation pick if we want the academic board on our side. Hard Button, Sparring and Ensemble Veto are layers that can be added to any pick. The strongest package we have found: Sky Cover as the task, Bonded Agent, Sparring and Hard Button on top. See FIELD_REVIEW.md for the check against every competitor repo.
 
 ## What every idea shares
 
