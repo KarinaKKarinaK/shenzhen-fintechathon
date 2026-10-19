@@ -70,7 +70,7 @@ export default function Home() {
       <Ticker />
 
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
-        <section className="band mt-10 grid grid-cols-1 items-center gap-8 p-8 md:grid-cols-[auto_1fr_auto] md:p-10">
+        <section className="band band-gold mt-10 grid grid-cols-1 items-center gap-8 p-8 md:grid-cols-[auto_1fr_auto] md:p-10">
           <Seal size={84} />
           <div>
             <h2 className="text-[34px] font-extrabold">Zishi, the robot that pays for itself</h2>
@@ -100,7 +100,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="band p-8 md:p-10">
+        <section className="band band-gold p-8 md:p-10">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><h2 className="h-section">Sixty seconds to break it</h2><span className="label">Live wallet moved: no</span></div>
           <JudgeConsole compact />
         </section>
@@ -117,9 +117,9 @@ export default function Home() {
           </ol>
         </section>
 
-        <section className="band p-8 md:p-10">
+        <section className="band band-gold p-8 md:p-10">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 className="h-section">Drones first. Where else it applies</h2>
+            <div><span className="rule-gold-grad mb-4" /><h2 className="h-section">Drones first. Where else it applies</h2></div>
             <span className="label">Click a card</span>
           </div>
           <div className="mt-6"><Fan items={uses} /></div>
@@ -156,7 +156,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="band mt-6 p-8 md:p-10">
+        <section className="band band-gold mt-6 p-8 md:p-10">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="h-section">Only here</h2><span className="label">Six things nobody else built</span></div>
           <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
             {firsts.map((f) => <li key={f} className="flex items-start gap-3 rounded-md bg-white/[0.07] px-4 py-3"><Seal size={18} />{f}</li>)}
