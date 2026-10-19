@@ -93,7 +93,7 @@ contract Bond is IBonded {
     }
 
     function DOMAIN_SEPARATOR() public view returns (bytes32) {
-        return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256("JiXin Bond"), keccak256("1"), block.chainid, address(this)));
+        return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256("Zishi Bond"), keccak256("1"), block.chainid, address(this)));
     }
 
     function hashIntent(Intent calldata i) public pure returns (bytes32) {

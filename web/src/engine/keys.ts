@@ -1,6 +1,6 @@
 // Fixed demo keys, one per actor. Derived from a label so they are stable across runs and
 // obviously not real funds. The policy engine and the bond contract verify against ADDR.
-// Intents are signed under the JiXin EIP-712 domain so the same digest can be checked on chain.
+// Intents are signed under the Zishi EIP-712 domain so the same digest can be checked on chain.
 
 import { hashTypedData, keccak256, recoverTypedDataAddress, toHex, type TypedDataDefinition } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
@@ -11,7 +11,7 @@ export type KeyedActor = "machine" | "operator" | "requester" | "lender" | "hunt
 const LABELS: KeyedActor[] = ["machine", "operator", "requester", "lender", "hunter", "vendor", "oracle"];
 
 export const KEYS: Record<KeyedActor, PrivateKeyAccount> = Object.fromEntries(
-  LABELS.map((a) => [a, privateKeyToAccount(keccak256(toHex(`jixin-demo-key-${a}`)))]),
+  LABELS.map((a) => [a, privateKeyToAccount(keccak256(toHex(`zishi-demo-key-${a}`)))]),
 ) as Record<KeyedActor, PrivateKeyAccount>;
 
 export const ADDR: Record<KeyedActor, string> = Object.fromEntries(
@@ -23,7 +23,7 @@ export function isKeyed(a: Actor): a is KeyedActor {
 }
 
 // The EIP-712 domain. Base Sepolia, the chain the contracts in /contracts deploy to.
-export const DOMAIN = { name: "JiXin", version: "1", chainId: 84532 } as const;
+export const DOMAIN = { name: "Zishi", version: "1", chainId: 84532 } as const;
 
 // Field order matches IBonded.Intent. Amounts are yuan with two decimals carried as a string,
 // ids as strings; the on-chain struct uses bytes32 and uint256 fen, mapped by the adapter.

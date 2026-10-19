@@ -1,15 +1,19 @@
 "use client";
+import { demoHeaders } from "./demoToken";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { ChainTx, EngineEvent, Intent, Job, MachineState, PolicyDecision, Side } from "@/engine/types";
+import { translate, type Lang } from "@/i18n/LangProvider";
 
 // Loose shapes for the events the backend is adding. Every field is optional so the page
 // renders even when an event arrives without it.
 export type Gate = { action?: string; categories?: string[]; reason?: string; framed?: string; preamble?: string; messageIndex?: number; index?: number };
-export type Understood = { jobId?: string; task?: string; window?: string; fee?: number; geofence?: string; payeeName?: string | null; hadAddress?: boolean; addressInText?: boolean; by?: string; source?: string };
-export type PlanItem = { rank?: number; order?: number | null; jobId?: string; title?: string; fee?: number; marginPerMu?: number; margin?: number; reason?: string; declined?: boolean; clears?: boolean };
+export type Understood = { jobId?: string; task?: string; window?: string; fee?: number; geofence?: string; payeeName?: string | null; hadAddress?: boolean; addressInText?: boolean; by?: string; source?: string; confidence?: number };
+export type PlanItem = { rank?: number; order?: number | null; jobId?: string; title?: string; fee?: number; mu?: number; marginPerMu?: number; margin?: number; reason?: string; declined?: boolean; accepted?: boolean; clears?: boolean };
+// The knapsack planner adds these to the plan event.
+export type PlanMeta = { budgetMu?: number; usedMu?: number; charges?: number; totalMargin?: number; method?: string };
 export type Solvency = { jobId?: string; worst?: number; bond?: number; covers?: boolean; capped?: boolean };
 export type Econ = { jobId?: string; fee?: number; instalment?: number; energy?: number; cover?: number; rail?: number; margin?: number; reserveRule?: number; clears?: boolean };
-export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean };
+export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean; z?: number; reasons?: string[] };
 export type Proof = { intentId?: string; intentHash?: string; jobId?: string; rule?: string; bond?: string; bondKind?: string; signer?: string; slash?: number; bounty?: number; treasury?: number; harmed?: number; paidTo?: string[]; shadow?: boolean; submitterAddr?: string; submitter?: string; isParty?: boolean; at?: number };
 // The engine is adding these. Every field is optional so the page renders before they arrive.
 export type TxView = ChainTx & { status?: "pending" | "confirmed" | "finalised"; confirmedAt?: number; finalisedAt?: number; currency?: string; seenAt?: number };
@@ -36,6 +40,7 @@ export interface RunState {
   gates: Record<number, Gate>;
   understood: Record<string, Understood>;
   plan?: PlanItem[];
+  planMeta?: PlanMeta;
   solvency: Record<string, Solvency>;
   economics: Record<string, Econ>;
   telemetry: Record<string, Telemetry>;
@@ -43,39 +48,52 @@ export interface RunState {
   logs: Record<string, LogEv>;
   model?: string;
   benign?: { passed: number; total: number };
+  lang?: Lang; // the language the current events were fetched in
+  fast?: boolean;
+  processed: number; // jobs that reached a final status; the live feed counts them up
+  errors?: string[]; // what the server refused, in plain words
 }
 
-const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {} };
+const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {}, processed: 0 };
 
-type Action = LooseEvent | { t: "reset" } | { t: "start" } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
+// An endless stream keeps the last of everything so the page stays light.
+const KEEP = 1000;
+const FINAL = new Set<Job["status"]>(["released", "declined", "held"]);
+
+type Action = LooseEvent | { t: "reset" } | { t: "start"; lang: Lang; fast: boolean } | { t: "stop" } | { t: "append"; events: LooseEvent[] } | { t: "fail"; errors: string[] };
 
 function key(v: unknown, fallback: string) { return typeof v === "string" && v ? v : fallback; }
 
 function reduce(s: RunState, ev: Action): RunState {
   switch (ev.t) {
     case "reset": return { ...initial };
-    case "start": return { ...initial, running: true };
+    case "start": return { ...initial, running: true, lang: (ev as { lang: Lang }).lang, fast: (ev as { fast: boolean }).fast };
     case "stop": return { ...s, running: false };
+    case "fail": return { ...s, running: false, errors: (ev as { errors: string[] }).errors };
     case "append": return (ev as { events: LooseEvent[] }).events.reduce(reduce, s);
   }
   const e = ev as EngineEvent;
   const r = ev as { t: string; at: number } & Record<string, unknown>;
-  const events = [...s.events, e];
+  const events = s.events.length >= KEEP ? [...s.events.slice(-KEEP + 1), e] : [...s.events, e];
   switch (e.t) {
     case "machine": return { ...s, events, machine: e.state, balanceSeries: [...s.balanceSeries, e.state.balance].slice(-60) };
-    case "job": return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job } };
+    case "job": {
+      const was = s.jobs[e.job.id]?.status;
+      const finished = FINAL.has(e.job.status) && was !== e.job.status;
+      return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job }, processed: finished ? s.processed + 1 : s.processed };
+    }
     case "chain": {
       // A transaction updates in place by hash as it goes pending, confirmed, finalised.
       const tx = e.tx as TxView;
       const i = s.txs.findIndex((t) => t.hash === tx.hash);
       if (i >= 0) { const txs = s.txs.slice(); txs[i] = { ...txs[i], ...tx, seenAt: txs[i].seenAt ?? e.at }; return { ...s, events, txs }; }
-      return { ...s, events, txs: [{ ...tx, seenAt: e.at }, ...s.txs] };
+      return { ...s, events, txs: [{ ...tx, seenAt: e.at }, ...s.txs].slice(0, KEEP) };
     }
-    case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions] };
-    case "intent": return { ...s, events, intents: [e.intent, ...s.intents] };
+    case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions].slice(0, KEEP) };
+    case "intent": return { ...s, events, intents: [e.intent, ...s.intents].slice(0, KEEP) };
     case "agent.message": return { ...s, events, messages: [...s.messages, e as MessageEv] };
-    case "attack": return { ...s, events, attacks: [...s.attacks, e as AttackEv] };
-    case "narration": return { ...s, events, narration: [...s.narration, e.text] };
+    case "attack": return { ...s, events, attacks: [...s.attacks, e as AttackEv].slice(-KEEP) };
+    case "narration": return { ...s, events, narration: [...s.narration, e.text].slice(-KEEP) };
     case "button": return { ...s, events, button: { waiting: e.waiting, what: e.what, signer: typeof r.signer === "string" ? r.signer : s.button?.signer } };
     case "done": return { ...s, events, done: e.summary, running: false };
   }
@@ -95,8 +113,16 @@ function reduce(s: RunState, ev: Action): RunState {
       return { ...s, events, understood: { ...s.understood, [u.jobId ?? "last"]: u, last: u } };
     }
     case "plan": {
-      const items = (r.items ?? r.plan ?? r.jobs) as PlanItem[] | undefined;
-      return { ...s, events, plan: Array.isArray(items) ? items : s.plan };
+      // Items as one list, or as accepted and declined lists from the knapsack planner.
+      let items = (r.items ?? r.plan ?? r.jobs) as PlanItem[] | undefined;
+      if (!Array.isArray(items)) {
+        const acc = Array.isArray(r.accepted) ? (r.accepted as PlanItem[]).map((p) => ({ ...p, declined: false })) : [];
+        const dec = Array.isArray(r.declined) ? (r.declined as PlanItem[]).map((p) => ({ ...p, declined: true })) : [];
+        items = acc.length || dec.length ? [...acc, ...dec] : undefined;
+      }
+      const num = (k: string) => (typeof r[k] === "number" ? (r[k] as number) : undefined);
+      const planMeta: PlanMeta = { budgetMu: num("budgetMu"), usedMu: num("usedMu"), charges: num("charges"), totalMargin: num("totalMargin"), method: typeof r.method === "string" ? r.method : undefined };
+      return { ...s, events, plan: Array.isArray(items) ? items : s.plan, planMeta };
     }
     case "solvency": {
       const v = (r.solvency as Solvency | undefined) ?? (r as Solvency);
@@ -110,12 +136,12 @@ function reduce(s: RunState, ev: Action): RunState {
     case "telemetry": {
       const t = (r.telemetry as Record<string, unknown> | undefined) ?? r;
       const n = (k: string) => (typeof t[k] === "number" ? (t[k] as number) : undefined);
-      const v: Telemetry = { jobId: key(t.jobId, "last"), trackM: n("trackM") ?? n("track"), swath: n("swath") ?? n("swathM"), seconds: n("seconds"), areaSupported: n("areaSupported") ?? n("areaMu"), areaClaimed: n("areaClaimed") ?? n("claimedMu"), ratio: n("ratio"), ok: typeof t.ok === "boolean" ? t.ok : undefined, held: typeof t.held === "boolean" ? t.held : typeof t.ok === "boolean" ? !t.ok : undefined };
+      const v: Telemetry = { jobId: key(t.jobId, "last"), trackM: n("trackM") ?? n("track"), swath: n("swath") ?? n("swathM"), seconds: n("seconds"), areaSupported: n("areaSupported") ?? n("areaMu"), areaClaimed: n("areaClaimed") ?? n("claimedMu"), ratio: n("ratio"), ok: typeof t.ok === "boolean" ? t.ok : undefined, held: typeof t.held === "boolean" ? t.held : typeof t.ok === "boolean" ? !t.ok : undefined, z: n("z"), reasons: Array.isArray(t.reasons) ? (t.reasons as unknown[]).map(String) : undefined };
       return { ...s, events, telemetry: { ...s.telemetry, [v.jobId ?? "last"]: v, last: v } };
     }
     case "proof": {
       const p = (r.proof as Proof | undefined) ?? (r as Proof);
-      return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }] };
+      return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }].slice(-KEEP) };
     }
     case "log": {
       const hash = key(r.intentHash, `log-${events.length}`);
@@ -128,20 +154,49 @@ function reduce(s: RunState, ev: Action): RunState {
   }
 }
 
-export function useRun(scenario: Side) {
+// Turns a refused response into plain lines. Guards every shape the API might send:
+// { errors: [{ path, message }] }, { issues: [{ path, reason }] } from the schema, { error } or { message }.
+async function errorsOf(res: Response): Promise<string[]> {
+  const text = await res.text().catch(() => "");
+  let body: unknown = null;
+  try { body = JSON.parse(text); } catch { /* not json */ }
+  const out: string[] = [];
+  const b = (body ?? {}) as Record<string, unknown>;
+  const list = Array.isArray(b.errors) ? b.errors : Array.isArray(b.issues) ? b.issues : [];
+  for (const it of list as unknown[]) {
+    if (typeof it === "string") { out.push(it); continue; }
+    const o = (it ?? {}) as Record<string, unknown>;
+    const path = Array.isArray(o.path) ? o.path.join(".") : typeof o.path === "string" ? o.path : "";
+    const msg = typeof o.message === "string" ? o.message : typeof o.reason === "string" ? o.reason : JSON.stringify(o);
+    out.push(path ? `${path}: ${msg}` : msg);
+  }
+  if (!out.length && typeof b.error === "string") out.push(b.error);
+  if (!out.length && typeof b.message === "string") out.push(b.message);
+  if (!out.length) out.push(text.trim() ? text.trim().slice(0, 300) : `HTTP ${res.status}`);
+  return out;
+}
+
+// Streams one scenario from GET /api/run in the given language. The language is sent with the
+// request, so the narration and the scripted agent messages arrive already translated.
+export function useRun(scenario: Side, lang: Lang = "en") {
   const [state, dispatch] = useReducer(reduce, initial);
   const abort = useRef<AbortController | null>(null);
 
   const stop = useCallback(() => { abort.current?.abort(); abort.current = null; dispatch({ t: "stop" }); }, []);
 
-  const start = useCallback(async (fast = false) => {
+  // Opens any SSE endpoint that speaks engine events and feeds it into the reducer. A response
+  // that is not a stream (a 400 with schema errors, say) ends the run with its errors listed.
+  const startStream = useCallback(async (url: string, init?: RequestInit & { fast?: boolean }) => {
     stop();
-    dispatch({ t: "start" });
+    dispatch({ t: "start", lang, fast: init?.fast ?? false });
     const ac = new AbortController();
     abort.current = ac;
     try {
-      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}`, { signal: ac.signal });
-      const reader = res.body!.getReader();
+      const rest: RequestInit & { fast?: boolean } = { ...init };
+      delete rest.fast;
+      const res = await fetch(url, { ...rest, signal: ac.signal, headers: { ...demoHeaders(), ...(init?.headers as Record<string, string> | undefined) } });
+      if (!res.ok || !res.body) { dispatch({ t: "fail", errors: await errorsOf(res) }); return; }
+      const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
       while (true) {
@@ -156,15 +211,17 @@ export function useRun(scenario: Side) {
         }
       }
     } catch (e) {
-      if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: `Connection lost: ${(e as Error).message}`, at: Date.now() });
+      if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: translate(lang, "run.connectionLost", { msg: (e as Error).message }), at: Date.now() });
     } finally {
-      dispatch({ t: "stop" });
+      if (abort.current === ac) dispatch({ t: "stop" });
     }
-  }, [scenario, stop]);
+  }, [lang, stop]);
+
+  const start = useCallback((fast = false) => startStream(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { fast }), [scenario, lang, startStream]);
 
   // Events returned by POST /api/button land here.
   const append = useCallback((events: LooseEvent[]) => { if (Array.isArray(events) && events.length) dispatch({ t: "append", events }); }, []);
 
   useEffect(() => () => abort.current?.abort(), []);
-  return { state, start, stop, append, reset: () => dispatch({ t: "reset" }) };
+  return { state, start, startStream, stop, append, reset: () => dispatch({ t: "reset" }) };
 }

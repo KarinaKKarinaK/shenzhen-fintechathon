@@ -19,7 +19,7 @@ const steps: [string, string][] = [["Plan", "Ranks the day's work, checks the ec
 const uses = [
   { who: "Delivery fleets", line: "A thousand drones, automatic repayment.", tag: "Fleet" },
   { who: "Small factories", line: "A robot arm that repays per verified part.", tag: "Factory" },
-  { who: "Agricultural drone pilots", line: "A drone that pays for itself one mu at a time.", tag: "Demo" },
+  { who: "Agricultural drone pilots", line: "A drone that pays for itself one mu at a time.", tag: "Demo", demo: true },
   { who: "A household with a humanoid", line: "Lend the robot next door. The bond pays if a rule breaks.", tag: "Individual" },
   { who: "Software agents", line: "No bond, no payment. Jailbroken means slashed.", tag: "Agent" },
 ];
@@ -36,7 +36,7 @@ function Head({ label, title, lead, light = false }: { label: string; title: str
 }
 
 function Sec({ id, seen, className = "", children }: { id: string; seen: Record<string, boolean>; className?: string; children: React.ReactNode }) {
-  return <section id={id} data-sec={id} data-in={seen[id] ? "true" : "false"} className={`scroll-mt-28 ${className}`}>{children}</section>;
+  return <section id={id} data-sec={id} data-in={seen[id] ? "true" : "false"} className={`scroll-mt-40 ${className}`}>{children}</section>;
 }
 
 // What if: pick an incident, see which bond pays and who is paid.
@@ -156,7 +156,7 @@ export function Pitch(p: Props) {
           </div>
           <h1 className="rv display mt-7 max-w-[16ch] text-[42px] font-extrabold text-white md:text-[72px]" style={d(1)}>Machines that earn, pay and post a bond.</h1>
           <span className="rv rule-gold mt-5" style={d(2)} />
-          <p className="rv mt-5 max-w-[50ch] text-lg text-white/90 md:text-xl" style={d(3)}>JiXin is a wallet for machines. Paid per verified unit of work, slashed on proof, owned once the lease is paid.</p>
+          <p className="rv mt-5 max-w-[50ch] text-lg text-white/90 md:text-xl" style={d(3)}>Zishi is a wallet for machines. Paid per verified unit of work, slashed on proof, owned once the lease is paid.</p>
           <div className="rv mt-7 flex flex-wrap gap-3" style={d(4)}>
             <a href="#money" className="btn btn-red" style={{ boxShadow: "inset 0 0 0 1px rgba(201,162,39,0.8)" }}>Run the numbers</a>
             <a href="#break" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45)" }}>Try to break it</a>
@@ -165,7 +165,7 @@ export function Pitch(p: Props) {
         <a href="https://commons.wikimedia.org/wiki/File:China_Resources_Tower_View_from_Shenzhen_Bay_20210825.jpg" target="_blank" rel="noreferrer" className="over absolute bottom-3 right-4 text-[12px] text-white/70 hover:text-white">Photo: 歪歪, CC BY-SA 4.0, via Wikimedia Commons</a>
       </Sec>
 
-      <nav className="sticky top-5 z-30 mt-5 flex items-center gap-1 overflow-x-auto rounded bg-white/90 p-1.5 shadow-sm ring-1 ring-line backdrop-blur scroll-thin" aria-label="Pitch sections">
+      <nav className="sticky top-20 z-30 mt-5 flex items-center gap-1 overflow-x-auto rounded bg-white/90 p-1.5 shadow-sm ring-1 ring-line backdrop-blur scroll-thin" aria-label="Pitch sections">
         <span className="tech hidden shrink-0 px-3 text-[12px] font-bold uppercase tracking-[0.14em] text-red md:inline">Pitch</span>
         {nav.map(([id, label]) => (
           <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}

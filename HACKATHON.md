@@ -149,7 +149,7 @@ The official "International Track: Topics & Rules" document confirms the scoring
 
 ## Competitive intel (updated 19 Oct)
 
-The earlier note (B and E crowded, F less crowded) is out of date. A full scan on 18 Oct found 113 real public entries: A 17, B 10, C 28, D 2, E 35, F 21. Each was code reviewed against the official rubric. Twelve already score 85 or more of 100, and prizes are awarded across topics. Topic F is not less crowded at the top: its leaders already ship agent to agent payments with escrow, on-chain mandates, session key wallets and real testnet hashes, and three entries are called Guardian Wallet. Topic D is the thinnest and weakest: two US health insurance entries at about 61. Details, the top 15 and the overlap for each of our ideas are in COMPETITION.md; the blind review of our twelve ideas is in JUDGE_REVIEW.md.
+The earlier note (B and E crowded, F less crowded) is out of date. A full scan on 18 Oct found 113 real public entries: A 17, B 10, C 28, D 2, E 35, F 21. Each was code reviewed against the official rubric. Twelve already score 85 or more of 100, and prizes are awarded across topics. Topic F is not less crowded at the top: its leaders already ship agent to agent payments with escrow, on-chain mandates, session key wallets and real testnet hashes, and three entries are called Guardian Wallet. Topic D is the thinnest and weakest: two US health insurance entries at about 61. Details, the top 15 and the overlap for each of our ideas are in docs/research/COMPETITION.md; the blind review of our twelve ideas is in docs/research/JUDGE_REVIEW.md.
 
 ## Open questions for the organizers
 

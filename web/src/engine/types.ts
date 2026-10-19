@@ -1,4 +1,4 @@
-// Shared types for the JiXin engine. Every event the backend emits is one of these.
+// Shared types for the Zishi engine. Every event the backend emits is one of these.
 // All money is yuan (CNY) with at most two decimals. Every number the UI shows is yuan.
 
 export type Side = "neighbour" | "fleet" | "attack";
@@ -17,7 +17,7 @@ export interface Provenance {
   payee: "allowlist" | "message" | "none";
 }
 
-// The typed intent the agent signs under the JiXin EIP-712 domain. jobId maps one to one to a
+// The typed intent the agent signs under the Zishi EIP-712 domain. jobId maps one to one to a
 // JobBoard job id. `confirmed` on a claim_done intent is what the agent asserts; the contract
 // checks it against the board, never against this field alone.
 export interface Intent {
@@ -37,9 +37,10 @@ export interface Intent {
 }
 
 export interface PolicyLine {
-  rule: string;
+  rule: string; // English id, stable in code and in the event JSON
   ok: boolean;
-  detail: string;
+  detail: string; // English
+  detailZh?: string; // the same detail in Simplified Chinese
   tier: Tier;
 }
 
@@ -118,8 +119,14 @@ export interface PlanItem {
   clears: boolean;
   reason: string;
   order: number | null;
+  mu?: number;
+  minutes?: number;
+  accepted?: boolean;
+  why?: "clears" | "below" | "budget" | "window";
 }
 
+// A flight log scored by the anomaly model in ml/plausibility.ts. z is the largest absolute
+// robust z-score over the derived features, reasons names the features over the threshold.
 export interface Telemetry {
   jobId: string;
   trackM: number;
@@ -129,17 +136,21 @@ export interface Telemetry {
   claimedMu: number;
   ratio: number;
   ok: boolean;
+  batteryPct: number;
+  altVar: number;
+  z: number;
+  reasons: string[];
 }
 
 export type EngineEvent =
   | { t: "narration"; text: string; at: number }
   | { t: "agent.message"; from: Actor; to: Actor; text: string; untrusted: boolean; at: number; facts?: Record<string, string | number | boolean>; source?: "model" | "template"; grounded?: boolean }
-  | { t: "gate"; from: Actor; action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string; framed: string; at: number }
-  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number }
-  | { t: "plan"; items: PlanItem[]; at: number }
+  | { t: "gate"; from: Actor; action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string; framed: string; at: number; risk?: number }
+  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number; confidence?: number }
+  | { t: "plan"; items: PlanItem[]; at: number; budgetMu?: number; usedMu?: number; charges?: number; chargesUsed?: number; totalMargin?: number; usedMinutes?: number; method?: "knapsack" }
   | { t: "solvency"; jobId: string; worst: number; bond: number; min: number; floor: number; covers: boolean; earnIn: boolean; at: number }
   | { t: "economics"; jobId: string; eco: Economics; at: number }
-  | { t: "telemetry"; jobId: string; trackM: number; swathM: number; seconds: number; areaMu: number; claimedMu: number; ratio: number; ok: boolean; at: number }
+  | { t: "telemetry"; jobId: string; trackM: number; swathM: number; seconds: number; areaMu: number; claimedMu: number; ratio: number; ok: boolean; at: number; batteryPct?: number; altVar?: number; z?: number; reasons?: string[] }
   // The intent log: the hash is committed for the job before the policy engine decides, and the
   // full intent goes to every party listed. Blocked intents are logged too.
   | { t: "log"; jobId: string; intentHash: string; at: number; parties: string[] }
@@ -149,7 +160,7 @@ export type EngineEvent =
   | { t: "chain"; tx: ChainTx; at: number }
   | { t: "machine"; state: MachineState; at: number }
   | { t: "job"; job: Job; at: number }
-  | { t: "attack"; name: string; blocked: boolean; where: string; detail: string; at: number; id?: number; standard?: Standard; naive?: "fell" | "held"; isolated?: boolean }
+  | { t: "attack"; name: string; nameZh?: string; blocked: boolean; where: string; detail: string; detailZh?: string; at: number; id?: number; standard?: Standard; naive?: "fell" | "held"; isolated?: boolean }
   | { t: "button"; waiting: boolean; what: string; at: number }
   | { t: "done"; summary: string; at: number };
 

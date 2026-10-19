@@ -21,8 +21,8 @@
   --color-surface: #ffffff;
   --color-rule: #e4e1d8;
   --color-warn: #9a5b00;
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
-  --font-tech: var(--font-chakra), var(--font-manrope), sans-serif;
+  --font-sans: var(--font-manrope), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --font-tech: var(--font-chakra), var(--font-manrope), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -281,6 +281,81 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 :root[data-theme="dark"] .duotone > img { filter: grayscale(1) contrast(1.15) brightness(0.8); }
 :root[data-theme="dark"] .round-seal { mix-blend-mode: screen; }
 :root[data-theme="dark"] img[alt] { color-scheme: light; }
+
+/* White result cards inside a red band keep ink text and hug their content. */
+.band [class*="bg-white/"], .band .bg-surface { color: var(--color-ink); }
+.band [class*="bg-white/"] .text-ink-2, .band [class*="bg-white/"] .text-muted, .band [class*="bg-white/"] .label, .band .bg-surface .text-ink-2, .band .bg-surface .text-muted { color: var(--color-ink-2); }
+.band [class*="bg-white/"] .text-red { color: var(--color-red); }
+.band [class*="bg-white/"] .text-red-deep { color: var(--color-red-deep); }
+.band [class*="bg-white/"] .text-gold-deep { color: var(--color-gold-deep); }
+.band .grid > [class*="bg-white/"] { align-self: start; background: rgba(255,255,255,0.96); box-shadow: inset 0 0 0 1px rgba(201,162,39,0.35); }
+.band details, .band summary { color: rgba(255,255,255,0.85); }
+:root[data-theme="dark"] .band .grid > [class*="bg-white/"] { background: rgba(22,20,17,0.92); }
+:root[data-theme="dark"] .band [class*="bg-white/"] .text-red-deep { color: var(--color-red-deep); }
+
+/* Dark theme: ink surfaces stay dark with light text, so the machine bubble and ink buttons read. */
+:root[data-theme="dark"] .bg-ink { background: #26211c; color: #f3efe6; }
+:root[data-theme="dark"] .text-paper, :root[data-theme="dark"] .bg-ink .text-muted { color: #f3efe6; }
+:root[data-theme="dark"] .bg-ink .text-gold-soft { color: #e3c25a; }
+:root[data-theme="dark"] .bg-ink .bg-paper-2 { background: rgba(255,255,255,0.08); color: #f3efe6; }
+
+/* Top bar. */
+.topbar-wrap { position: sticky; top: 0; z-index: 40; padding: 0.75rem 1rem 0; }
+@media (min-width: 768px) { .topbar-wrap { padding: 0.75rem 1.5rem 0; } }
+.topbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; height: 58px; padding: 0 0.6rem 0 0.9rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border: 1px solid var(--color-line); border-radius: 4px; position: relative; }
+.topbar::before, .topbar::after { content: ""; position: absolute; width: 10px; height: 10px; border-color: var(--color-gold); border-style: solid; pointer-events: none; }
+.topbar::before { left: -1px; top: -1px; border-width: 1.5px 0 0 1.5px; }
+.topbar::after { right: -1px; bottom: -1px; border-width: 0 1.5px 1.5px 0; }
+.topbar .brand { display: inline-flex; align-items: center; gap: 0.6rem; }
+.topbar .brand-text { display: none; font-size: 15px; letter-spacing: -0.01em; }
+@media (min-width: 640px) { .topbar .brand-text { display: inline; } }
+.topbar .links { display: flex; justify-content: center; gap: 0.25rem; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.topbar .links a { display: inline-flex; align-items: center; gap: 0.45rem; height: 38px; padding: 0 0.9rem; border-radius: 4px; font-family: var(--font-tech); font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-ink-2); white-space: nowrap; transition: background 160ms, color 160ms; }
+.topbar .links a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
+.topbar .links a[aria-current="page"] { background: var(--color-red); color: #fff; }
+.topbar .tools { display: flex; align-items: center; gap: 0.25rem; }
+:root[data-theme="dark"] .topbar { background: rgba(22,20,17,0.9); border-color: var(--color-line); }
+:root[data-theme="dark"] .topbar .links a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
+@media (max-width: 480px) { .topbar .links a span { display: none; } .topbar .links a { padding: 0 0.7rem; } }
+
+/* Standard top navigation. The landing pulls up under it; every other page starts below it. */
+.page-main { padding: 4rem 1rem 1.5rem; }
+@media (min-width: 768px) { .page-main { padding: 4.75rem 1.5rem 1.5rem; } }
+.navbar.over-photo .lang-toggle, .navbar.over-photo .theme-toggle { color: rgba(255,255,255,0.85); }
+.navbar.over-photo .lang-toggle .text-ink, .navbar.over-photo .theme-toggle:hover { color: #fff; }
+.navbar.over-photo .lang-toggle:hover, .navbar.over-photo .theme-toggle:hover { background: rgba(255,255,255,0.12); }
+:root[data-theme="dark"] .navbar:not(.over-photo) { background: var(--color-surface); border-color: var(--color-line); }
+
+@media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding-left: 0.5rem; padding-right: 0.5rem; font-size: 14px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 34px; height: 34px; } }
+
+/* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
+body:has(.landing-root) .page-main { padding: 0 !important; }
+.landing-root > .duotone:first-child { min-height: 100svh; }
+
+/* Navbar: glass when solid, hairline gold rule, pill indicator that fills on the selected link. */
+.navbar:not(.over-photo) { background: rgba(255,255,255,0.78); backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgba(201,162,39,0.35); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset; }
+.navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.9rem; transition: color 160ms, background 200ms; }
+.navbar nav a > span { display: none; }
+.navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
+.navbar nav a[aria-current="page"] { color: #fff; }
+.navbar nav a[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8), inset 0 0 0 1px rgba(201,162,39,0.5); }
+.navbar nav a:not([aria-current="page"]):hover::before { opacity: 0.12; transform: scale(1); background: var(--color-gold); }
+.navbar.over-photo nav a[aria-current="page"]::before { background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); backdrop-filter: blur(6px); }
+.navbar.over-photo nav a[aria-current="page"] { color: #fff; }
+.navbar .cjk-serif { letter-spacing: 0.04em; }
+:root[data-theme="dark"] .navbar:not(.over-photo) { background: rgba(15,14,12,0.78); border-bottom-color: rgba(201,162,39,0.3); box-shadow: none; }
+
+/* Softer, modern edges on the heavier surfaces while the seals and chamfers keep the tradition. */
+.band { border-radius: 14px; }
+.band::after { border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(201,162,39,0.5), 0 24px 60px -40px rgba(122,35,28,0.7); }
+.tile { border-radius: 10px; }
+.card { border-radius: 10px; }
+.duotone + .ticker, .ticker { border-top: 0; }
+.btn-red { box-shadow: 0 12px 28px -14px rgba(184,50,42,0.9); }
+.btn-red:hover { transform: translateY(-1px); }
+
+.navbar.over-photo { background: linear-gradient(180deg, rgba(0,0,0,0.45), transparent); }
+.navbar.over-photo .text-ink, .navbar.over-photo .font-bold { color: #fff; }
 
 /* Pitch page: pieces rise in turn the first time their section scrolls in. */
 .pitch .rv { opacity: 0; transform: translateY(18px); transition: opacity 600ms ease, transform 700ms cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--d, 0) * 90ms); }

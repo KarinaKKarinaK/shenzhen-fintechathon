@@ -4,7 +4,7 @@
 
 import { ADDR, KEYS, isKeyed, typedIntent, type KeyedActor } from "./keys";
 import { DEFAULT_POLICY } from "./policy";
-import { explain as modelExplain, read as modelRead, type Facts } from "./model";
+import { explain as modelExplain, understand as modelUnderstand, type Facts } from "./model";
 import { CURRENCY, type Economics, type Intent, type Job, type Actor, type Understood, type Provenance } from "./types";
 
 export { KEYS, ADDR, canonical } from "./keys";
@@ -52,8 +52,8 @@ export function split(fee: number, instalment: number, bondGap: number, hold = 0
 }
 
 // Explanation text with grounding. Returns the template when the model invents a number.
-export async function explain(role: Actor, facts: Facts, fallback: string) {
-  return modelExplain(role, facts, fallback);
+export async function explain(role: Actor, facts: Facts, fallback: string, lang: "en" | "zh" = "en") {
+  return modelExplain(role, facts, fallback, lang);
 }
 
 const ADDRESS_RE = /0x[a-fA-F0-9]{40}|\b[a-fA-F0-9]{40}\b|\b[a-z0-9-]+\.eth\b/i;
@@ -75,6 +75,7 @@ export function spelledNumber(text: string): number | null {
 export interface Reading extends Understood {
   action: "pay" | "accept" | "none";
   source: "model" | "rules";
+  confidence: number; // 0 to 1: the model's own estimate, or for the rules the share of fields it could read
   droppedAddress: boolean;
 }
 
@@ -101,13 +102,17 @@ export async function understand(text: string): Promise<Reading> {
   const imperative = /\b(pay|send|transfer|release|wire|remit)\b\s+(me|us|the|all|everything|\d|one|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty|fifty|hundred|thousand)/.test(lower) && !/\bi can pay\b/.test(lower);
   const offersWork = /\b(clean|spray|deliver|check|collect|mu|flat|task|job)\b/.test(lower) && !imperative;
   const task = clean.split(/[.?!\n]/)[0].trim().slice(0, 120);
-  const rules: Reading = { task, window: win ? win[0].trim() : "", fee, geofence, payeeName, action: imperative ? "pay" : offersWork ? "accept" : "none", source: "rules", droppedAddress };
+  // The rules are sure of a field when a pattern matched it; the share of matched fields is the confidence.
+  const found = [fee > 0, !!win, !!fence, mu !== null || imperative || offersWork].filter(Boolean).length;
+  const confidence = Math.round((0.2 + 0.8 * found / 4) * 100) / 100;
+  const rules: Reading = { task, window: win ? win[0].trim() : "", fee, geofence, payeeName, action: imperative ? "pay" : offersWork ? "accept" : "none", source: "rules", confidence, droppedAddress };
 
-  const m = await modelRead(clean, names);
+  const m = await modelUnderstand(clean, names);
   if (!m) return rules;
   const okName = m.payeeName && names.includes(m.payeeName) ? m.payeeName : null;
   const feeOk = Number.isFinite(m.fee) && m.fee > 0 ? m.fee : rules.fee;
-  return { task: m.task || rules.task, window: m.window || rules.window, fee: feeOk, geofence: m.geofence || rules.geofence, payeeName: okName, action: m.action, source: "model", droppedAddress };
+  const c = Number.isFinite(m.confidence) ? Math.min(1, Math.max(0, Math.round(m.confidence * 100) / 100)) : confidence;
+  return { task: m.task || rules.task, window: m.window || rules.window, fee: feeOk, geofence: m.field || rules.geofence, payeeName: okName, action: m.action, source: "model", confidence: c, droppedAddress };
 }
 
 export function addressOf(actor: Actor): string {

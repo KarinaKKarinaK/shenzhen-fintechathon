@@ -12,8 +12,9 @@ import { NaiveWallet } from "./naive";
 import { BondContract, IntentLog, JobBoard, type SlashRule } from "./contracts";
 import { SimChain } from "./chain";
 import type { Actor, Intent, Job, Standard } from "./types";
+import { ATTACK_NAMES_ZH } from "./i18n";
 
-export interface AttackResult { blocked: boolean; detail: string }
+export interface AttackResult { blocked: boolean; detail: string; detailZh?: string }
 export interface AttackCase {
   id: number;
   name: string;
@@ -45,7 +46,7 @@ function msg(id: number, name: string, standard: Standard, text: string, relatio
 function pol(id: number, name: string, standard: Standard, build: () => Promise<Intent>, ctx: EvalContext = {}, policy?: Policy, isolated?: boolean): AttackCase {
   return {
     id, name, layer: "policy", standard, isolated,
-    run: async () => { const d = await fresh(policy).evaluate(await build(), ctx); return { blocked: d.verdict !== "allow", detail: d.lines.filter((l) => !l.ok).map((l) => `${l.rule}: ${l.detail}`).join("; ") || "allowed" }; },
+    run: async () => { const d = await fresh(policy).evaluate(await build(), ctx); const bad = d.lines.filter((l) => !l.ok); return { blocked: d.verdict !== "allow", detail: bad.map((l) => `${l.rule}: ${l.detail}`).join("; ") || "allowed", detailZh: bad.map((l) => `${l.rule}: ${l.detailZh ?? l.detail}`).join("; ") || "已允许" }; },
     naive: async () => (naiveWallet.evaluate(await build()).verdict === "allow" ? "fell" : "held"),
   };
 }
@@ -236,11 +237,11 @@ export const BENIGN: { text: string; relation: Rel }[] = [
   { text: "pay the lender 5", relation: "unknown" },
 ];
 
-export interface AttackRow { id: number; name: string; layer: AttackCase["layer"]; standard: Standard; isolated?: boolean; blocked: boolean; detail: string; naive: "fell" | "held" }
+export interface AttackRow { id: number; name: string; nameZh: string; layer: AttackCase["layer"]; standard: Standard; isolated?: boolean; blocked: boolean; detail: string; detailZh?: string; naive: "fell" | "held" }
 
 export async function runCase(a: AttackCase): Promise<AttackRow> {
   const [r, n] = await Promise.all([a.run(), a.naive()]);
-  return { id: a.id, name: a.name, layer: a.layer, standard: a.standard, isolated: a.isolated, blocked: r.blocked, detail: r.detail, naive: n };
+  return { id: a.id, name: a.name, nameZh: ATTACK_NAMES_ZH[a.id] ?? a.name, layer: a.layer, standard: a.standard, isolated: a.isolated, blocked: r.blocked, detail: r.detail, detailZh: r.detailZh, naive: n };
 }
 
 export async function runAll(): Promise<AttackRow[]> {

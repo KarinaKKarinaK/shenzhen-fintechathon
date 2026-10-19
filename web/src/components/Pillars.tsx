@@ -9,6 +9,7 @@ const icons: Record<string, React.ReactNode> = {
   pen: <path d="M4 20l4-1 10-10-3-3L5 16zM14 6l3 3" />,
   scale: <><path d="M12 4v16M5 8h14M6 8l-3 6h6zM18 8l-3 6h6z" /><path d="M8 20h8" /></>,
   chain: <><path d="M9 15a4 4 0 0 1 0-6l2-2a4 4 0 0 1 6 6l-1 1" /><path d="M15 9a4 4 0 0 1 0 6l-2 2a4 4 0 0 1-6-6l1-1" /></>,
+  learn: <><path d="M4 18l5-6 4 3 7-9" /><path d="M4 21h16" /><circle cx="9" cy="12" r="1.2" /><circle cx="13" cy="15" r="1.2" /></>,
 };
 
 export function SafeByDesign({ items }: { items: [string, string, string][] }) {

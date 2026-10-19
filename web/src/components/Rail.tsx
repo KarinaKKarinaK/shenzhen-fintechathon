@@ -1,29 +1,59 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Mark } from "./Logo";
+import { useEffect, useState } from "react";
+import { Seal } from "./Seal";
 import { ThemeToggle } from "./ThemeToggle";
+import { LangToggle } from "@/i18n/LangToggle";
+import { useLang, type TKey } from "@/i18n/LangProvider";
 
-const items = [
-  { href: "/", label: "Home", icon: <path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" /> },
-  { href: "/app", label: "Dashboard", icon: <><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></> },
-  { href: "/app/fleet", label: "Fleet", icon: <><path d="M12 4v4M12 16v4M4 12h4M16 12h4" /><circle cx="12" cy="12" r="3" /></> },
-  { href: "/app/evidence", label: "Evidence", icon: <><path d="M7 4h7l4 4v12H7z" /><path d="M14 4v4h4M9.5 13h5M9.5 16h5" /></> },
-  { href: "/pitch", label: "Pitch", icon: <><rect x="4" y="5" width="16" height="11" rx="1.5" /><path d="M12 16v4M8.5 20h7M8 12l3-3 2 2 3-3" /></> },
+const items: { href: string; label: TKey }[] = [
+  { href: "/", label: "rail.home" },
+  { href: "/app", label: "rail.dashboard" },
+  { href: "/app/fleet", label: "rail.fleet" },
+  { href: "/app/live", label: "rail.live" },
+  { href: "/app/evidence", label: "rail.evidence" },
+  { href: "/pitch", label: "rail.pitch" },
 ];
 
+// Top bar with written links. Over the landing photo it starts transparent and turns solid on scroll.
 export function Rail() {
   const path = usePathname();
+  const { t } = useLang();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 40);
+    const raf = requestAnimationFrame(on);
+    window.addEventListener("scroll", on, { passive: true });
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", on); };
+  }, []);
+  const overPhoto = path === "/" && !scrolled;
   return (
-    <nav className="rail flex h-full w-full flex-col items-center gap-1.5 py-4" aria-label="Sections">
-      <Link href="/" className="mb-5 !bg-transparent !shadow-none" aria-label="JiXin home" style={{ background: "transparent" }}><Mark size={34} /></Link>
-      {items.map((it) => (
-        <Link key={it.href} href={it.href} aria-current={path === it.href ? "page" : undefined} aria-label={it.label}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{it.icon}</svg>
-          <span className="tip">{it.label}</span>
+    <header className={`navbar fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${overPhoto ? "over-photo bg-transparent text-white" : "border-b border-rule bg-surface text-ink"}`}>
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-6 px-4 md:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-3" aria-label={t("rail.homeAria")}>
+          <Seal size={36} />
+          <span className="hidden leading-tight sm:block">
+            <span className="block font-bold">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
+            <span lang="zh-Hans" className={`cjk-serif block text-[13px] ${overPhoto ? "text-white/80" : "text-ink-2"}`}>自食其力</span>
+          </span>
         </Link>
-      ))}
-      <div className="mt-auto flex flex-col items-center gap-2"><ThemeToggle /><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>机信 JIXIN</span><span className="h-6 w-px bg-gold" /></div>
-    </nav>
+        <nav className="ml-auto flex min-w-0 items-center gap-1 overflow-x-auto" aria-label={t("rail.sections")}>
+          {items.map((it) => {
+            const on = path === it.href;
+            return (
+              <Link key={it.href} href={it.href} aria-current={on ? "page" : undefined}
+                className={`relative whitespace-nowrap rounded-md px-3 py-2 text-[15px] font-semibold transition-colors ${on ? "" : overPhoto ? "text-white/80 hover:text-white" : "text-ink-2 hover:text-ink"}`}>
+                {t(it.label)}
+                <span className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded ${on ? (overPhoto ? "bg-white" : "bg-seal") : "bg-transparent"}`} />
+              </Link>
+            );
+          })}
+          <span className={`mx-2 h-5 w-px ${overPhoto ? "bg-white/30" : "bg-rule"}`} aria-hidden />
+          <LangToggle />
+          <ThemeToggle />
+        </nav>
+      </div>
+    </header>
   );
 }

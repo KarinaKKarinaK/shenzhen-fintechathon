@@ -1,4 +1,4 @@
-// The Zishi seal (印章). 自食 cut white into a red seal, read right to left, with a printed edge.
+// The Zishi seal (印章). 自食 (zì shí) cut white into a red seal, read left to right so it matches the name, with a printed edge.
 // Glyph outlines come from Noto Serif SC Black (SIL Open Font License), so the mark never depends on the viewer's fonts.
 
 const EDGE = "M3.0 2.4 L11.6 2.8 L20.2 3.1 L28.8 2.3 L37.4 3.4 L46.0 2.6 L54.6 3.0 L63.2 3.6 L71.8 2.8 L80.4 3.7 L89.0 3.1 L97.6 3.0 L96.8 11.6 L96.8 20.2 L97.3 28.8 L98.0 37.4 L96.7 46.0 L96.8 54.6 L97.4 63.2 L98.0 71.8 L97.2 80.4 L96.9 89.0 L97.0 97.6 L88.4 98.4 L79.8 96.7 L71.2 98.1 L62.6 97.0 L54.0 96.7 L45.4 96.6 L36.8 96.9 L28.2 97.7 L19.6 96.5 L11.0 97.2 L2.4 97.0 L2.2 88.4 L2.7 79.8 L2.5 71.2 L3.4 62.6 L3.5 54.0 L3.3 45.4 L2.5 36.8 L3.0 28.2 L3.2 19.6 L2.8 11.0Z";
@@ -13,8 +13,8 @@ function Face() {
   return (
     <>
       <path d={EDGE} fill="var(--color-seal, #B8322A)" />
-      <path d={ZI} fill="#FFFFFF" />
-      <path d={SHI} fill="#FFFFFF" />
+      <g transform="translate(-50 0)"><path d={ZI} fill="#FFFFFF" /></g>
+      <g transform="translate(50 0)"><path d={SHI} fill="#FFFFFF" /></g>
       {VOIDS.map(([x, y, r]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill="#FFFFFF" opacity={0.85} />)}
     </>
   );

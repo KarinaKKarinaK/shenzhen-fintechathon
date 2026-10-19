@@ -1,6 +1,6 @@
-# JiXin (Bonded Agent): design fixes
+# Zishi (Bonded Agent): design fixes
 
-Problems found in the JiXin design (`BONDED_AGENT.md`) and the contracts (`contracts/`), what we decided, and exactly what to change in code.
+Problems found in the Zishi design (`../../DESIGN.md`) and the contracts (`contracts/`), what we decided, and exactly what to change in code.
 
 Checked against commit `7abd4ef` (contracts) on 20 October 2026.
 
@@ -62,13 +62,13 @@ Words used throughout:
 | 2 | Nobody but the pilot ever holds the evidence, so nothing is ever slashed | Per-job intent log: hash on chain before the policy engine decides, full intent delivered to every party, only parties report | Yes, this pass (B.1, B.3, B.6) |
 | 3 | The bond starts at zero | Limits scale with the bond, a starting floor, the vendor bond covers the start (with 11) | Yes, this pass (B.3, B.4) |
 | 4 | Where insurance fits | Not in the build. Bonds first, insurance only above them, in the pitch | Yes, this pass (B.2, B.4 remove cover) |
-| 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Docs. `BONDED_AGENT.md` is drone only. Contracts are scenario neutral |
+| 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Docs. `../../DESIGN.md` is drone only. Contracts are scenario neutral |
 | 10 | The contract believed the reporter | Every fact read from the signed intent and the contracts' own records | Yes, this pass (B.3 rule table, B.4 views) |
 | 11 | A new machine can never start | No minimum in `covers`, a starting floor | Yes, this pass (B.3 `covers`) |
-| 6 | Market section argues for insurance | Financing story replaces it (Part C) | Docs. `BONDED_AGENT.md` Market and Who pays |
+| 6 | Market section argues for insurance | Financing story replaces it (Part C) | Docs. `../../DESIGN.md` Market and Who pays |
 | 7 | Seasonal income vs a fixed monthly minimum | Zero minimum outside spraying windows, catch up inside them (Part C) | No. Not in the build; `Lease.monthlyMinimum` stays fixed |
 | 8 | Scope | Frozen to Part B plus the demo story in A.5 (Part C) | Docs |
-| 9 | Claims that can backfire | Fixed wording (Part C) | Docs. `BONDED_AGENT.md`, `TECHNICAL.md`, `SELF_ASSESSMENT.md` |
+| 9 | Claims that can backfire | Fixed wording (Part C) | Docs. `../../DESIGN.md`, `../../TECHNICAL.md`, `../../SELF_ASSESSMENT.md` |
 
 Already done in code (credit to the team, commit `7abd4ef`):
 
@@ -157,7 +157,7 @@ Closing statement, for the last slide and the end of the video:
 
 > The same rail works for any machine that does paid work someone can verify. Delivery drones paid per drop. Robot arms paid per part. Robotaxis paid per trip. Port vehicles paid per container move. And one day the humanoid in your building, paid per errand for your neighbour. Every one of them can earn, pay its own way, post a bond and pay off its own financing. The agricultural drone is the first.
 
-Changes to `BONDED_AGENT.md` (owner of that file): Side B moves to the closing statement and a short "next" section; Side A becomes the agricultural drone only (spraying per mu, farmer confirmation, no delivery flow); the three-act demo becomes the story above; mission control keeps only the farmland view.
+Changes to `../../DESIGN.md` (owner of that file): Side B moves to the closing statement and a short "next" section; Side A becomes the agricultural drone only (spraying per mu, farmer confirmation, no delivery flow); the three-act demo becomes the story above; mission control keeps only the farmland view.
 
 ## A.6 Proof is checked against records (problem 10)
 
@@ -310,7 +310,7 @@ For every action the agent takes:
 
 1. Compute numbers with tools. The model may explain them, never produce them.
 2. Validate the action against the schema and the tool outputs. Discard anything malformed. Discarded actions are never signed.
-3. Build the typed intent (B.2 fields) and sign it with the agent key under the JiXin EIP-712 domain. The engine currently signs a canonical string with `recoverMessageAddress`; switch to EIP-712 so the same signature verifies on chain.
+3. Build the typed intent (B.2 fields) and sign it with the agent key under the Zishi EIP-712 domain. The engine currently signs a canonical string with `recoverMessageAddress`; switch to EIP-712 so the same signature verifies on chain.
 4. Commit `hashIntent(intent)` to `IntentLog` for its job.
 5. Deliver the full intent and signature to every party of the job (farmer, pilot, lender, vendor).
 6. Only then run the policy engine. Blocked intents stay committed and delivered.
@@ -358,7 +358,7 @@ JobBoard:
 
 | # | Problem | Decision |
 |---|---|---|
-| 6 | The market section of `BONDED_AGENT.md` listed insurance pricing, agent liability insurance and "a take rate on every task and cover bound" as revenue, which A.4 rules out | Replaced with the financing story: pilots and drones, drone cost, the gap between subsidies and credit, a fee per financed machine, basis points on repayments, the 2 percent rail fee per job. Insurance sources dropped. A Bond economics section gives a worked schedule in yuan (drone 55,000, 13,750 mu, fees 3 to 15 per mu, bond slice, floor 200, vendor bond 5,000, penalty 200, daily cap 1,000, lender loss given default at months one, six and twelve with and without the bond), marked illustrative |
-| 7 | Spraying is seasonal; `Lease.monthlyMinimum` is fixed, so pilots default in the off-season | Decided: the minimum is zero outside spraying windows and cannot freeze the lease there; inside a window it applies and a shortfall carries into the next window month until caught up; windows come from the regional crop calendar and are set at `Lease.open`. Not in the build (problem 8). Written in `BONDED_AGENT.md`, Seasonal minimum |
-| 8 | Scope is far bigger than the time left | Frozen: Part B plus the seven step demo story in A.5. Nothing else on a slide as done. Cut order is in `BONDED_AGENT.md`, Scope |
+| 6 | The market section of `../../DESIGN.md` listed insurance pricing, agent liability insurance and "a take rate on every task and cover bound" as revenue, which A.4 rules out | Replaced with the financing story: pilots and drones, drone cost, the gap between subsidies and credit, a fee per financed machine, basis points on repayments, the 2 percent rail fee per job. Insurance sources dropped. A Bond economics section gives a worked schedule in yuan (drone 55,000, 13,750 mu, fees 3 to 15 per mu, bond slice, floor 200, vendor bond 5,000, penalty 200, daily cap 1,000, lender loss given default at months one, six and twelve with and without the bond), marked illustrative |
+| 7 | Spraying is seasonal; `Lease.monthlyMinimum` is fixed, so pilots default in the off-season | Decided: the minimum is zero outside spraying windows and cannot freeze the lease there; inside a window it applies and a shortfall carries into the next window month until caught up; windows come from the regional crop calendar and are set at `Lease.open`. Not in the build (problem 8). Written in `../../DESIGN.md`, Seasonal minimum |
+| 8 | Scope is far bigger than the time left | Frozen: Part B plus the seven step demo story in A.5. Nothing else on a slide as done. Cut order is in `../../DESIGN.md`, Scope |
 | 9 | Claims that can backfire | Fixed in the three docs: the lender is "a licensed lessor in a sandbox", WeBank is never named as the lender; farm machinery purchase subsidies (农机购置补贴) may cover part of a drone's price and must be verified before any slide says pilots cannot get financing; "a credit bureau for machines" is dropped (it is shenzhen-comp's pitch); every market figure is verified against its source before it goes on a slide |

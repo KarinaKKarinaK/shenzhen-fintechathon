@@ -5,7 +5,7 @@ Deadline: Tuesday 20 October 2026, 23:59 Beijing time (17:59 Amsterdam). Submit 
 ## Sunday night (18 Oct)
 
 - Lock the team. Collect passport bio pages. Fill the registration form.
-- Email both organizer addresses (see HACKATHON.md) about exchange student eligibility and the submission address. Register tonight even if the answer is pending.
+- Email both organizer addresses (see ../../HACKATHON.md) about exchange student eligibility and the submission address. Register tonight even if the answer is pending.
 - Pick the idea (see CORE_IDEA.md).
 - Create the testnet wallet, get faucet funds, deploy a hello world contract so the toolchain is proven.
 

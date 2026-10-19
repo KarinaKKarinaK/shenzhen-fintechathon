@@ -3,7 +3,7 @@ import { Pitch } from "@/components/Pitch";
 import { ATTACKS, BENIGN } from "@/engine/attacks";
 import { DEFAULT_POLICY } from "@/engine/policy";
 
-export const metadata: Metadata = { title: "JiXin · Pitch" };
+export const metadata: Metadata = { title: "Zishi 自食其力 · Pitch" };
 
 export default function PitchPage() {
   const p = DEFAULT_POLICY;

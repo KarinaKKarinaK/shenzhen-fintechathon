@@ -22,9 +22,14 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm test
-      - run: pnpm build
+      - name: lint (errors fail the job)
+        run: pnpm lint
+      - name: type check
+        run: npx tsc --noEmit
+      - name: engine self check
+        run: pnpm test
+      - name: build
+        run: pnpm build
 
   contracts:
     runs-on: ubuntu-latest
@@ -36,6 +41,8 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
-      - run: forge install foundry-rs/forge-std
+      - name: forge-std
+        run: test -f lib/forge-std/src/Test.sol || forge install foundry-rs/forge-std
       - run: forge build
-      - run: forge test -vv
+      - name: forge test (40 tests)
+        run: forge test -vv

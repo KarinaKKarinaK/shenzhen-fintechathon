@@ -1,0 +1,6 @@
+job id,title,mu,price per mu,field,window,requester
+job-201,"Spray 60 mu of rice, field north",60,4,field-north,today,Farmer Lin
+job-202,"Spray 20 mu of maize, field north",20,3,field-north,today,Farmer Lin
+job-203,"Spray 100 mu of passion fruit, field east",100,15,field-east,08:00-18:00,Farmer Zhao
+job-204,"Spray 50 mu of rice, field south",50,5,field-south,today,Farmer Chen
+job-205,"Spray 30 mu of maize, field west",30,5,field-west,13:00-18:00,Farmer Wu

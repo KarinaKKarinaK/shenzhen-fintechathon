@@ -1,17 +1,22 @@
 "use client";
+import { demoHeaders } from "./demoToken";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Intent, MachineState, PolicyDecision, PolicyLine, Job, Side } from "@/engine/types";
-import { short } from "@/engine/policy";
-import type { Gate, Understood, MessageEv, PlanItem, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
+import { DEFAULT_POLICY, short } from "@/engine/policy";
+import { ADDR } from "@/engine/keys";
+import { ruleLabel } from "@/engine/i18n";
+import type { Gate, Understood, MessageEv, PlanItem, PlanMeta, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
 import { timeOf, yuan } from "./money";
+import { useLang } from "@/i18n/LangProvider";
 
-const kindLabel: Record<string, string> = { fee_in: "Fee in", instalment: "Instalment", energy: "Energy", rail: "Rail fee", cover: "Cover", bond_fill: "Bond fill", slash: "Slash", bounty: "Bounty", title: "Title transfer", lock: "Fee locked", release: "Release", refund: "Held", top_up: "Top up" };
 const inbound = new Set(["fee_in", "top_up", "bounty", "release"]);
 const danger = new Set(["slash", "refund"]);
 const statusTone: Record<string, string> = { pending: "bg-paper-2 text-muted pulse-dot", confirmed: "bg-gold-soft text-ink", finalised: "bg-gold text-ink" };
 
 export function ChainFeed({ txs, compact = false }: { txs: TxView[]; compact?: boolean }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   return (
     <div className="flex flex-col gap-2">
       <AnimatePresence initial={false}>
@@ -20,24 +25,24 @@ export function ChainFeed({ txs, compact = false }: { txs: TxView[]; compact?: b
           return (
             <motion.div key={tx.hash} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`mined rounded-xl border px-3 py-2 ${danger.has(tx.kind) ? "border-red/50 bg-red-soft/50" : inbound.has(tx.kind) ? "border-gold/60 bg-gold-soft/40" : "border-slate/40 bg-paper-2"}`}>
               <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-sm font-medium">{kindLabel[tx.kind] ?? tx.kind}<span className={`pill !px-1.5 !py-0.5 !text-[9px] ${statusTone[status]}`}>{status}</span></span>
-                <span className={`text-sm tabular-nums ${danger.has(tx.kind) ? "text-red" : inbound.has(tx.kind) ? "text-red-deep" : "text-slate"}`}>{tx.kind === "title" ? "title" : `${inbound.has(tx.kind) ? "+" : "-"}${yuan(tx.amount)}`}</span>
+                <span className="flex items-center gap-2 text-sm font-medium">{(P.kinds as Record<string, string>)[tx.kind] ?? tx.kind}<span className={`pill !px-1.5 !py-0.5 !text-[9px] ${statusTone[status]}`}>{P.txStatus[status]}</span></span>
+                <span className={`text-sm tabular-nums ${danger.has(tx.kind) ? "text-red" : inbound.has(tx.kind) ? "text-red-deep" : "text-slate"}`}>{tx.kind === "title" ? P.titleWord : `${inbound.has(tx.kind) ? "+" : "-"}${yuan(tx.amount)}`}</span>
               </div>
               <div className="text-xs text-muted">{tx.label}</div>
               <div className="mono mt-1 flex flex-wrap items-center justify-between gap-x-3 text-muted">
-                {tx.explorer && !tx.simulated ? <a className="underline decoration-gold hover:text-red-deep" href={tx.explorer} target="_blank" rel="noreferrer">{short(tx.hash)} on the explorer</a> : <span title={tx.hash}>{short(tx.hash)}</span>}
-                <span>block {tx.block}{tx.simulated ? " sim" : ""}</span>
+                {tx.explorer && !tx.simulated ? <a className="underline decoration-gold hover:text-red-deep" href={tx.explorer} target="_blank" rel="noreferrer">{t("panels.onExplorer", { hash: short(tx.hash) })}</a> : <span title={tx.hash}>{short(tx.hash)}</span>}
+                <span>{t("panels.block", { n: tx.block })}{tx.simulated ? P.sim : ""}</span>
               </div>
               <div className="mono mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-muted">
-                <span>sent {timeOf(tx.seenAt)}</span>
-                {status !== "pending" ? <span>confirmed {timeOf(tx.confirmedAt ?? tx.seenAt)}</span> : null}
-                {status === "finalised" ? <span className="text-gold-deep">finalised {timeOf(tx.finalisedAt)}</span> : null}
+                <span>{t("panels.sent", { t: timeOf(tx.seenAt) })}</span>
+                {status !== "pending" ? <span>{t("panels.confirmedAt", { t: timeOf(tx.confirmedAt ?? tx.seenAt) })}</span> : null}
+                {status === "finalised" ? <span className="text-gold-deep">{t("panels.finalisedAt", { t: timeOf(tx.finalisedAt) })}</span> : null}
               </div>
             </motion.div>
           );
         })}
       </AnimatePresence>
-      {txs.length === 0 ? <div className="text-sm text-muted">No transactions yet. Start a run.</div> : null}
+      {txs.length === 0 ? <div className="text-sm text-muted">{P.noTx}</div> : null}
     </div>
   );
 }
@@ -49,14 +54,16 @@ export function gateTone(action?: string) {
 
 function GateStrip({ g }: { g: Gate }) {
   const [open, setOpen] = useState(false);
+  const { d } = useLang();
+  const P = d.panels;
   return (
     <div className="mt-1.5 border-t border-line/70 pt-1.5 text-[11px]">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-muted">gate</span>
-        <span className={`pill !px-1.5 !py-0.5 !text-[9px] ${gateTone(g.action)}`}>{g.action ?? "pending"}</span>
+        <span className="text-muted">{P.gate}</span>
+        <span className={`pill !px-1.5 !py-0.5 !text-[9px] ${gateTone(g.action)}`}>{g.action ? (P.gateActions as Record<string, string>)[g.action] ?? g.action : P.pending}</span>
         {(g.categories ?? []).map((c) => <span key={c} className="rounded-sm bg-paper-2 px-1.5 py-0.5 text-ink-2">{c}</span>)}
         {g.reason ? <span className="text-muted">{g.reason}</span> : null}
-        {g.framed ? <button type="button" onClick={() => setOpen(!open)} className="ml-auto underline decoration-gold text-ink-2">{open ? "hide" : "How the agent sees it"}</button> : null}
+        {g.framed ? <button type="button" onClick={() => setOpen(!open)} className="ml-auto underline decoration-gold text-ink-2">{open ? P.hide : P.how}</button> : null}
       </div>
       {open && g.framed ? <pre className="mono mt-1.5 whitespace-pre-wrap break-all rounded-sm bg-ink p-2 text-[10px] text-white/85">{(g.preamble ? g.preamble + "\n" : "") + g.framed}</pre> : null}
     </div>
@@ -64,33 +71,50 @@ function GateStrip({ g }: { g: Gate }) {
 }
 
 function UnderstoodLine({ u }: { u: Understood }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   const by = u.by ?? u.source ?? "rules";
   const addr = u.hadAddress ?? u.addressInText;
   return (
     <div className="mt-1.5 border-t border-line/70 pt-1.5 text-[11px] text-ink-2">
-      <span className="font-semibold text-ink">Understood:</span> {u.task ?? "task"}{u.window ? `, ${u.window}` : ""}{u.fee !== undefined ? `, fee ${u.fee}` : ""}{u.geofence ? `, geofence ${u.geofence}` : ""}
-      <span className="ml-1.5 rounded-sm bg-paper-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">by {by === "model" ? "model" : "rules"}</span>
-      {u.payeeName === null && addr ? <span className="ml-1.5 rounded-sm bg-red-soft px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-red">address in text ignored</span> : null}
+      <span className="font-semibold text-ink">{P.understood}</span> {u.task ?? P.task}{u.window ? `, ${u.window}` : ""}{u.fee !== undefined ? t("panels.fee", { fee: u.fee }) : ""}{u.geofence ? t("panels.geofence", { g: u.geofence }) : ""}
+      <span className="ml-1.5 rounded-sm bg-paper-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("panels.by", { who: by === "model" ? P.model : P.rules })}</span>
+      {u.payeeName === null && addr ? <span className="ml-1.5 rounded-sm bg-red-soft px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-red">{P.addrIgnored}</span> : null}
     </div>
   );
 }
 
+// The four facts a judge reads first. The rest sit behind a link; every label is a human word.
+const FACT_FIRST = ["fee", "instalment", "margin", "reserveRule"];
 function Facts({ m }: { m: MessageEv }) {
-  const entries = Object.entries(m.facts ?? {});
-  if (!entries.length && m.grounded === undefined) return null;
+  const { d, t } = useLang();
+  const [more, setMore] = useState(false);
+  const P = d.panels;
+  const labels = P.factLabels as Record<string, string>;
+  const all = Object.entries(m.facts ?? {});
+  if (!all.length && m.grounded === undefined) return null;
+  const first = all.filter(([k]) => FACT_FIRST.includes(k)).slice(0, 4);
+  const shown = more ? all : first.length ? first : all.slice(0, 4);
+  const rest = all.length - shown.length;
+  const val = (v: string | number | boolean) => (typeof v === "boolean" ? (v ? d.judge.yes : d.judge.no) : String(v));
   return (
     <div className="mt-1.5 border-t border-white/15 pt-1.5 text-[11px]">
-      <div className="flex flex-wrap gap-1">{entries.map(([k, v]) => <span key={k} className="rounded-sm bg-white/12 px-1.5 py-0.5 text-white/90"><span className="text-white/60">{k}</span> {String(v)}</span>)}</div>
+      <div className="flex flex-wrap items-center gap-1">
+        {shown.map(([k, v]) => <span key={k} className="rounded-sm bg-white/12 px-1.5 py-0.5 text-white/90"><span className="text-white/60">{labels[k] ?? k}</span> {val(v)}</span>)}
+        {rest > 0 || more ? <button type="button" onClick={() => setMore(!more)} className="text-white/60 underline decoration-gold">{more ? P.factsLess : t("panels.factsMore", { n: rest })}</button> : null}
+      </div>
       <div className="mt-1 flex items-center gap-2 text-white/60">
-        <span>numbers from economics(), text by {m.source ?? "template"}</span>
-        {m.grounded === false ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[10px] uppercase text-white">rejected, template used</span> : <span className="text-gold" aria-label="grounded">&#10003; grounded</span>}
+        <span>{t("panels.factsFrom", { src: m.source === "model" ? P.model : P.template })}</span>
+        {m.grounded === false ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[10px] uppercase text-white">{P.rejected}</span> : <span className="text-gold" aria-label={P.grounded}>&#10003; {P.grounded}</span>}
       </div>
     </div>
   );
 }
 
 export function AgentFeed({ messages, gates = {}, understood = {}, frozen = false }: { messages: MessageEv[]; gates?: Record<number, Gate>; understood?: Record<string, Understood>; frozen?: boolean }) {
-  const who: Record<string, string> = { machine: "Machine agent", requester: "Requester agent", lender: "Lender agent", hunter: "Hunter", operator: "Operator" };
+  const { d } = useLang();
+  const P = d.panels;
+  const who = P.who as Record<string, string>;
   const lastReq = messages.map((m, i) => (m.from === "requester" ? i : -1)).filter((i) => i >= 0).pop();
   const u = understood.last;
   return (
@@ -99,8 +123,8 @@ export function AgentFeed({ messages, gates = {}, understood = {}, frozen = fals
         {messages.map((m, i) => (
           <motion.div key={`${m.at}-${i}`} initial={{ opacity: 0, x: m.from === "machine" ? 10 : -10 }} animate={{ opacity: 1, x: 0 }} className={`max-w-[94%] rounded-2xl px-3 py-2 text-sm ${m.from === "machine" ? "self-end bg-ink text-white" : "self-start bg-paper-2"}`}>
             <div className={`mb-0.5 flex items-center gap-2 text-[11px] ${m.from === "machine" ? "text-gold-soft" : "text-muted"}`}>
-              <span>{who[m.from] ?? m.from}{m.untrusted ? " (untrusted data)" : ""}</span>
-              {m.from === "machine" && frozen ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">frozen</span> : null}
+              <span>{who[m.from] ?? m.from}{m.untrusted ? P.untrusted : ""}</span>
+              {m.from === "machine" && frozen ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">{P.frozen}</span> : null}
             </div>
             {m.text}
             {m.untrusted && gates[i] ? <GateStrip g={gates[i]} /> : null}
@@ -109,7 +133,7 @@ export function AgentFeed({ messages, gates = {}, understood = {}, frozen = fals
           </motion.div>
         ))}
       </AnimatePresence>
-      {messages.length === 0 ? <div className="text-sm text-muted">The agents have not spoken yet.</div> : null}
+      {messages.length === 0 ? <div className="text-sm text-muted">{P.noMessages}</div> : null}
     </div>
   );
 }
@@ -127,45 +151,48 @@ function Chip({ k, v }: { k: string; v: unknown }) {
 }
 
 function Verdict({ v }: { v: PolicyDecision["verdict"] }) {
+  const { d } = useLang();
   const cls = v === "allow" ? "text-gold-deep" : v === "deny" ? "text-red" : "text-slate";
-  return <span className={`text-sm font-semibold ${cls}`}>{v === "allow" ? "Allowed" : v === "deny" ? "Blocked" : "Needs the button"}</span>;
+  return <span className={`text-sm font-semibold ${cls}`}>{d.panels.verdict[v] ?? v}</span>;
 }
 
 // Last five decisions pinned. The newest shows the typed intent, the key and every rule with its tier.
 export function PolicyCard({ decisions, intents }: { decisions: PolicyDecision[]; intents: Intent[] }) {
-  if (!decisions.length) return <div className="text-sm text-muted">No decision yet. The policy engine checks every signed intent.</div>;
+  const { d, t, lang } = useLang();
+  const P = d.panels;
+  if (!decisions.length) return <div className="text-sm text-muted">{P.noDecision}</div>;
   const byId = new Map(intents.map((i) => [i.id, i as Intent & { nonce?: number; signer?: string }]));
   return (
     <div className="flex flex-col gap-2">
-      {decisions.slice(0, 5).map((d, n) => {
-        const it = byId.get(d.intentId);
-        const signer = (d as PolicyDecision & { signer?: string }).signer ?? it?.signer;
-        const sigLine = d.lines.find((l) => l.rule === "signature");
+      {decisions.slice(0, 5).map((dec, n) => {
+        const it = byId.get(dec.intentId);
+        const signer = (dec as PolicyDecision & { signer?: string }).signer ?? it?.signer;
+        const sigLine = dec.lines.find((l) => l.rule === "signature");
         return (
-          <motion.div key={d.intentId + n} layout initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className={`rounded-lg border px-3 py-2 ${d.verdict === "deny" ? "border-l-4 border-l-red border-line" : "border-line"} ${n > 0 ? "opacity-80" : ""}`}>
+          <motion.div key={dec.intentId + n} layout initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className={`rounded-lg border px-3 py-2 ${dec.verdict === "deny" ? "border-l-4 border-l-red border-line" : "border-line"} ${n > 0 ? "opacity-80" : ""}`}>
             <div className="flex items-center justify-between">
-              <span className="mono text-muted">{d.intentId}{it ? ` ${it.kind}` : ""}</span>
-              <Verdict v={d.verdict} />
+              <span className="mono text-muted">{dec.intentId}{it ? ` ${it.kind}` : ""}</span>
+              <Verdict v={dec.verdict} />
             </div>
             {n === 0 && it ? (
               <div className="mt-1.5">
-                <div className="mb-1 text-[10px] uppercase tracking-wider text-muted">Intent</div>
+                <div className="mb-1 text-[10px] uppercase tracking-wider text-muted">{P.intent}</div>
                 <div className="flex flex-wrap gap-1">
                   <Chip k="actor" v={it.actor} /><Chip k="kind" v={it.kind} /><Chip k="payee" v={it.payee ? short(it.payee) : undefined} /><Chip k="amount" v={it.amount} /><Chip k="jobId" v={it.jobId} /><Chip k="geofence" v={it.geofence} /><Chip k="confirmed" v={it.confirmed} /><Chip k="nonce" v={it.nonce} />
                 </div>
-                <div className="mono mt-1 break-all text-[10px] text-muted">sig {it.signature}</div>
+                <div className="mono mt-1 break-all text-[10px] text-muted">{P.sig} {it.signature}</div>
               </div>
             ) : null}
-            {n === 0 || d.verdict !== "allow" ? (
+            {n === 0 || dec.verdict !== "allow" ? (
               <ul className="mt-1.5 flex flex-col gap-1">
-                {d.lines.map((l, i) => (
+                {dec.lines.map((l, i) => (
                   <motion.li key={l.rule} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: n === 0 ? i * 0.06 : 0 }} className="flex items-start gap-2 text-sm">
                     <span className={`mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full ${l.ok ? "bg-gold" : "bg-red"}`} aria-hidden />
-                    <span className="flex flex-wrap items-center gap-1.5"><span className="font-medium">{l.rule}</span><Tier line={l} /><span className="text-muted">{l.detail}</span>{l === sigLine && signer ? <span className="mono text-muted">signer {short(signer)}</span> : null}</span>
+                    <span className="flex flex-wrap items-center gap-1.5"><span className="font-medium">{ruleLabel(lang, l.rule)}</span><Tier line={l} /><span className="text-muted">{lang === "zh" ? l.detailZh ?? l.detail : l.detail}</span>{l === sigLine && signer ? <span className="mono text-muted">{t("panels.signer", { s: short(signer) })}</span> : null}</span>
                   </motion.li>
                 ))}
               </ul>
-            ) : <div className="mt-1 text-[11px] text-muted">{d.lines.length} rules, all pass</div>}
+            ) : <div className="mt-1 text-[11px] text-muted">{t("panels.allPass", { n: dec.lines.length })}</div>}
           </motion.div>
         );
       })}
@@ -173,57 +200,80 @@ export function PolicyCard({ decisions, intents }: { decisions: PolicyDecision[]
   );
 }
 
-// The mechanism behind a slash, one line at a time. Every fact is read from the signed intent and the contracts' records.
+// Known addresses to a role word: the demo keys first, then the allowlist. Anything else stays a short hash.
+const ROLE_OF: Record<string, string> = Object.fromEntries([
+  ...Object.entries(ADDR).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k === "operator" ? "pilot" : k]),
+  ...Object.entries(DEFAULT_POLICY.allowlist).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k]),
+]);
+
+// A receipt for a slash. Every fact is read from the signed intent and the contracts' records.
 export function ProofCard({ proof, log }: { proof?: Proof; log?: LogEv }) {
-  if (!proof) return <div className="text-sm text-muted">No violation yet. When a signed intent breaks a rule, a party of the job submits it and the contract checks it against its own records.</div>;
-  const bond = (proof.bond ?? proof.bondKind) === "pilot" ? "pilot" : "vendor";
+  const { d, t, lang } = useLang();
+  const [addrs, setAddrs] = useState(false);
+  const P = d.panels;
+  if (!proof) return <div className="text-sm text-muted">{P.proofNone}</div>;
+  const roles = P.roles as Record<string, string>;
+  const role = (a?: string) => (a && roles[ROLE_OF[a.toLowerCase()] ?? ""]) || short(a);
+  const bondKind = (proof.bond ?? proof.bondKind) === "pilot" ? "pilot" : "vendor";
+  const bond = bondKind === "pilot" ? d.moments.pilot : d.moments.vendor;
   const shadow = proof.shadow === true;
   const treasury = typeof proof.treasury === "number" ? proof.treasury : undefined;
-  const paid = proof.paidTo?.length ? proof.paidTo.join(" and ")
-    : shadow ? `registered hunter ${short(proof.submitterAddr ?? proof.submitter)} as bounty${treasury !== undefined ? ` (${yuan(proof.bounty)}) and the treasury (${yuan(treasury)})` : ""}`
-    : treasury !== undefined ? `the harmed party (${yuan((proof.slash ?? 0) - treasury)}) and the treasury (${yuan(treasury)}), no bounty` : "the harmed party and the treasury, no bounty";
-  const lines = [
-    `signed intent ${short(proof.intentHash ?? proof.intentId)}${log ? `, in the log${log.parties?.length ? `, delivered to ${log.parties.join(", ")}` : ""}` : ""}`,
-    `rule broken: ${proof.rule ?? "unknown"}, tagged ${bond} bond`,
-    `signature verified, signer ${short(proof.signer)}`,
-    `${yuan(proof.slash)} slashed from the ${bond} bond, paid to ${paid}`,
+  const paid = proof.paidTo?.length ? proof.paidTo.join(P.and)
+    : shadow ? t("panels.paidShadow", { who: short(proof.submitterAddr ?? proof.submitter), tr: treasury !== undefined ? t("panels.paidShadowTr", { bounty: yuan(proof.bounty), treasury: yuan(treasury) }) : "" })
+    : treasury !== undefined ? t("panels.paidTreasury", { harmed: yuan((proof.slash ?? 0) - treasury), treasury: yuan(treasury) }) : P.paidNone;
+  const hash = proof.intentHash ?? proof.intentId;
+  const parties = log?.parties ?? [];
+  const ledger: [string, string][] = [
+    [P.receiptIntent, `${short(hash)}${log ? P.inLog : ""}`],
+    [P.receiptDelivered, parties.length ? parties.map(role).join(", ") : P.unknown],
+    [P.receiptSigner, `${short(proof.signer)}, ${role(proof.signer)}`],
+    [P.receiptOutcome, paid],
   ];
+  const full: [string, string | undefined][] = [[P.receiptIntent, hash], ...parties.map((a): [string, string] => [role(a), a]), [P.receiptSigner, proof.signer]];
   return (
-    <div>
-      <ol className="flex flex-col gap-1.5">
-        {lines.map((l, i) => (
-          <motion.li key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.35 }} className="flex items-start gap-2 text-sm">
-            <span className={`tech mt-0.5 grid h-5 w-5 shrink-0 place-items-center text-[10px] font-bold ${i === 3 ? "bg-red text-white" : "bg-gold text-ink"}`}>{i + 1}</span>
-            <span className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{l}</span>
-          </motion.li>
+    <div className="text-sm">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2">
+        <span className="font-semibold">{proof.rule ? ruleLabel(lang, proof.rule) : P.unknown}</span>
+        <span className={`pill !px-1.5 !py-0.5 !text-[9px] ${bondKind === "pilot" ? "bg-gold-soft text-ink" : "bg-gold text-ink"}`}>{t("panels.bondChip", { bond })}</span>
+        <span className="kpi ml-auto !text-xl tabular-nums text-red">-{yuan(proof.slash)}</span>
+      </div>
+      <dl className="mt-2 flex flex-col gap-1">
+        {ledger.map(([k, v], i) => (
+          <motion.div key={k} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.3 }} className="grid grid-cols-[6rem_1fr] gap-2">
+            <dt className="text-muted">{k}</dt><dd className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{v}</dd>
+          </motion.div>
         ))}
-      </ol>
-      <p className="mt-3 border-t border-line pt-2 text-xs text-muted">{bond === "vendor" ? "The pilot bond is untouched. The vendor pays for the agent's mistakes." : "The vendor bond is untouched. The pilot pays for the pilot's own cheating."} On live jobs only a party of the job can submit, and no bounty goes to the submitter. Bounties exist only for registered hunters on shadow jobs.</p>
+      </dl>
+      <button type="button" onClick={() => setAddrs(!addrs)} className="mt-2 text-xs text-ink-2 underline decoration-gold">{addrs ? P.hideAddr : P.showAddr}</button>
+      {addrs ? <ul className="mono mt-1 flex flex-col gap-0.5 break-all text-[10px] text-muted">{full.filter(([, a]) => a).map(([k, a]) => <li key={k + a}><span className="text-ink-2">{k}</span> {a}</li>)}</ul> : null}
+      <p className="mt-3 border-t border-line pt-2 text-xs text-muted">{bondKind === "vendor" ? P.noteVendor : P.notePilot}{P.noteLive}</p>
     </div>
   );
 }
 
 export function BondGauge({ value, min, slashes, side, solvency }: { value: number; min: number; slashes: number; side?: Side; solvency?: Solvency }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   const max = Math.max(min * 1.6, value, 1);
   const r = 44, c = 2 * Math.PI * r;
   const pct = Math.min(1, value / max);
   const minPct = Math.min(1, min / max);
   const low = value < min;
-  const sub = solvency ? (solvency.covers ? `worst case ${yuan(solvency.worst)}, covered` : "small jobs only while it fills") : low ? "Reaching the minimum unlocks a better rate" : "Covers the worst case";
+  const sub = solvency ? (solvency.covers ? t("panels.worstCovered", { w: yuan(solvency.worst) }) : P.smallJobs) : low ? P.reachMin : P.coversWorst;
   return (
     <div className="flex items-center gap-4">
-      <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={`Pilot bond ${yuan(value)} of minimum ${yuan(min)}`}>
+      <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={t("panels.gaugeAria", { v: yuan(value), min: yuan(min) })}>
         <circle cx="56" cy="56" r={r} fill="none" stroke="#efe9d8" strokeWidth="10" />
         <circle cx="56" cy="56" r={r} fill="none" stroke={low ? "#c8102e" : "#b8860b"} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${pct * c} ${c}`} transform="rotate(-90 56 56)" style={{ transition: "stroke-dasharray 600ms ease, stroke 300ms" }} />
         <line x1="56" y1="4" x2="56" y2="16" stroke="#1b2a2a" strokeWidth="2" transform={`rotate(${minPct * 360} 56 56)`} />
         <text x="56" y="52" textAnchor="middle" fontSize="16" fontWeight="600" fill="#1b2a2a">{yuan(value)}</text>
-        <text x="56" y="68" textAnchor="middle" fontSize="10" fill="#7f8d8e">min {yuan(min)}</text>
+        <text x="56" y="68" textAnchor="middle" fontSize="10" fill="#7f8d8e">{t("panels.gaugeMin", { min: yuan(min) })}</text>
       </svg>
       <div className="text-sm">
-        <div className="font-medium">{side === "neighbour" ? "Bond" : "Pilot bond"}{low ? ", under the minimum" : ""}</div>
+        <div className="font-medium">{side === "neighbour" ? P.bond : P.pilotBond}{low ? P.under : ""}</div>
         <div className={solvency?.covers ? "text-gold-deep" : "text-muted"}>{sub}</div>
-        <div className="text-muted">{slashes} slash{slashes === 1 ? "" : "es"} on record</div>
-        <div className="text-xs text-muted">A slice of every fee. Slashed only for the pilot&apos;s own cheating.</div>
+        <div className="text-muted">{t(slashes === 1 ? "panels.slashOne" : "panels.slashMany", { n: slashes })}</div>
+        <div className="text-xs text-muted">{P.slice}</div>
       </div>
     </div>
   );
@@ -231,38 +281,44 @@ export function BondGauge({ value, min, slashes, side, solvency }: { value: numb
 
 // The vendor's own money, posted up front. Slashed for the agent's mistakes, never the pilot's.
 export function VendorBond({ m }: { m?: MachineView }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   const v = m?.vendorBond, min = m?.vendorBondMin;
   return (
     <div className="text-sm">
-      <div className="flex items-end justify-between"><span className="font-medium">Vendor bond</span><span className="kpi tabular-nums">{v === undefined ? "n/a" : yuan(v)}</span></div>
+      <div className="flex items-end justify-between"><span className="font-medium">{P.vendorTitle}</span><span className="kpi tabular-nums">{v === undefined ? d.run.na : yuan(v)}</span></div>
       <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-paper-2"><div className="h-full bg-gold" style={{ width: `${min ? Math.min(100, ((v ?? 0) / min) * 100) : v ? 100 : 0}%` }} /></div>
-      <div className="mt-1 text-xs text-muted">Posted by the vendor{min ? `, minimum ${yuan(min)}` : ""}. One fixed penalty per proven agent mistake{m?.vendorPenalty ? ` (${yuan(m.vendorPenalty)})` : ""}{m?.vendorDailyCap ? `, capped at ${yuan(m.vendorDailyCap)} a day` : ""}. The pilot never pays for the AI.</div>
+      <div className="mt-1 text-xs text-muted">{P.vendorPosted}{min ? t("panels.vendorMin", { min: yuan(min) }) : ""}{P.vendorPenalty}{m?.vendorPenalty ? t("panels.vendorPenaltyAmt", { amt: yuan(m.vendorPenalty) }) : ""}{m?.vendorDailyCap ? t("panels.vendorCap", { cap: yuan(m.vendorDailyCap) }) : ""}{P.vendorNever}</div>
     </div>
   );
 }
 
 export function LeaseBar({ m }: { m?: MachineState }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   if (!m) return null;
   const paid = m.leaseTotal - m.leaseBalance;
   const pct = Math.min(100, (paid / m.leaseTotal) * 100);
   return (
     <div>
-      <div className="mb-1 flex justify-between text-sm"><span>Lease paid</span><span className="tabular-nums">{yuan(paid)} of {yuan(m.leaseTotal)}</span></div>
+      <div className="mb-1 flex justify-between text-sm"><span>{P.leasePaid}</span><span className="tabular-nums">{t("panels.leaseOf", { paid: yuan(paid), total: yuan(m.leaseTotal) })}</span></div>
       <div className="h-3 overflow-hidden rounded-full bg-paper-2"><motion.div className={`h-full ${m.owned ? "bg-gold" : "bg-slate"}`} animate={{ width: `${pct}%` }} transition={{ type: "spring", stiffness: 80, damping: 20 }} /></div>
-      <div className="mt-1 text-xs text-muted">{m.owned ? "Title transferred. The drone belongs to the pilot." : "An instalment comes out of every confirmed fee by rule."}</div>
+      <div className="mt-1 text-xs text-muted">{m.owned ? P.leaseOwned : P.leaseRule}</div>
     </div>
   );
 }
 
 export function BalanceSheet({ m, series }: { m?: MachineState; series: number[] }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   const max = Math.max(1, ...series);
   return (
     <div>
       <div className="flex items-end justify-between">
-        <div><div className="text-xs text-muted">Operating balance, yuan</div><div className="kpi tabular-nums">{yuan(m?.balance)}</div></div>
-        <div className="text-right text-xs text-muted">reserve rule {yuan(m?.reserve)}<br />{m?.tasksDone ?? 0} tasks done</div>
+        <div><div className="text-xs text-muted">{P.balanceTitle}</div><div className="kpi tabular-nums">{yuan(m?.balance)}</div></div>
+        <div className="text-right text-xs text-muted">{t("panels.reserve", { r: yuan(m?.reserve) })}<br />{t("panels.tasksDone", { n: m?.tasksDone ?? 0 })}</div>
       </div>
-      <svg viewBox="0 0 120 32" className="mt-2 h-8 w-full" role="img" aria-label="Balance over the run">
+      <svg viewBox="0 0 120 32" className="mt-2 h-8 w-full" role="img" aria-label={P.balanceAria}>
         {series.map((v, i) => <rect key={i} x={(i / Math.max(series.length, 1)) * 120} y={32 - (v / max) * 30} width={Math.max(1, 120 / Math.max(series.length, 1) - 1)} height={(v / max) * 30} rx="1" fill="#b8860b" opacity={0.35 + 0.65 * (i / Math.max(series.length, 1))} />)}
       </svg>
     </div>
@@ -271,18 +327,20 @@ export function BalanceSheet({ m, series }: { m?: MachineState; series: number[]
 
 // The day's work ranked by margin per mu. Declined rows stay visible with the reason.
 export function PlanTable({ plan }: { plan?: PlanItem[] }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   if (!plan?.length) return null;
   return (
     <div className="mb-3">
-      <div className="mb-1 flex items-center justify-between text-xs text-muted"><span>Plan, ranked by margin per mu</span><span>{plan.filter((p) => !p.declined).length} of {plan.length} taken</span></div>
+      <div className="mb-1 flex items-center justify-between text-xs text-muted"><span>{P.planTitle}</span><span>{t("panels.planTaken", { a: plan.filter((p) => !p.declined).length, b: plan.length })}</span></div>
       <table className="passbook w-full text-xs">
-        <thead><tr><th className="text-left">#</th><th className="text-left">Job</th><th className="text-right">Fee, yuan</th><th className="text-right">Margin per mu, yuan</th><th className="text-left">Reason</th></tr></thead>
+        <thead><tr><th className="text-left">#</th><th className="text-left">{P.thJob}</th><th className="text-right">{P.thFee}</th><th className="text-right">{P.thMargin}</th><th className="text-left">{P.thReason}</th></tr></thead>
         <tbody>
           {plan.map((p, i) => {
-            const declined = p.declined ?? (p.clears === false || p.order === null);
+            const declined = p.declined ?? (p.accepted !== undefined ? !p.accepted : p.clears === false || p.order === null);
             return (
               <tr key={p.jobId ?? i} className={declined ? "text-muted" : ""}>
-                <td>{declined ? "-" : (p.order ?? p.rank ?? i + 1)}</td><td className={declined ? "line-through decoration-red/60" : "text-ink"}>{p.title ?? p.jobId}</td><td className="text-right tabular-nums">{p.fee === undefined ? "" : yuan(p.fee)}</td><td className="text-right tabular-nums">{yuan(p.marginPerMu ?? p.margin ?? 0, 2)}</td><td>{declined ? <span className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">declined</span> : null} {p.reason ?? ""}</td>
+                <td>{declined ? "-" : (p.order ?? p.rank ?? i + 1)}</td><td className={declined ? "line-through decoration-red/60" : "text-ink"}>{p.title ?? p.jobId}</td><td className="text-right tabular-nums">{p.fee === undefined ? "" : yuan(p.fee)}</td><td className="text-right tabular-nums">{yuan(p.marginPerMu ?? p.margin ?? 0, 2)}</td><td>{declined ? <span className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">{P.declined}</span> : null} {p.reason ?? ""}</td>
               </tr>
             );
           })}
@@ -293,39 +351,80 @@ export function PlanTable({ plan }: { plan?: PlanItem[] }) {
 }
 
 // Plausibility: area the track supports against the area claimed.
-export function TelemetryCard({ t }: { t?: Telemetry }) {
-  if (!t) return <div className="text-sm text-muted">No flight log checked yet.</div>;
-  const supported = t.areaSupported ?? 0, claimed = t.areaClaimed ?? 0;
-  const ratio = t.ratio ?? (supported > 0 ? claimed / supported : 0);
-  const held = t.held ?? (t.ok === false);
+export function TelemetryCard({ t: tele }: { t?: Telemetry }) {
+  const { d, t } = useLang();
+  const P = d.panels;
+  if (!tele) return <div className="text-sm text-muted">{P.teleNone}</div>;
+  const supported = tele.areaSupported ?? 0, claimed = tele.areaClaimed ?? 0;
+  const ratio = tele.ratio ?? (supported > 0 ? claimed / supported : 0);
+  const held = tele.held ?? (tele.ok === false);
   const pct = Math.min(100, (supported / Math.max(claimed, supported, 1e-9)) * 100);
-  const track = t.trackM ?? t.track;
+  const track = tele.trackM ?? tele.track;
   return (
     <div className="text-sm">
-      <div className="mb-2 flex items-center justify-between"><span className="font-medium">Telemetry check</span><span className={`pill ${held ? "bg-red text-white" : "bg-gold text-ink"}`}>{held ? "held" : "ok"}</span></div>
+      <div className="mb-2 flex items-center justify-between"><span className="font-medium">{P.teleTitle}</span><span className={`pill ${held ? "bg-red text-white" : "bg-gold text-ink"}`}>{held ? P.held : P.ok}</span></div>
       <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="tile !p-2"><div className="text-muted">track</div><div className="tabular-nums">{track ?? "?"} m</div></div>
-        <div className="tile !p-2"><div className="text-muted">swath</div><div className="tabular-nums">{t.swath ?? "?"} m</div></div>
-        <div className="tile !p-2"><div className="text-muted">time</div><div className="tabular-nums">{t.seconds ?? "?"} s</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.track}</div><div className="tabular-nums">{track ?? "?"} m</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.swath}</div><div className="tabular-nums">{tele.swath ?? "?"} m</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.time}</div><div className="tabular-nums">{tele.seconds ?? "?"} s</div></div>
       </div>
-      <div className="mt-2 flex justify-between text-xs"><span>area supported <b className="tabular-nums">{supported}</b> mu</span><span>claimed <b className="tabular-nums">{claimed}</b> mu</span></div>
+      <div className="mt-2 flex justify-between text-xs"><span>{P.supported} <b className="tabular-nums">{supported}</b> {P.mu}</span><span>{P.claimed} <b className="tabular-nums">{claimed}</b> {P.mu}</span></div>
       <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-red/15"><div className={`h-full ${held ? "bg-red" : "bg-gold"}`} style={{ width: `${pct}%` }} /></div>
-      <div className="mt-1 text-xs text-muted">{held ? `claimed ${ratio.toFixed(1)}x what the track supports, fee held` : `ratio ${ratio.toFixed(2)}, within tolerance`}</div>
+      <div className="mt-1 text-xs text-muted">{held ? t("panels.teleHeld", { r: ratio.toFixed(1) }) : t("panels.teleOk", { r: ratio.toFixed(2) })}</div>
+      {typeof tele.z === "number" || tele.reasons?.length ? (
+        <div className="mt-2 border-t border-line pt-2 text-xs">
+          <div className="flex items-center justify-between"><span className="text-muted">{P.zLabel}</span><span className={`tabular-nums font-semibold ${held ? "text-red" : "text-gold-deep"}`}>{typeof tele.z === "number" ? tele.z.toFixed(2) : "?"}</span></div>
+          {tele.reasons?.length ? <ul className="mt-1 flex flex-wrap gap-1">{tele.reasons.map((r) => <li key={r} className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">{r}</li>)}</ul> : <div className="mt-1 text-muted">{P.noReasons}</div>}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// The knapsack result: budget against used mu, charges, the jobs taken and the jobs left, expected margin.
+export function PlanCard({ plan, meta }: { plan?: PlanItem[]; meta?: PlanMeta }) {
+  const { d, t } = useLang();
+  const P = d.panels;
+  if (!plan?.length && !meta) return <div><h2 className="mb-3 text-sm font-semibold">{P.planCard}</h2><div className="text-sm text-muted">{P.planNone}</div></div>;
+  const isDeclined = (p: PlanItem) => p.declined ?? (p.accepted !== undefined ? !p.accepted : p.clears === false || p.order === null);
+  const taken = (plan ?? []).filter((p) => !isDeclined(p)).sort((a, b) => (a.order ?? a.rank ?? 0) - (b.order ?? b.rank ?? 0));
+  const left = (plan ?? []).filter(isDeclined);
+  const budget = meta?.budgetMu, used = meta?.usedMu;
+  const fill = budget ? Math.min(100, ((used ?? 0) / budget) * 100) : 0;
+  const total = meta?.totalMargin ?? taken.reduce((a, p) => a + (p.margin ?? 0), 0);
+  return (
+    <div className="text-sm">
+      <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">{P.planCard}</h2>{meta?.method ? <span className="pill bg-gold text-ink">{meta.method}</span> : null}</div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="tile !p-2"><div className="text-muted">{P.budgetMu}</div><div className="tabular-nums">{budget ?? "?"} {P.mu}</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.usedMu}</div><div className="tabular-nums">{used ?? "?"} {P.mu}</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.charges}</div><div className="tabular-nums">{meta?.charges ?? "?"}</div></div>
+      </div>
+      {budget ? <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-paper-2"><div className="h-full bg-gold" style={{ width: `${fill}%` }} /></div> : null}
+      <div className="mt-2 flex items-center justify-between text-xs"><span className="text-muted">{P.totalMargin}</span><span className="tech text-base font-bold text-gold-deep">{yuan(total, 2)}</span></div>
+      <ul className="mt-2 flex flex-col gap-1 text-xs">
+        {taken.map((p, i) => <li key={p.jobId ?? `a${i}`} className="flex gap-2"><span className="tech w-5 shrink-0 text-gold-deep">{p.order ?? p.rank ?? i + 1}</span><span className="min-w-0 flex-1 truncate text-ink">{p.title ?? p.jobId}</span><span className="shrink-0 tabular-nums text-muted">{p.mu !== undefined ? `${p.mu} ${P.mu}, ` : ""}{yuan(p.margin ?? 0, 2)}</span></li>)}
+        {left.map((p, i) => <li key={p.jobId ?? `d${i}`} className="flex gap-2 text-muted"><span className="w-5 shrink-0 text-red">x</span><span className="min-w-0 flex-1 truncate line-through decoration-red/60">{p.title ?? p.jobId}</span><span className="shrink-0 truncate">{p.reason ?? P.declined}</span></li>)}
+      </ul>
+      <div className="mt-2 text-[11px] text-muted">{t("panels.planTaken", { a: taken.length, b: (plan ?? []).length })}</div>
     </div>
   );
 }
 
 export function JobList({ jobs, hold = 20 }: { jobs: Record<string, Job>; hold?: number }) {
+  const { d, t } = useLang();
+  const P = d.panels;
   const tone: Record<Job["status"], string> = { posted: "bg-paper-2", locked: "bg-paper-2 text-slate", running: "bg-gold-soft text-red-deep", confirmed: "bg-gold-soft text-red-deep", released: "bg-gold text-ink", held: "bg-red/15 text-red", declined: "bg-paper-2 text-muted" };
   const list = Object.values(jobs);
-  if (!list.length) return <div className="text-sm text-muted">No jobs yet.</div>;
+  if (!list.length) return <div className="text-sm text-muted">{P.noJobs}</div>;
+  const names = d.names as Record<string, string>;
   return (
     <ul className="flex flex-col gap-2">
       {list.map((j) => (
         <li key={j.id} className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2 text-sm">
-          <div className="min-w-0"><div className="font-medium">{j.title}</div><div className="text-xs text-muted">{j.requester}, {j.window}{j.split ? `, split pilot ${yuan(j.split.owner)} instalment ${yuan(j.split.instalment)} rail ${yuan(j.split.rail)} bond ${yuan(j.split.bond)}` : ""}</div>
-            {j.status === "released" ? <span className="mt-1 inline-block rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] text-ink-2">hold {yuan(Math.min(hold, j.fee))}, releases in 24h</span> : null}</div>
-          <div className="flex items-center gap-2"><span className="tabular-nums">{yuan(j.fee)}</span><span className={`pill ${tone[j.status]}`}>{j.status}</span></div>
+          <div className="min-w-0"><div className="font-medium">{j.title}</div><div className="text-xs text-muted">{names[j.requester] ?? j.requester}, {j.window}{j.split ? t("panels.split", { o: yuan(j.split.owner), i: yuan(j.split.instalment), r: yuan(j.split.rail), b: yuan(j.split.bond) }) : ""}</div>
+            {j.status === "released" ? <span className="mt-1 inline-block rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] text-ink-2">{t("panels.holdLine", { h: yuan(Math.min(hold, j.fee)) })}</span> : null}</div>
+          <div className="flex items-center gap-2"><span className="tabular-nums">{yuan(j.fee)}</span><span className={`pill ${tone[j.status]}`}>{P.jobStatus[j.status] ?? j.status}</span></div>
         </li>
       ))}
     </ul>
@@ -334,6 +433,7 @@ export function JobList({ jobs, hold = 20 }: { jobs: Record<string, Job>; hold?:
 
 // The scene caption. A pinned moment stays in front; the engine's latest line runs under it.
 export function Narration({ lines, pinned }: { lines: string[]; pinned?: string }) {
+  const { d } = useLang();
   const last = lines[lines.length - 1];
   return (
     <div aria-live="polite">
@@ -342,7 +442,7 @@ export function Narration({ lines, pinned }: { lines: string[]; pinned?: string 
       ) : null}
       <AnimatePresence mode="wait">
         <motion.p key={last ?? "none"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`leading-relaxed text-ink-2 ${pinned ? "mt-1 text-xs" : "text-sm"}`}>
-          {last ?? "Press start. Five moments, narrated as they happen."}
+          {last ?? d.panels.narrationIdle}
         </motion.p>
       </AnimatePresence>
     </div>
@@ -353,11 +453,13 @@ export function Narration({ lines, pinned }: { lines: string[]; pinned?: string 
 export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; what: string; signer?: string }; scenario: Side; onEvents?: (ev: LooseEvent[]) => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { d, t, lang } = useLang();
+  const P = d.panels;
   if (!b) return null;
   async function press() {
     setBusy(true); setErr(null);
     try {
-      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: b!.what, amount: 200, scenario }) });
+      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json", ...demoHeaders() }, body: JSON.stringify({ what: b!.what, amount: 200, scenario, lang }) });
       if (!r.ok) throw new Error(`button returned ${r.status}`);
       const j = (await r.json()) as { events?: LooseEvent[] };
       onEvents?.(j.events ?? []);
@@ -366,12 +468,12 @@ export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; 
   return (
     <div className="flex items-center gap-3">
       {b.waiting ? (
-        <button type="button" onClick={press} disabled={busy} className="pulse relative grid h-14 w-14 shrink-0 place-items-center rounded-full bg-red text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_0_0_4px_#f6d9de] transition active:scale-95 disabled:opacity-60" aria-label="Press the operator button">{busy ? "..." : "Press"}</button>
+        <button type="button" onClick={press} disabled={busy} className="pulse relative grid h-14 w-14 shrink-0 place-items-center rounded-full bg-red text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_0_0_4px_#f6d9de] transition active:scale-95 disabled:opacity-60" aria-label={P.pressAria}>{busy ? "..." : P.press}</button>
       ) : <span className="relative inline-block h-10 w-10 rounded-full bg-gold" aria-hidden />}
       <div className="text-sm">
-        <div className="font-medium">{b.waiting ? "Waiting for the operator's button" : "Button pressed"}</div>
-        <div className="text-muted">{b.what === "top_up" ? "Top up the pilot bond by ¥200" : b.what}</div>
-        <div className="text-xs text-muted">operator only{!b.waiting && b.signer ? <span className="mono ml-1">signer {short(b.signer)}</span> : ""}</div>
+        <div className="font-medium">{b.waiting ? P.waitingButton : P.pressed}</div>
+        <div className="text-muted">{b.what === "top_up" ? P.topUp : b.what}</div>
+        <div className="text-xs text-muted">{P.opOnly}{!b.waiting && b.signer ? <span className="mono ml-1">{t("panels.signer", { s: short(b.signer) })}</span> : ""}</div>
         {err ? <div className="text-xs text-red">{err}</div> : null}
       </div>
     </div>
