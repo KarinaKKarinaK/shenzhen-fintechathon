@@ -2,7 +2,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html, Line, Sparkles, RoundedBox, Float } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, createContext, useContext } from "react";
 import * as THREE from "three";
 import type { ChainTx, Job, MachineState, Side } from "@/engine/types";
 
@@ -139,9 +139,10 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
   })}</>;
 }
 
-let SHOW_LABELS = true;
+const LabelsCtx = createContext(true);
 function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
-  if (!SHOW_LABELS) return null;
+  const show = useContext(LabelsCtx);
+  if (!show) return null;
   return (
     <Html position={[pos[0], y, pos[2]]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
       <div style={{ background: "rgba(255,255,255,0.95)", color: INK, padding: "5px 9px", borderRadius: 2, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-tech)", letterSpacing: "0.04em" }}>
@@ -538,10 +539,9 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
 }
 
 export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, labels = true, slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean; labels?: boolean } & Extra) {
-  SHOW_LABELS = labels;
   return (
     <Canvas shadows camera={{ position: side === "fleet" ? [13, 9, 15] : [9, 6.5, 10], fov: 34 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }} style={{ background: "transparent" }}>
-      <World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} />
+      <LabelsCtx.Provider value={labels}><World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} /></LabelsCtx.Provider>
       <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={0.85} intensity={0.9} mipmapBlur radius={0.6} />
         <Vignette eskil={false} offset={0.2} darkness={0.35} />

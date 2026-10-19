@@ -46,7 +46,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-3 text-center">
           <Mark size={84} />
           <div className="display text-3xl md:text-4xl">JiXin, machine credit</div>
-          <p className="max-w-md text-sm text-white/80">The machine's own money at risk, so a lender can trust it with a loan.</p>
+          <p className="max-w-md text-sm text-white/80">The machine&apos;s own money at risk, so a lender can trust it with a loan.</p>
         </div>
       </section>
 
@@ -80,7 +80,7 @@ export default function Home() {
         <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">{firsts.map((f) => <li key={f} className="cut-sm bg-white/10 px-3 py-2 text-sm backdrop-blur">{f}</li>)}</ul>
         <div className="mt-5 flex gap-2"><Link href="/app" className="btn btn-gold">Open mission control</Link><a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "white" }}>Design and research</a></div>
       </section>
-      <footer className="px-2 py-6 text-xs text-muted">JiXin 机信 rhymes with WeChat and sits next to WeBank's own naming. A homophone of 积信, accumulated trust, which is what the on chain record becomes.</footer>
+      <footer className="px-2 py-6 text-xs text-muted">JiXin 机信 rhymes with WeChat and sits next to WeBank&apos;s own naming. A homophone of 积信, accumulated trust, which is what the on chain record becomes.</footer>
     </div>
   );
 }

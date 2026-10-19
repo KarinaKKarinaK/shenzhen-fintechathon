@@ -63,7 +63,7 @@ export default async function Page() {
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-muted">The engine mirrors each contract's rules in TypeScript. With a funded key, every event is anchored on Base Sepolia as calldata; contract calls follow deployment.</p>
+          <p className="mt-2 text-xs text-muted">The engine mirrors each contract&apos;s rules in TypeScript. With a funded key, every event is anchored on Base Sepolia as calldata; contract calls follow deployment.</p>
         </section>
         <section className="card p-4"><LastRun /></section>
       </div>

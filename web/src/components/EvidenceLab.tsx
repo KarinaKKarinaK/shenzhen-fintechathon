@@ -38,7 +38,7 @@ export function LastRun() {
       setRaw(JSON.stringify(events, null, 1));
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   }
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
   return (
     <div className="text-sm">
