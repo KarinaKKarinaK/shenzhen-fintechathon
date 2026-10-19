@@ -37,9 +37,10 @@ export interface Intent {
 }
 
 export interface PolicyLine {
-  rule: string;
+  rule: string; // English id, stable in code and in the event JSON
   ok: boolean;
-  detail: string;
+  detail: string; // English
+  detailZh?: string; // the same detail in Simplified Chinese
   tier: Tier;
 }
 
@@ -149,7 +150,7 @@ export type EngineEvent =
   | { t: "chain"; tx: ChainTx; at: number }
   | { t: "machine"; state: MachineState; at: number }
   | { t: "job"; job: Job; at: number }
-  | { t: "attack"; name: string; blocked: boolean; where: string; detail: string; at: number; id?: number; standard?: Standard; naive?: "fell" | "held"; isolated?: boolean }
+  | { t: "attack"; name: string; nameZh?: string; blocked: boolean; where: string; detail: string; detailZh?: string; at: number; id?: number; standard?: Standard; naive?: "fell" | "held"; isolated?: boolean }
   | { t: "button"; waiting: boolean; what: string; at: number }
   | { t: "done"; summary: string; at: number };
 

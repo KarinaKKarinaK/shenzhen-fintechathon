@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { ChainTx, EngineEvent, Intent, Job, MachineState, PolicyDecision, Side } from "@/engine/types";
+import { translate, type Lang } from "@/i18n/LangProvider";
 
 // Loose shapes for the events the backend is adding. Every field is optional so the page
 // renders even when an event arrives without it.
@@ -43,18 +44,20 @@ export interface RunState {
   logs: Record<string, LogEv>;
   model?: string;
   benign?: { passed: number; total: number };
+  lang?: Lang; // the language the current events were fetched in
+  fast?: boolean;
 }
 
 const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {} };
 
-type Action = LooseEvent | { t: "reset" } | { t: "start" } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
+type Action = LooseEvent | { t: "reset" } | { t: "start"; lang: Lang; fast: boolean } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
 
 function key(v: unknown, fallback: string) { return typeof v === "string" && v ? v : fallback; }
 
 function reduce(s: RunState, ev: Action): RunState {
   switch (ev.t) {
     case "reset": return { ...initial };
-    case "start": return { ...initial, running: true };
+    case "start": return { ...initial, running: true, lang: (ev as { lang: Lang }).lang, fast: (ev as { fast: boolean }).fast };
     case "stop": return { ...s, running: false };
     case "append": return (ev as { events: LooseEvent[] }).events.reduce(reduce, s);
   }
@@ -128,7 +131,9 @@ function reduce(s: RunState, ev: Action): RunState {
   }
 }
 
-export function useRun(scenario: Side) {
+// Streams one scenario from GET /api/run in the given language. The language is sent with the
+// request, so the narration and the scripted agent messages arrive already translated.
+export function useRun(scenario: Side, lang: Lang = "en") {
   const [state, dispatch] = useReducer(reduce, initial);
   const abort = useRef<AbortController | null>(null);
 
@@ -136,11 +141,11 @@ export function useRun(scenario: Side) {
 
   const start = useCallback(async (fast = false) => {
     stop();
-    dispatch({ t: "start" });
+    dispatch({ t: "start", lang, fast });
     const ac = new AbortController();
     abort.current = ac;
     try {
-      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}`, { signal: ac.signal });
+      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { signal: ac.signal });
       const reader = res.body!.getReader();
       const dec = new TextDecoder();
       let buf = "";
@@ -156,11 +161,11 @@ export function useRun(scenario: Side) {
         }
       }
     } catch (e) {
-      if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: `Connection lost: ${(e as Error).message}`, at: Date.now() });
+      if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: translate(lang, "run.connectionLost", { msg: (e as Error).message }), at: Date.now() });
     } finally {
       dispatch({ t: "stop" });
     }
-  }, [scenario, stop]);
+  }, [scenario, lang, stop]);
 
   // Events returned by POST /api/button land here.
   const append = useCallback((events: LooseEvent[]) => { if (Array.isArray(events) && events.length) dispatch({ t: "append", events }); }, []);

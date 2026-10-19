@@ -43,12 +43,12 @@ export function grounded(text: string, facts: Facts): boolean {
   return true;
 }
 
-export async function explain(role: string, facts: Facts, fallback: string): Promise<{ text: string; source: "model" | "template"; grounded: boolean }> {
+export async function explain(role: string, facts: Facts, fallback: string, lang: "en" | "zh" = "en"): Promise<{ text: string; source: "model" | "template"; grounded: boolean }> {
   if (!hasKey()) return { text: fallback, source: "template", grounded: true };
   try {
     const { text, usage } = await generateText({
       model: MODEL,
-      system: `You are the ${role} agent in a machine wallet system. Write one plain sentence, under 25 words, explaining the decision from these facts. Use only numbers that appear in the facts. No em dashes.`,
+      system: `You are the ${role} agent in a machine wallet system. Write one plain sentence, under 25 words, explaining the decision from these facts. Use only numbers that appear in the facts. No em dashes.${lang === "zh" ? " Write in Simplified Chinese." : ""}`,
       prompt: JSON.stringify(facts),
     });
     const out = text.trim();

@@ -3,13 +3,15 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ComponentProps } from "react";
 import type { Scene as SceneType } from "./Scene";
 import { Poster } from "./Poster";
+import { useLang } from "@/i18n/LangProvider";
 
 function Loading() {
+  const { t } = useLang();
   return (
     <div className="grid h-full place-items-center p-6 text-center">
       <div className="bg-white/90 px-4 py-3 text-sm text-ink-2 backdrop-blur" style={{ borderLeft: "4px solid #c8102e" }}>
-        <div className="font-semibold text-ink">Loading the field view</div>
-        <div className="mt-0.5 text-xs text-muted">A few seconds. The numbers above are already live.</div>
+        <div className="font-semibold text-ink">{t("loading.title")}</div>
+        <div className="mt-0.5 text-xs text-muted">{t("loading.body")}</div>
       </div>
     </div>
   );
@@ -30,9 +32,10 @@ function useNarrow() {
   return narrow;
 }
 
-export default function Scene(props: ComponentProps<typeof SceneType>) {
+export default function Scene(props: Omit<ComponentProps<typeof SceneType>, "lang">) {
   const narrow = useNarrow();
+  const { t, lang } = useLang();
   if (narrow === undefined) return <Loading />;
-  if (narrow) return <Poster alt="An agricultural drone spraying a rice field" label="STILL VIEW ON PHONES" />;
-  return <Live {...props} />;
+  if (narrow) return <Poster alt={t("loading.posterAlt")} label={t("loading.posterLabel")} />;
+  return <Live {...props} lang={lang} />;
 }

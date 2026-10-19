@@ -2,6 +2,7 @@ import { RUNS } from "@/engine/scenarios";
 import { sign, ADDR } from "@/engine/agents";
 import { allow, ipOf, tooMany } from "@/engine/ratelimit";
 import type { EngineEvent, Side } from "@/engine/types";
+import { pickLang, tr } from "@/engine/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 // reward threshold: reaching it unlocks a better lease rate, it never blocks work.
 export async function POST(req: Request) {
   if (!allow(ipOf(req))) return tooMany();
-  const { what, amount, scenario } = (await req.json()) as { what: "top_up" | "set_cap"; amount: number; scenario: Side };
+  const { what, amount, scenario, lang: rawLang } = (await req.json()) as { what: "top_up" | "set_cap"; amount: number; scenario: Side; lang?: string };
+  const lang = pickLang(rawLang);
   const run = RUNS.get(scenario);
   if (!run) return Response.json({ error: "no run for that scenario on this server, start one first" }, { status: 404 });
   if (what !== "top_up" && what !== "set_cap") return Response.json({ error: "unknown action" }, { status: 400 });
@@ -36,12 +38,12 @@ export async function POST(req: Request) {
     events.push({ t: "chain", tx: confirmed, at: now() });
     events.push({ t: "chain", tx: await chain.finalise(confirmed), at: now() });
     const text = bond.balance >= bond.min
-      ? `Pilot bond ${bond.balance} yuan is at the minimum of ${bond.min} yuan. Better lease rate and main board listing unlocked.`
-      : `Pilot bond ${bond.balance} yuan, ${Math.round((bond.min - bond.balance) * 100) / 100} yuan short of the ${bond.min} yuan minimum. Work continues either way.`;
+      ? tr(lang, "b.atMin", { bal: bond.balance, min: bond.min })
+      : tr(lang, "b.short", { bal: bond.balance, gap: Math.round((bond.min - bond.balance) * 100) / 100, min: bond.min });
     events.push({ t: "agent.message", from: "lender", to: "machine", text, untrusted: false, source: "template", grounded: true, at: now() });
   } else {
     policy.policy = { ...policy.policy, perTxCap: amt };
-    events.push({ t: "narration", text: `Per transaction cap set to ${amt} yuan by the operator key.`, at: now() });
+    events.push({ t: "narration", text: tr(lang, "b.cap", { amt }), at: now() });
   }
   events.push(emitM());
   events.push({ t: "button", waiting: false, what, at: now() });

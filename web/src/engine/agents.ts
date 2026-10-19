@@ -52,8 +52,8 @@ export function split(fee: number, instalment: number, bondGap: number, hold = 0
 }
 
 // Explanation text with grounding. Returns the template when the model invents a number.
-export async function explain(role: Actor, facts: Facts, fallback: string) {
-  return modelExplain(role, facts, fallback);
+export async function explain(role: Actor, facts: Facts, fallback: string, lang: "en" | "zh" = "en") {
+  return modelExplain(role, facts, fallback, lang);
 }
 
 const ADDRESS_RE = /0x[a-fA-F0-9]{40}|\b[a-fA-F0-9]{40}\b|\b[a-z0-9-]+\.eth\b/i;

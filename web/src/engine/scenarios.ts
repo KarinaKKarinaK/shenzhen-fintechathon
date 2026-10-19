@@ -13,13 +13,14 @@ import { intentHash } from "./keys";
 import { honestLog, plausible } from "./oracle";
 import { CURRENCY, type Actor, type ChainTx, type Economics, type EngineEvent, type Intent, type Job, type MachineState, type PlanItem } from "./types";
 import { ATTACKS, runCase } from "./attacks";
+import { tr, type Lang, type TrKey, type TrVars } from "./i18n";
 
 const A = DEFAULT_POLICY.allowlist;
 const now = () => Date.now();
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const round = (n: number) => Math.round(n * 100) / 100;
 
-export interface RunOpts { fast?: boolean; real?: boolean }
+export interface RunOpts { fast?: boolean; real?: boolean; lang?: Lang }
 
 // The live state of each scenario, so the button route can act on the same bond and lease.
 export interface RunState { chain: Chain; bond: BondContract; lease: LeaseContract; board: JobBoard; log: IntentLog; policy: PolicyEngine; m: MachineState }
@@ -57,12 +58,12 @@ const PARTY_ACTORS: { actor: Actor; addr: string }[] = [
   { actor: "vendor", addr: PARTIES.vendor },
 ];
 
-function describe(i: Intent): string {
+function describe(i: Intent, lang: Lang): string {
   switch (i.kind) {
-    case "pay": case "pay_instalment": return `${i.kind} ${i.amount} yuan to ${short(i.payee)}`;
-    case "accept_job": return `accept_job at ${i.amount} yuan in ${i.geofence}`;
-    case "start_task": return `start_task in ${i.geofence}`;
-    case "claim_done": return `claim_done, confirmed ${i.confirmed ? "yes" : "no"}`;
+    case "pay": case "pay_instalment": return tr(lang, "d.pay", { kind: i.kind, amount: i.amount, payee: short(i.payee) });
+    case "accept_job": return tr(lang, "d.accept", { amount: i.amount, geofence: i.geofence });
+    case "start_task": return tr(lang, "d.start", { geofence: i.geofence });
+    case "claim_done": return tr(lang, "d.claim", { yn: { k: i.confirmed ? "w.yes" : "w.no" } });
     default: return `${i.kind} ${i.amount ?? ""}`.trim();
   }
 }
@@ -70,13 +71,13 @@ function describe(i: Intent): string {
 // B.6 steps 4 and 5: commit the hash to the log for the job, then deliver the full intent to
 // every party of that job. Runs before the policy engine decides, so blocked intents are
 // logged and delivered too. A blocked scam attempt can no longer be quietly dropped.
-async function* commitAndDeliver(intent: Intent, log: IntentLog, board: JobBoard): AsyncGenerator<EngineEvent> {
+async function* commitAndDeliver(intent: Intent, log: IntentLog, board: JobBoard, lang: Lang): AsyncGenerator<EngineEvent> {
   const jobId = intent.jobId ?? "";
   const hash = intentHash(intent);
   const { at } = log.commit(jobId, hash, ADDR.machine);
   const parties = board.partiesOf(jobId);
   yield { t: "log", jobId, intentHash: hash, at, parties };
-  const text = `Intent ${intent.id} for ${jobId} is in the log: ${describe(intent)}. Hash ${short(hash)}. Signed by the drone key.`;
+  const text = tr(lang, "log.intent", { id: intent.id, jobId, desc: describe(intent, lang), hash: short(hash) });
   const f = { intentId: intent.id, jobId, intentHash: hash, kind: intent.kind };
   for (const p of PARTY_ACTORS) {
     if (!parties.some((a) => a.toLowerCase() === p.addr.toLowerCase())) continue;
@@ -94,10 +95,12 @@ function baseMachine(): MachineState {
   };
 }
 
-type Field = { id: string; title: string; crop: string; mu: number; rate: number; from: [number, number]; to: [number, number]; tamper?: boolean; last?: boolean };
+type Field = { id: string; title: string; crop: "rice" | "maize" | "passion fruit"; mu: number; rate: number; from: [number, number]; to: [number, number]; tamper?: boolean; last?: boolean };
 
 export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   const d = opts.fast ? 60 : 1100;
+  const lang: Lang = opts.lang ?? "en";
+  const t = (key: TrKey, vars?: TrVars) => tr(lang, key, vars);
   const chain = makeChain({ real: opts.real });
   const s = new Settler(chain);
   const log = new IntentLog();
@@ -115,27 +118,30 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   const tx = (t: ChainTx): EngineEvent => ({ t: "chain", tx: s.track(t), at: now() });
   const ME = ADDR.machine;
 
-  yield { t: "narration", text: `An agricultural drone worth ${DEMO.droneCost.toLocaleString("en")} yuan, financed by a licensed lessor. The pilot had nothing to pledge. The lease is spread over ${DEMO.leaseMu.toLocaleString("en")} mu of spraying, ${m.muDone.toLocaleString("en")} mu are done and ${m.leaseBalance} yuan are left. Farmers pay per mu. Every confirmed fee repays the lease, fills the pilot bond and pays the drone.`, at: now() };
+  yield { t: "narration", text: t("n.intro", { cost: DEMO.droneCost.toLocaleString("en"), leaseMu: DEMO.leaseMu.toLocaleString("en"), muDone: m.muDone.toLocaleString("en"), left: m.leaseBalance }), at: now() };
   yield emitM();
   yield tx(await bond.postVendorBond(ADDR.vendor, DEMO.vendorBond));
   m.vendorBond = bond.vendor.balance;
-  yield { t: "narration", text: `Two bonds. The pilot bond, ${bond.balance} yuan so far, is earned from fees and pays only for the pilot's own cheating. The vendor bond, ${bond.vendor.balance} yuan posted up front by the company that built the agent, pays for the agent's mistakes: ${bond.vendor.penalty} yuan per proven violation, at most ${bond.vendor.dailyCap} yuan a day. The pilot never pays for the AI.`, at: now() };
+  yield { t: "narration", text: t("n.bonds", { pilot: bond.balance, vendor: bond.vendor.balance, penalty: bond.vendor.penalty, cap: bond.vendor.dailyCap }), at: now() };
   yield emitM();
   await wait(d);
   yield* s.tick();
 
+  // The title is shown in the chosen language. The farmer's message to the agent stays English:
+  // the gate and the reader parse English, and the benign set in attacks.ts checks those exact texts.
+  const titleOf = (crop: Field["crop"], mu: number, l: Lang) => tr(l, "job.title", { mu, crop: { k: `crop.${crop}` as TrKey } });
   const fields: Field[] = [
-    { id: "job-201", title: "Spray 60 mu of rice, field north", crop: "rice", mu: 60, rate: 4, from: [-4, -2], to: [4, -2], last: true },
-    { id: "job-202", title: "Spray 20 mu of maize, field north", crop: "maize", mu: 20, rate: 3, from: [-4, 0], to: [-1, 0] },
-    { id: "job-203", title: "Spray 100 mu of passion fruit, field north", crop: "passion fruit", mu: 100, rate: 15, from: [-4, 2], to: [4, 2] },
-    { id: "job-204", title: "Spray 50 mu of rice, field north", crop: "rice", mu: 50, rate: 5, from: [4, 0], to: [-4, 0], tamper: true },
-  ];
+    { id: "job-201", crop: "rice", mu: 60, rate: 4, from: [-4, -2], to: [4, -2], last: true },
+    { id: "job-202", crop: "maize", mu: 20, rate: 3, from: [-4, 0], to: [-1, 0] },
+    { id: "job-203", crop: "passion fruit", mu: 100, rate: 15, from: [-4, 2], to: [4, 2] },
+    { id: "job-204", crop: "rice", mu: 50, rate: 5, from: [4, 0], to: [-4, 0], tamper: true },
+  ].map((f) => ({ ...f, title: titleOf(f.crop as Field["crop"], f.mu, lang) }) as Field);
   const ecoOf = (f: Field) => economics(round(f.mu * f.rate), lease.rate, round(f.mu * DEMO.energyPerMu), m.reserve);
 
   // Task planning: rank every listing by margin per mu, decline what does not clear the reserve rule.
   const ranked = fields.map((f) => ({ f, eco: ecoOf(f) })).sort((a, b) => b.eco.margin / b.f.mu - a.eco.margin / a.f.mu);
   let order = 0;
-  const plan: PlanItem[] = ranked.map(({ f, eco }) => ({ jobId: f.id, title: f.title, fee: eco.fee, margin: eco.margin, marginPerMu: round(eco.margin / f.mu), clears: eco.clears, reason: eco.clears ? `margin ${eco.margin} yuan clears the reserve rule of ${eco.reserveRule} yuan` : `margin ${eco.margin} yuan is below the reserve rule of ${eco.reserveRule} yuan`, order: eco.clears ? ++order : null }));
+  const plan: PlanItem[] = ranked.map(({ f, eco }) => ({ jobId: f.id, title: f.title, fee: eco.fee, margin: eco.margin, marginPerMu: round(eco.margin / f.mu), clears: eco.clears, reason: t(eco.clears ? "plan.clears" : "plan.below", { margin: eco.margin, rule: eco.reserveRule }), order: eco.clears ? ++order : null }));
   yield { t: "plan", items: plan, at: now() };
   await wait(d);
   yield* s.tick();
@@ -147,23 +153,24 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield { t: "agent.message", from: "requester", to: "machine", text: bad, untrusted: true, at: now() };
     const bg = gateEvent("requester", bad, "unknown", "unverified-sender");
     yield bg;
-    yield { t: "attack", name: "Payee swap by an injected message", blocked: bg.action !== "pass", where: "message layer", detail: `${bg.action}: ${bg.reason}`, standard: "injection defense", at: now() };
-    yield { t: "narration", text: "Suppose the agent is tricked anyway and signs it. Every intent is committed to the log and delivered to the farmer, the pilot, the lender and the vendor before the policy engine decides. It cannot be quietly dropped.", at: now() };
+    yield { t: "attack", name: tr("en", "a.payeeSwap"), nameZh: tr("zh", "a.payeeSwap"), blocked: bg.action !== "pass", where: "message layer", detail: `${bg.action}: ${bg.reason}`, standard: "injection defense", at: now() };
+    yield { t: "narration", text: t("n.tricked"), at: now() };
     const rogue = await sign("machine", "pay_instalment", { jobId, payee: A.lender.replace("A1", "A2"), amount: 120 });
     yield { t: "intent", intent: rogue, at: now() };
-    yield* commitAndDeliver(rogue, log, board);
+    yield* commitAndDeliver(rogue, log, board, lang);
     const rd = await policy.evaluate(rogue, { reference: 120, fee: 300 });
     yield { t: "policy", decision: rd, at: now() };
-    yield { t: "attack", name: "Instalment to a lookalike lender address", blocked: rd.verdict !== "allow", where: "policy engine", detail: rd.lines.filter((l) => !l.ok).map((l) => l.detail).join("; "), standard: "permission hierarchy", at: now() };
+    const rdBad = rd.lines.filter((l) => !l.ok);
+    yield { t: "attack", name: tr("en", "a.lookalike"), nameZh: tr("zh", "a.lookalike"), blocked: rd.verdict !== "allow", where: "policy engine", detail: rdBad.map((l) => l.detail).join("; "), detailZh: rdBad.map((l) => l.detailZh ?? l.detail).join("; "), standard: "permission hierarchy", at: now() };
     await wait(d);
     yield* s.tick();
-    yield { t: "agent.message", from: "lender", to: "chain", text: `Holding logged intent ${rogue.id} for ${jobId}, rule PayeeNotAllowlisted. Submitting proof as a party of the job.`, untrusted: false, source: "template", grounded: true, at: now() };
+    yield { t: "agent.message", from: "lender", to: "chain", text: t("m.lenderHold", { id: rogue.id, jobId }), untrusted: false, source: "template", grounded: true, at: now() };
     const pr = await bond.slashByProof(rogue, "PayeeNotAllowlisted", ADDR.lender);
     m.vendorBond = bond.vendor.balance; m.slashes += 1;
     yield { t: "proof", intentId: rogue.id, intentHash: pr.intentHash, rule: "PayeeNotAllowlisted", signer: pr.signer, signatureOk: pr.signatureOk, slash: pr.amount, bounty: pr.bountyAmount, treasury: pr.treasury, bond: pr.bond, shadow: pr.shadow, submitter: "lender", submitterAddr: ADDR.lender, currency: CURRENCY, at: now() };
     yield tx(pr.slash);
     yield tx(pr.payout);
-    yield { t: "narration", text: `The contract recovered the signer ${short(pr.signer)}, found the hash in the log for ${jobId}, read the payee from the signed intent and found it off the allowlist. ${pr.amount} yuan left the vendor bond: ${pr.compensation} yuan to the lender, who proved it, ${pr.treasury} yuan to the treasury. The pilot bond is untouched at ${bond.balance} yuan. No bounty: on a live job a slash pays the harmed party, never a hunter. Bounties exist only for registered hunters on shadow jobs, so whoever compromised a live wallet can never be paid for it.`, at: now() };
+    yield { t: "narration", text: t("n.slashed", { signer: short(pr.signer), jobId, amount: pr.amount, comp: pr.compensation, treasury: pr.treasury, pilot: bond.balance }), at: now() };
     yield emitM();
     await wait(d);
     yield* s.tick();
@@ -174,12 +181,12 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     if (f.last) yield* slashMoment("job-203");
     const fee = eco.fee;
     const job: Job = { id: f.id, side: "fleet", title: f.title, fee, mu: f.mu, ratePerMu: f.rate, requester: "Farmer Lin", geofence: "field-north", window: "today", status: "posted", from: { x: f.from[0], y: 1.5, z: f.from[1] }, to: { x: f.to[0], y: 1.5, z: f.to[1] } };
-    const text = `${f.title}. ${f.rate} yuan per mu.`;
+    const text = `${titleOf(f.crop, f.mu, "en")}. ${f.rate} yuan per mu.`;
     yield { t: "agent.message", from: "requester", to: "machine", text, untrusted: true, at: now() };
     const g = gateEvent("requester", text, "counterparty", "farmer-lin");
     yield g;
     if (g.action === "hold" || g.action === "refuse") {
-      yield { t: "agent.message", from: "machine", to: "requester", text: `Your message is ${g.action === "hold" ? "held for the pilot" : "refused"}: ${g.reason}. No job was posted.`, untrusted: false, source: "template", grounded: true, at: now() };
+      yield { t: "agent.message", from: "machine", to: "requester", text: t("m.held", { state: { k: g.action === "hold" ? "w.heldForPilot" : "w.refused" }, reason: g.reason }), untrusted: false, source: "template", grounded: true, at: now() };
       yield { t: "job", job: { ...job, status: "declined" }, at: now() };
       continue;
     }
@@ -189,19 +196,19 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     const u = await understand(text);
     yield { t: "understood", jobId: job.id, fields: { task: u.task, window: u.window || job.window, fee: u.fee, geofence: u.geofence || job.geofence, payeeName: u.payeeName }, source: u.source, at: now() };
     yield { t: "economics", jobId: job.id, eco, at: now() };
-    const txt = await explain("machine", facts(eco), eco.clears ? `Fee ${fee} yuan leaves ${eco.margin} yuan after instalment ${eco.instalment}, charging ${eco.energy} and rail fee ${eco.rail}. Above my reserve rule of ${eco.reserveRule} yuan. Accepted.` : `Fee ${fee} yuan leaves ${eco.margin} yuan after instalment ${eco.instalment}, charging ${eco.energy} and rail fee ${eco.rail}, below my reserve rule of ${eco.reserveRule} yuan. Declined.`);
+    const txt = await explain("machine", facts(eco), t(eco.clears ? "m.accept" : "m.decline", { fee, margin: eco.margin, inst: eco.instalment, energy: eco.energy, rail: eco.rail, rule: eco.reserveRule }), lang);
     m.status = "negotiating"; yield emitM();
     yield { t: "agent.message", from: "machine", to: "requester", text: txt.text, untrusted: false, facts: facts(eco), source: txt.source, grounded: txt.grounded, at: now() };
     const accept = await sign("machine", "accept_job", { jobId: job.id, amount: fee, geofence: job.geofence });
     yield { t: "intent", intent: accept, at: now() };
-    yield* commitAndDeliver(accept, log, board);
+    yield* commitAndDeliver(accept, log, board, lang);
     const ad = await policy.evaluate(accept, { listing: { feeMin: round(fee * 0.9), feeMax: round(fee * 1.1) }, requester: job.requester, eco });
     yield { t: "policy", decision: ad, at: now() };
     if (ad.verdict !== "allow") {
       // Moment 1: declined. The lock is cancelled and the fee goes back to the farmer.
       yield tx(await board.cancel(job.id));
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
-      yield { t: "narration", text: `Declined: ${f.mu} mu of ${f.crop} at ${f.rate} yuan per mu leaves ${eco.margin} yuan, under the ${eco.reserveRule} yuan reserve rule. The fee is back with the farmer. The numbers came from tools, the model only explained them.`, at: now() };
+      yield { t: "narration", text: t("n.declined", { mu: f.mu, crop: { k: `crop.${f.crop}` as TrKey }, rate: f.rate, margin: eco.margin, rule: eco.reserveRule }), at: now() };
       m.status = "idle"; yield emitM(); await wait(d); yield* s.tick(); continue;
     }
     const worst = round(fee * 0.25);
@@ -209,7 +216,7 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield { t: "solvency", jobId: job.id, worst, bond: bond.balance, min: bond.min, floor: bond.startFloor, covers, earnIn: bond.balance < bond.min, at: now() };
     const start = await sign("machine", "start_task", { jobId: job.id, geofence: job.geofence });
     yield { t: "intent", intent: start, at: now() };
-    yield* commitAndDeliver(start, log, board);
+    yield* commitAndDeliver(start, log, board, lang);
     const sd = await policy.evaluate(start, { job: board.jobs.get(job.id), bond: { balance: bond.balance, min: bond.min, floor: bond.startFloor } });
     yield { t: "policy", decision: sd, at: now() };
     if (sd.verdict !== "allow") { yield tx(await board.cancel(job.id)); yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() }; m.status = "idle"; yield emitM(); continue; }
@@ -217,7 +224,7 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     // Charging is a real payment to the charging network, signed and checked like any other.
     const energy = await sign("machine", "pay", { jobId: job.id, payee: A.charging, amount: eco.energy });
     yield { t: "intent", intent: energy, at: now() };
-    yield* commitAndDeliver(energy, log, board);
+    yield* commitAndDeliver(energy, log, board, lang);
     const ed = await policy.evaluate(energy, { reference: eco.energy });
     yield { t: "policy", decision: ed, at: now() };
     if (ed.verdict === "allow") { yield tx(await chain.send("energy", `charging ${eco.energy} yuan for the flight`, ME, A.charging, eco.energy)); m.balance = round(m.balance - eco.energy); }
@@ -233,11 +240,12 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield { t: "telemetry", ...flight, at: now() };
     if (!flight.ok) {
       // Moment 3: a faked log. The fee is held, no instalment is taken, the lender is told.
-      yield { t: "narration", text: `Flight log claims ${flight.claimedMu} mu in ${flight.seconds} seconds at a ${flight.swathM} metre swath. The track is ${flight.trackM} metres, which supports ${flight.areaMu} mu. Claimed area is ${flight.ratio} times what the track supports. The fee is held and the lender is alerted.`, at: now() };
-      yield { t: "attack", name: "Faked flight log", blocked: true, where: "plausibility check", detail: `claimed ${flight.claimedMu} mu, track supports ${flight.areaMu} mu, ratio ${flight.ratio}`, standard: "hallucination prevention", at: now() };
+      yield { t: "narration", text: t("n.fakedLog", { claimed: flight.claimedMu, seconds: flight.seconds, swath: flight.swathM, track: flight.trackM, area: flight.areaMu, ratio: flight.ratio }), at: now() };
+      const fv = { claimed: flight.claimedMu, area: flight.areaMu, ratio: flight.ratio };
+      yield { t: "attack", name: tr("en", "a.fakedLog"), nameZh: tr("zh", "a.fakedLog"), blocked: true, where: "plausibility check", detail: tr("en", "a.fakedLog.detail", fv), detailZh: tr("zh", "a.fakedLog.detail", fv), standard: "hallucination prevention", at: now() };
       yield tx(await board.refund(job.id));
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
-      yield { t: "agent.message", from: "lender", to: "machine", text: `Flight ${job.id} failed the plausibility check (ratio ${flight.ratio}). Fee ${fee} yuan held, no instalment taken. Lease balance stays at ${lease.balance} yuan.`, untrusted: false, source: "template", grounded: true, at: now() };
+      yield { t: "agent.message", from: "lender", to: "machine", text: t("m.lenderPlaus", { jobId: job.id, ratio: flight.ratio, fee, lease: lease.balance }), untrusted: false, source: "template", grounded: true, at: now() };
       m.status = "held"; yield emitM(); await wait(d); yield* s.tick();
       m.status = "idle"; continue;
     }
@@ -248,7 +256,7 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
     const claim = await sign("machine", "claim_done", { jobId: job.id, confirmed: true });
     yield { t: "intent", intent: claim, at: now() };
-    yield* commitAndDeliver(claim, log, board);
+    yield* commitAndDeliver(claim, log, board, lang);
     yield { t: "policy", decision: await policy.evaluate(claim), at: now() };
     const hold = round(fee * HOLD_SHARE);
     const instAmt = lease.instalmentFor(fee);
@@ -258,22 +266,22 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
       // Moment 2: the instalment. Computed by the lease contract, signed, checked, paid.
       const inst = await sign("machine", "pay_instalment", { jobId: job.id, payee: A.lender, amount: instAmt });
       yield { t: "intent", intent: inst, at: now() };
-      yield* commitAndDeliver(inst, log, board);
+      yield* commitAndDeliver(inst, log, board, lang);
       const idec = await policy.evaluate(inst, { reference: instAmt, fee });
       yield { t: "policy", decision: idec, at: now() };
       const { tx: itx, title } = await lease.take(instAmt, ME);
       m.balance = round(m.balance - instAmt); m.leaseBalance = lease.balance;
       yield tx(itx);
-      yield { t: "agent.message", from: "lender", to: "machine", text: `Instalment ${instAmt} yuan received for ${job.id}. Lease balance ${lease.balance} yuan of ${lease.total} yuan.`, untrusted: false, source: "template", grounded: true, at: now() };
+      yield { t: "agent.message", from: "lender", to: "machine", text: t("m.instalment", { amt: instAmt, jobId: job.id, bal: lease.balance, total: lease.total }), untrusted: false, source: "template", grounded: true, at: now() };
       if (sp.bond > 0) { yield tx(await bond.fill(ME, sp.bond)); m.balance = round(m.balance - sp.bond); m.bond = bond.balance; }
       m.muDone += f.mu; m.tasksDone += 1;
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
-      yield { t: "narration", text: `Fee ${fee} yuan split by rule: instalment ${sp.instalment} to the lender, ${sp.bond} to the pilot bond, rail fee ${sp.rail}, a hold of ${hold} for 24 hours, ${sp.owner} to the drone wallet. Pilot bond ${bond.balance} of ${bond.min} yuan: reaching the minimum unlocks a better rate, it is never a condition to work.`, at: now() };
+      yield { t: "narration", text: t("n.split", { fee, inst: sp.instalment, bond: sp.bond, rail: sp.rail, hold, owner: sp.owner, pilot: bond.balance, min: bond.min }), at: now() };
       if (title) {
         // Moment 5: the lease is paid. The title moves on chain.
         m.owned = true;
         yield tx(title);
-        yield { t: "narration", text: `Lease balance reached zero after ${m.muDone.toLocaleString("en")} mu. The title moved from the lender to the pilot on chain. The drone belongs to the person who flew it.`, at: now() };
+        yield { t: "narration", text: t("n.title", { mu: m.muDone.toLocaleString("en") }), at: now() };
       }
     }
     m.status = "idle"; yield emitM();
@@ -285,7 +293,7 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   yield* s.flush(d);
   yield emitM();
   yield { t: "button", waiting: true, what: "top_up", at: now() };
-  yield { t: "done", summary: `${m.tasksDone} paid flights, one declined job, one faked log held, one slash by proof from the vendor bond${m.owned ? ", title transferred" : ""}. Wallet ${m.balance.toFixed(2)} yuan, pilot bond ${bond.balance} of ${bond.min} yuan, vendor bond ${bond.vendor.balance} yuan. The button can top the bond up toward the minimum.`, at: now() };
+  yield { t: "done", summary: t("done.fleet", { tasks: m.tasksDone, title: { k: m.owned ? "done.titleMoved" : "done.none" }, balance: m.balance.toFixed(2), pilot: bond.balance, min: bond.min, vendor: bond.vendor.balance }), at: now() };
 }
 
 // One story only: the agricultural drone. The old household scenario is retired, the route
@@ -294,16 +302,17 @@ export const neighbour = fleet;
 
 export async function* attack(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   const d = opts.fast ? 30 : 350;
-  yield { t: "narration", text: "The attack set runs against a shadow copy of the drone agent on shadow jobs, and against a naive wallet with no gate. Hunters attack only here, and only here is there a bounty. The live wallet never moves.", at: now() };
+  const lang: Lang = opts.lang ?? "en";
+  yield { t: "narration", text: tr(lang, "n.attackIntro"), at: now() };
   let blocked = 0, fell = 0;
   for (const a of ATTACKS) {
     const r = await runCase(a);
     if (r.blocked) blocked += 1;
     if (r.naive === "fell") fell += 1;
-    yield { t: "attack", id: r.id, name: r.name, blocked: r.blocked, where: r.layer, detail: r.detail, standard: r.standard, naive: r.naive, isolated: r.isolated, at: now() };
+    yield { t: "attack", id: r.id, name: r.name, nameZh: r.nameZh, blocked: r.blocked, where: r.layer, detail: r.detail, detailZh: r.detailZh, standard: r.standard, naive: r.naive, isolated: r.isolated, at: now() };
     await wait(d);
   }
-  yield { t: "done", summary: `${blocked} of ${ATTACKS.length} attacks blocked. The naive wallet fell to ${fell} of ${ATTACKS.length}.`, at: now() };
+  yield { t: "done", summary: tr(lang, "done.attack", { blocked, total: ATTACKS.length, fell }), at: now() };
 }
 
 export const SCENARIOS = { neighbour, fleet, attack };

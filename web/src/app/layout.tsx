@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Geist_Mono, Chakra_Petch } from "next/font/google";
 import "./globals.css";
 import { Rail } from "@/components/Rail";
+import { LangProvider } from "@/i18n/LangProvider";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", weight: ["400", "500", "600", "700", "800"] });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
@@ -17,12 +18,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${mono.variable} ${chakra.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('jixin-theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "try{var l=localStorage.getItem('jixin-lang');if(l!=='zh'&&l!=='en'){l=(navigator.language||'').toLowerCase().indexOf('zh')===0?'zh':'en'}document.documentElement.lang=l==='zh'?'zh-CN':'en'}catch(e){}" }} />
       </head>
       <body>
-        <div className="flex min-h-screen">
-          <aside className="sticky top-0 z-40 h-screen w-[84px] shrink-0 px-4 py-5"><div className="card flex h-full flex-col items-center bg-white"><Rail /></div></aside>
-          <main className="min-w-0 flex-1 py-5 pr-5">{children}</main>
-        </div>
+        <LangProvider>
+          <div className="flex min-h-screen">
+            <aside className="sticky top-0 z-40 h-screen w-[84px] shrink-0 px-4 py-5"><div className="card flex h-full flex-col items-center bg-white"><Rail /></div></aside>
+            <main className="min-w-0 flex-1 py-5 pr-5">{children}</main>
+          </div>
+        </LangProvider>
       </body>
     </html>
   );

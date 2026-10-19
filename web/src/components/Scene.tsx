@@ -5,6 +5,11 @@ import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { useMemo, useRef, useState, useEffect, createContext, useContext } from "react";
 import * as THREE from "three";
 import type { ChainTx, Job, MachineState, Side } from "@/engine/types";
+import { translate, type Lang, type TKey, type Vars } from "@/i18n/LangProvider";
+
+// The Canvas has its own React root, so the language comes in as a prop and is re-provided inside it.
+const SceneLangCtx = createContext<Lang>("en");
+function useSceneT() { const lang = useContext(SceneLangCtx); return (key: TKey, vars?: Vars) => translate(lang, key, vars); }
 
 // Every object here maps to engine state: the machine moves on machine events, money dots fly
 // on chain events, the fence turns coral on a geofence slash, the vault on any slash, labels show live numbers.
@@ -154,13 +159,14 @@ function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [numbe
 
 // The lender: a small bank hall with columns, a red roof and a gold plaque. Instalments fly here.
 function Bank({ pos, paid, total, windows, owned = false, frozen = false }: { pos: [number, number, number]; paid: number; total: number; windows: THREE.Texture; owned?: boolean; frozen?: boolean }) {
+  const t = useSceneT();
   const pct = total > 0 ? Math.min(1, paid / total) : 0;
   return (
     <group position={pos}>
       <Html position={[0, 0.95, 1.55]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <div key={owned ? "op" : "ld"} className={owned ? "seal stamp" : ""} style={{ background: owned ? undefined : "rgba(255,255,255,0.95)", color: owned ? "white" : INK, padding: "4px 8px", fontSize: 10, fontFamily: "var(--font-tech)", letterSpacing: "0.12em", whiteSpace: "nowrap", borderLeft: owned ? undefined : `3px solid ${TURQ}` }}>TITLE: {owned ? "OPERATOR" : "LENDER"}</div>
+        <div key={owned ? "op" : "ld"} className={owned ? "seal stamp" : ""} style={{ background: owned ? undefined : "rgba(255,255,255,0.95)", color: owned ? "white" : INK, padding: "4px 8px", fontSize: 10, fontFamily: "var(--font-tech)", letterSpacing: "0.12em", whiteSpace: "nowrap", borderLeft: owned ? undefined : `3px solid ${TURQ}` }}>{t("scene.titleLabel", { who: owned ? t("scene.operator") : t("scene.lenderCaps") })}</div>
       </Html>
-      {frozen ? <Html position={[0, 4.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}><div className="stamp" style={{ background: CORAL, color: "white", padding: "4px 10px", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>FROZEN, NO NEW JOBS</div></Html> : null}
+      {frozen ? <Html position={[0, 4.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}><div className="stamp" style={{ background: CORAL, color: "white", padding: "4px 10px", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>{t("scene.frozen")}</div></Html> : null}
       <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[3.4, 0.3, 2.6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
       <mesh position={[0, 1.2, -0.3]} castShadow receiveShadow><boxGeometry args={[2.8, 1.8, 1.8]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
       {[-1.1, -0.37, 0.37, 1.1].map((x) => <mesh key={x} position={[x, 1.2, 0.85]} castShadow><cylinderGeometry args={[0.1, 0.12, 1.8, 10]} /><meshStandardMaterial color="#f4efe3" roughness={0.6} /></mesh>)}
@@ -169,7 +175,7 @@ function Bank({ pos, paid, total, windows, owned = false, frozen = false }: { po
       <mesh position={[0, 1.6, 0.95]}><boxGeometry args={[1.2, 0.3, 0.05]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={0.8} metalness={0.6} roughness={0.3} /></mesh>
       <mesh position={[-1.5 + pct * 3, 0.36, 1.2]}><boxGeometry args={[0.08, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
       <mesh position={[0, 0.33, 1.2]}><boxGeometry args={[3, 0.04, 0.12]} /><meshStandardMaterial color="#bdb5a3" /></mesh>
-      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#8e0e22" y={3.9} />
+      <Label pos={pos} title={t("scene.lender")} value={t("scene.lenderVal", { paid: paid.toFixed(1), total })} accent="#8e0e22" y={3.9} />
     </group>
   );
 }
@@ -185,6 +191,7 @@ function Vault({ pos, bond, min, slashed, worst }: { pos: [number, number, numbe
     liquid.current.position.y = 0.25 + liquid.current.scale.y / 2;
   });
   const low = bond < min;
+  const t = useSceneT();
   return (
     <group position={pos}>
       <mesh position={[0, 0.12, 0]} receiveShadow><cylinderGeometry args={[1.3, 1.4, 0.24, 24]} /><meshStandardMaterial color="#2a2a2a" metalness={0.6} roughness={0.4} /></mesh>
@@ -193,13 +200,15 @@ function Vault({ pos, bond, min, slashed, worst }: { pos: [number, number, numbe
       <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#c8102e" : "#d4a017"} emissive={low ? "#c8102e" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
       <mesh position={[0, 0.25 + (Math.min(min, cap) / cap) * 1.6, 0]}><boxGeometry args={[1.55, 0.02, 1.55]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1.5} /></mesh>
       <mesh position={[0, 2.05, 0]}><torusGeometry args={[0.45, 0.05, 10, 40]} /><meshStandardMaterial color={TURQ} metalness={0.8} roughness={0.2} emissive={slashed ? CORAL : TURQ} emissiveIntensity={slashed ? 2 : 0.4} /></mesh>
-      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}${worst !== undefined ? (bond >= worst ? `, covers ${worst}` : `, worst case ${worst} not covered`) : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
+      <Label pos={pos} title={t("scene.vault")} value={`${t("scene.vaultVal", { bond: bond.toFixed(0), min })}${low ? t("scene.below") : ""}${worst !== undefined ? (bond >= worst ? t("scene.covers", { w: worst }) : t("scene.notCovered", { w: worst })) : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
     </group>
   );
 }
 
 // The farm: a house with a notice board where jobs are posted and the fee is held.
 function Farmhouse({ pos, windows, roof, job }: { pos: [number, number, number]; windows: THREE.Texture; roof: THREE.Texture; job?: Job }) {
+  const t = useSceneT();
+  const status = (k: Job["status"]) => t(`panels.jobStatus.${k}` as TKey);
   return (
     <group position={pos}>
       <mesh position={[0, 0.9, 0]} castShadow receiveShadow><boxGeometry args={[2.4, 1.8, 2]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
@@ -209,13 +218,14 @@ function Farmhouse({ pos, windows, roof, job }: { pos: [number, number, number];
         <mesh position={[0, 1.35, 0]} castShadow><boxGeometry args={[1.1, 0.7, 0.05]} /><meshStandardMaterial color="#f6f3ea" roughness={0.9} /></mesh>
         <mesh position={[0, 1.35, 0.03]}><boxGeometry args={[0.9, 0.5, 0.01]} /><meshStandardMaterial color={job ? (job.status === "held" ? CORAL : TURQ) : "#d9d2c0"} emissive={job ? (job.status === "held" ? CORAL : TURQ) : "#000"} emissiveIntensity={job ? 0.6 : 0} /></mesh>
       </group>
-      <Label pos={pos} title="Farmer, job board" value={job ? `${job.title}, fee ${job.fee} ${job.status}` : "no job posted"} accent="#d4a017" y={3.4} />
+      <Label pos={pos} title={t("scene.board")} value={job ? t("scene.boardVal", { title: job.title, fee: job.fee, status: status(job.status) }) : t("scene.noJob")} accent="#d4a017" y={3.4} />
     </group>
   );
 }
 
 // Launch pad with a charging post. Energy is paid here.
 function Pad({ pos }: { pos: [number, number, number] }) {
+  const t = useSceneT();
   const ring = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => { if (ring.current) (ring.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 2) * 0.4; });
   return (
@@ -225,7 +235,7 @@ function Pad({ pos }: { pos: [number, number, number] }) {
       <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.1, 0.16, 24]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1} side={THREE.DoubleSide} /></mesh>
       <mesh position={[1.6, 0.5, 0]} castShadow><boxGeometry args={[0.3, 1, 0.3]} /><meshStandardMaterial color={INK} roughness={0.5} /></mesh>
       <mesh position={[1.6, 1.05, 0]}><boxGeometry args={[0.2, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
-      <Label pos={pos} title="Launch pad" value="charging, energy by time of day" accent="#121212" y={1.9} />
+      <Label pos={pos} title={t("scene.pad")} value={t("scene.padVal")} accent="#121212" y={1.9} />
     </group>
   );
 }
@@ -245,11 +255,12 @@ function SprayedStrip({ job, machine }: { job?: Job; machine?: MachineState }) {
 }
 
 function Sticker({ job, kind, tele }: { job: Job; kind: "seal" | "flag"; tele?: Tele }) {
+  const t = useSceneT();
   const ratio = tele?.ratio ?? (tele?.areaSupported && tele.areaClaimed ? tele.areaClaimed / tele.areaSupported : undefined);
-  const flag = ratio ? `HELD, CLAIMED ${ratio.toFixed(ratio >= 10 ? 0 : 1)}X THE TRACK` : "HELD, LOG FAILED";
+  const flag = ratio ? t("scene.heldRatio", { r: ratio.toFixed(ratio >= 10 ? 0 : 1) }) : t("scene.heldLog");
   return (
     <Html position={[job.to.x, 1.2, job.to.z]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>已验证 CONFIRMED</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>{flag}</div>}
+      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>{t("scene.confirmed")}</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>{flag}</div>}
     </Html>
   );
 }
@@ -386,35 +397,38 @@ function Flat({ pos, label, active, windows }: { pos: [number, number, number]; 
 }
 
 function Fence({ center, size, breached, height = 2.3, name }: { center: [number, number, number]; size: [number, number]; breached: boolean; height?: number; name?: string }) {
+  const t = useSceneT();
   const col = breached ? CORAL : TURQ;
   const box = useMemo(() => new THREE.BoxGeometry(size[0], height, size[1]), [size, height]);
   return (
     <group position={[center[0], height / 2, center[2]]}>
       <mesh geometry={box}><meshStandardMaterial color={col} transparent opacity={breached ? 0.14 : 0.06} depthWrite={false} /></mesh>
       <lineSegments><edgesGeometry args={[box]} /><lineBasicMaterial color={col} transparent opacity={0.9} /></lineSegments>
-      <Label pos={[size[0] / 2 - 0.2, 0, -size[1] / 2 + 0.2]} title={`Geofence ${name ?? ""}`} value={breached ? "breached, slashed by proof" : "inside"} accent={breached ? CORAL : TURQ} y={height / 2 + 0.3} />
+      <Label pos={[size[0] / 2 - 0.2, 0, -size[1] / 2 + 0.2]} title={t("scene.geofence", { name: name ?? "" })} value={breached ? t("scene.breached") : t("scene.inside")} accent={breached ? CORAL : TURQ} y={height / 2 + 0.3} />
     </group>
   );
 }
 
 // Anyone who submits a signed violation. The bounty dot lands here.
 function Hunter({ pos, paid }: { pos: [number, number, number]; paid: number }) {
+  const t = useSceneT();
   return (
     <group position={pos}>
       <mesh position={[0, 0.5, 0]} castShadow><coneGeometry args={[0.35, 1, 5]} /><meshStandardMaterial color={paid > 0 ? TURQ : "#bdb5a3"} emissive={paid > 0 ? TURQ : "#000"} emissiveIntensity={paid > 0 ? 0.8 : 0} metalness={0.5} roughness={0.4} /></mesh>
-      <Label pos={pos} title="Hunter" value={paid > 0 ? `bounty ${paid.toFixed(1)} received` : "watching for signed violations"} accent={paid > 0 ? "#d4a017" : "#7a7a76"} y={1.7} />
+      <Label pos={pos} title={t("scene.hunter")} value={paid > 0 ? t("scene.bounty", { v: paid.toFixed(1) }) : t("scene.watching")} accent={paid > 0 ? "#d4a017" : "#7a7a76"} y={1.7} />
     </group>
   );
 }
 
 // Cover pool plinth. Flat cover for each task is bound here, not at the charging pad.
 function CoverPool({ pos, bound }: { pos: [number, number, number]; bound: number }) {
+  const t = useSceneT();
   return (
     <group position={pos}>
       <mesh position={[0, 0.15, 0]} receiveShadow><cylinderGeometry args={[0.8, 0.9, 0.3, 6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
       <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.28, 16, 16]} /><meshPhysicalMaterial color="#ffffff" transmission={0.8} thickness={0.4} roughness={0.1} transparent opacity={0.7} /></mesh>
       <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.14, 12, 12]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={bound > 0 ? 2 : 0.3} /></mesh>
-      <Label pos={pos} title="Cover pool" value={bound > 0 ? `${bound.toFixed(0)} bound this run` : "flat cover per task"} accent="#d4a017" y={1.5} />
+      <Label pos={pos} title={t("scene.cover")} value={bound > 0 ? t("scene.bound", { v: bound.toFixed(0) }) : t("scene.flatCover")} accent="#d4a017" y={1.5} />
     </group>
   );
 }
@@ -493,6 +507,7 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (lastJob?.status === "released") { setRecent(true); const t = setTimeout(() => setRecent(false), 2600); return () => clearTimeout(t); } }, [lastJob?.id, lastJob?.status]);
   const m = machine;
+  const t = useSceneT();
   return (
     <>
       <hemisphereLight args={["#fff5e6", "#e8c46a", 0.9]} />
@@ -520,8 +535,8 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow><planeGeometry args={[40, 40]} /><meshStandardMaterial map={tex.tiles} roughness={0.95} /></mesh>
         <mesh position={[0, 3.2, -8]} receiveShadow castShadow><boxGeometry args={[18, 6.4, 3]} /><meshStandardMaterial map={tex.windows} roughness={0.85} /></mesh>
         <mesh position={[-12, 2.4, -2]} receiveShadow castShadow><boxGeometry args={[3, 4.8, 10]} /><meshStandardMaterial map={tex.windows} roughness={0.85} /></mesh>
-        <Flat pos={[-3, 0, 0]} label="Owner, flat 4A" active={false} windows={tex.windows} />
-        <Flat pos={[3, 0, 0]} label="Neighbour, flat 4B" active={!!activeJob} windows={tex.windows} />
+        <Flat pos={[-3, 0, 0]} label={t("scene.ownerFlat")} active={false} windows={tex.windows} />
+        <Flat pos={[3, 0, 0]} label={t("scene.neighbourFlat")} active={!!activeJob} windows={tex.windows} />
         <Fence center={[3, 0, 0]} size={[3.6, 2.9]} breached={!!breached} name={extra.geofence ?? "flat-4b"} />
         <Lamp pos={[0, 0, 2.6]} /><Lamp pos={[-7, 0, 2.6]} /><Lamp pos={[7, 0, 2.6]} />
         <Trees count={70} />
@@ -538,10 +553,10 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
   );
 }
 
-export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, labels = true, slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean; labels?: boolean } & Extra) {
+export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, labels = true, lang = "en", slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean; labels?: boolean; lang?: Lang } & Extra) {
   return (
     <Canvas shadows camera={{ position: side === "fleet" ? [13, 9, 15] : [9, 6.5, 10], fov: 34 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }} style={{ background: "transparent" }}>
-      <LabelsCtx.Provider value={labels}><World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} /></LabelsCtx.Provider>
+      <SceneLangCtx.Provider value={lang}><LabelsCtx.Provider value={labels}><World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} /></LabelsCtx.Provider></SceneLangCtx.Provider>
       <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={0.85} intensity={0.9} mipmapBlur radius={0.6} />
         <Vignette eskil={false} offset={0.2} darkness={0.35} />

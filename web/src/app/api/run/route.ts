@@ -1,6 +1,7 @@
 import { SCENARIOS } from "@/engine/scenarios";
 import { demoAuthorised } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
+import { pickLang, tr } from "@/engine/i18n";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -12,6 +13,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const name = (url.searchParams.get("scenario") || "fleet") as keyof typeof SCENARIOS;
   const fast = url.searchParams.get("fast") === "1";
+  const lang = pickLang(url.searchParams.get("lang"));
   // Real chain mode only for a caller holding the demo token. Everyone else gets the simulation.
   const real = demoAuthorised(req.headers);
   const gen = SCENARIOS[name] ?? SCENARIOS.fleet;
@@ -19,11 +21,11 @@ export async function GET(req: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const ev of gen({ fast, real })) {
+        for await (const ev of gen({ fast, real, lang })) {
           controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
         }
       } catch (e) {
-        controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "narration", text: `Run stopped: ${(e as Error).message}`, at: Date.now() })}\n\n`));
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "narration", text: tr(lang, "run.stopped", { msg: (e as Error).message }), at: Date.now() })}\n\n`));
       } finally {
         end(ip);
         controller.close();

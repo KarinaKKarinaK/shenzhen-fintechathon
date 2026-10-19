@@ -21,8 +21,8 @@
   --color-surface: #ffffff;
   --color-rule: #e4e1d8;
   --color-warn: #9a5b00;
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
-  --font-tech: var(--font-chakra), var(--font-manrope), sans-serif;
+  --font-sans: var(--font-manrope), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --font-tech: var(--font-chakra), var(--font-manrope), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -281,3 +281,20 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 :root[data-theme="dark"] .duotone > img { filter: grayscale(1) contrast(1.15) brightness(0.8); }
 :root[data-theme="dark"] .round-seal { mix-blend-mode: screen; }
 :root[data-theme="dark"] img[alt] { color-scheme: light; }
+
+/* White result cards inside a red band keep ink text and hug their content. */
+.band [class*="bg-white/"], .band .bg-surface { color: var(--color-ink); }
+.band [class*="bg-white/"] .text-ink-2, .band [class*="bg-white/"] .text-muted, .band [class*="bg-white/"] .label, .band .bg-surface .text-ink-2, .band .bg-surface .text-muted { color: var(--color-ink-2); }
+.band [class*="bg-white/"] .text-red { color: var(--color-red); }
+.band [class*="bg-white/"] .text-red-deep { color: var(--color-red-deep); }
+.band [class*="bg-white/"] .text-gold-deep { color: var(--color-gold-deep); }
+.band .grid > [class*="bg-white/"] { align-self: start; background: rgba(255,255,255,0.96); box-shadow: inset 0 0 0 1px rgba(201,162,39,0.35); }
+.band details, .band summary { color: rgba(255,255,255,0.85); }
+:root[data-theme="dark"] .band .grid > [class*="bg-white/"] { background: rgba(22,20,17,0.92); }
+:root[data-theme="dark"] .band [class*="bg-white/"] .text-red-deep { color: var(--color-red-deep); }
+
+/* Dark theme: ink surfaces stay dark with light text, so the machine bubble and ink buttons read. */
+:root[data-theme="dark"] .bg-ink { background: #26211c; color: #f3efe6; }
+:root[data-theme="dark"] .text-paper, :root[data-theme="dark"] .bg-ink .text-muted { color: #f3efe6; }
+:root[data-theme="dark"] .bg-ink .text-gold-soft { color: #e3c25a; }
+:root[data-theme="dark"] .bg-ink .bg-paper-2 { background: rgba(255,255,255,0.08); color: #f3efe6; }
