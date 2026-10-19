@@ -47,6 +47,7 @@ export const zh: Dict = {
     ] as Use[],
     rulesTitle: "策略引擎检查什么",
     rulesBody: "十四条规则写在代码里，资金流动前逐条检查每一条已签名意图。标签显示的是实时限额。",
+    thRule: "规则", thEnforces: "约束内容", whyTitle: "为什么站得住",
     rulesLink: "查看攻击结果",
     ruleGroups: [
       { title: "谁可以签名", note: "密钥与重放", rules: [["签名", "意图必须由其所声明角色的密钥签名。"], ["重放", "每个签名只接受一次，永不重复。"], ["仅限操作员", "提高上限或补足保证金，需要按钮持有的操作员密钥。"]] },

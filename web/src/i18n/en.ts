@@ -46,6 +46,7 @@ export const en = {
     ] as Use[],
     rulesTitle: "What the policy engine checks",
     rulesBody: "Fourteen rules in code, checked on every signed intent before money moves. The chips are the live limits.",
+    thRule: "Rule", thEnforces: "What it enforces", whyTitle: "Why it holds up",
     rulesLink: "See the attack results",
     ruleGroups: [
       { title: "Who may sign", note: "keys and replay", rules: [["Signature", "The intent is signed by the key of the actor it names."], ["Replay", "Each signature is accepted once, ever."], ["Operator only", "Raising a cap or topping up needs the operator key held by the button."]] },

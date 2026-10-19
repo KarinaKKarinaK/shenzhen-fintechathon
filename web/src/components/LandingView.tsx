@@ -7,13 +7,9 @@ import { Ticker } from "./Ticker";
 import { Fan } from "./Fan";
 import { RoundSeal } from "./RoundSeal";
 import { JudgeConsole } from "./JudgeConsole";
-import { FlowTimeline } from "./FlowTimeline";
-import { RulesBoard, type RuleGroup } from "./RulesBoard";
-import { SafeByDesign, HoldsUp, OnlyHere } from "./Pillars";
 import { useLang } from "@/i18n/LangProvider";
 
 export type Limits = { payees: number; perTxCap: number; dailyCap: number; maxPerHour: number; deviationPct: number; bandLo: number; bandHi: number; floor: number };
-const STRENGTH_ICONS = ["key", "gate", "calc", "pen", "scale", "chain", "learn"];
 
 export function LandingView({ attackN, benignN, limits }: { attackN: number; benignN: number; limits: Limits }) {
   const { d, t } = useLang();
@@ -25,18 +21,17 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
     [t("landing.chips.yuan", { n: limits.perTxCap }), t("landing.chips.yuan", { n: limits.dailyCap }), t("landing.chips.perHour", { n: limits.maxPerHour }), t("landing.chips.percent", { n: limits.deviationPct }), t("landing.chips.band", { lo: limits.bandLo, hi: limits.bandHi })],
     [undefined, t("landing.chips.floor", { n: limits.floor }), undefined],
   ];
-  const ruleGroups: RuleGroup[] = L.ruleGroups.map((g, gi) => ({ title: g.title, note: g.note, rules: g.rules.map(([name, what], i) => [name, what, chips[gi]?.[i]]) }));
-  const strengths = L.strengths.map(([a, b], i) => [a, b, STRENGTH_ICONS[i]] as [string, string, string]);
-  const holds = [
-    { n: 0, title: L.holds.human, line: L.holds.humanLine },
-    { n: attackN, title: L.holds.attacks, line: t("landing.holds.attacksLine", { n: benignN }) },
-    { n: 3, title: L.holds.contracts, line: L.holds.contractsLine },
-    { n: 1, title: L.holds.chain, line: L.holds.chainLine },
+  const rules: [string, string][] = L.ruleGroups.flatMap((g, gi) => g.rules.map(([name, what], i) => { const c = chips[gi]?.[i]; return [name, c ? `${what} ${c}.` : what] as [string, string]; }));
+  const pillars: [string, string][] = [
+    [L.holds.human, `0 ${L.holds.humanLine}`],
+    [L.holds.attacks, `${attackN} ${t("landing.holds.attacksLine", { n: benignN })}`],
+    [L.holds.contracts, `3 ${L.holds.contractsLine}`],
+    [L.holds.chain, L.holds.chainLine],
   ];
   const stats = [String(attackN), "3", "0", "2"];
   return (
-    <div>
-      <section className="duotone flex min-h-[100svh] items-end text-white">
+    <div className="-mx-4 -mt-4 md:-mx-6">
+      <section className="duotone flex min-h-[92svh] items-end text-white">
         <Image src="/photos/shenzhen-tower.jpg" alt={L.heroAlt} fill priority sizes="100vw" className="object-cover object-[50%_35%]" />
         <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>
         <div className="over mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 md:px-8 md:pb-20">
@@ -61,7 +56,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
       <Ticker />
 
       <div className="mx-auto max-w-[1440px] px-4 md:px-8">
-        <section className="band band-gold mt-10 grid grid-cols-1 items-center gap-8 p-8 md:grid-cols-[auto_1fr_auto] md:p-10">
+        <section className="band mt-10 grid grid-cols-1 items-center gap-8 p-8 md:grid-cols-[auto_1fr_auto] md:p-10">
           <Seal size={84} />
           <div>
             <h2 className="text-[34px] font-extrabold">{L.zishiTitle}</h2>
@@ -91,7 +86,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
           </div>
         </section>
 
-        <section className="band band-gold p-8 md:p-10">
+        <section className="band p-8 md:p-10">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><h2 className="h-section">{L.judgeTitle}</h2><span className="label">{L.judgeLabel}</span></div>
           <JudgeConsole compact />
         </section>
@@ -101,37 +96,57 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
             <div><span className="rule-gold mb-4" /><h2 className="h-section">{L.flowTitle}</h2><p className="mt-1 text-ink-2">{L.flowBody}</p></div>
             <Link href="/app/fleet" className="link">{L.flowLink}</Link>
           </div>
-          <FlowTimeline steps={L.steps} />
+          <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-rule bg-rule md:grid-cols-4 xl:grid-cols-7">
+            {L.steps.map(([st, b], i) => (
+              <li key={st} className="bg-surface p-5"><div className="kpi text-gold-text">{i}</div><div className="mt-3 text-lg font-semibold">{st}</div><div className="mt-1 text-[15px] text-ink-2">{b}</div></li>
+            ))}
+          </ol>
         </section>
 
-        <section className="band band-gold p-8 md:p-10">
+        <section className="band p-8 md:p-10">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><span className="rule-gold-grad mb-4" /><h2 className="h-section">{L.usesTitle}</h2></div>
+            <h2 className="h-section">{L.usesTitle}</h2>
             <span className="label">{L.usesLabel}</span>
           </div>
           <div className="mt-6"><Fan items={L.uses} /></div>
         </section>
 
-        <section className="relative py-14">
-          <RoundSeal size={340} opacity={0.1} rotate={9} className="absolute -right-10 -top-6 z-0 hidden lg:block" />
-          <div className="relative flex flex-wrap items-end justify-between gap-3">
-            <div><span className="rule-gold mb-4" /><h2 className="h-section">{L.rulesTitle}</h2><p className="mt-1 max-w-[52ch] text-ink-2">{L.rulesBody}</p></div>
-            <Link href="/app/evidence" className="link">{L.rulesLink}</Link>
+        <section className="relative grid grid-cols-1 gap-6 py-14 lg:grid-cols-[1.1fr_1fr]">
+          <RoundSeal size={340} opacity={0.13} rotate={9} className="absolute -bottom-12 left-[22%] z-0 hidden lg:block" />
+          <div className="relative">
+            <span className="rule-gold mb-4" />
+            <h2 className="h-section">{L.rulesTitle}</h2>
+            <p className="mt-1 max-w-[52ch] text-ink-2">{L.rulesBody}</p>
+            <Link href="/app/evidence" className="link mt-4 inline-block">{L.rulesLink}</Link>
           </div>
-          <div className="relative mt-8"><RulesBoard groups={ruleGroups} /></div>
+          <div className="card relative overflow-hidden">
+            <table className="ledger">
+              <thead><tr><th>{L.thRule}</th><th>{L.thEnforces}</th></tr></thead>
+              <tbody>{rules.map(([r, dsc]) => <tr key={r}><td className="whitespace-nowrap font-semibold">{r}</td><td className="text-ink-2">{dsc}</td></tr>)}</tbody>
+            </table>
+          </div>
         </section>
 
-        <section className="py-6">
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_1fr]">
           <div className="card p-6 md:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="text-[25px]">{L.safeTitle}</h2><span className="label">{L.safeLabel}</span></div>
-            <div className="mt-6"><SafeByDesign items={strengths} /></div>
+            <h2 className="text-[25px]">{L.safeTitle}</h2>
+            <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {L.strengths.map(([ti, b]) => <li key={ti} className="tile"><div className="font-semibold">{ti}</div><div className="text-[15px] text-ink-2">{b}</div></li>)}
+            </ul>
           </div>
-          <div className="mt-6"><HoldsUp items={holds} /></div>
+          <div className="card p-6 md:p-8">
+            <h2 className="text-[25px]">{L.whyTitle}</h2>
+            <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {pillars.map(([n, h]) => <li key={n} className="tile tile-seal"><div className="font-semibold">{n}</div><div className="text-[15px] text-ink-2">{h}</div></li>)}
+            </ul>
+          </div>
         </section>
 
-        <section className="band band-gold mt-6 p-8 md:p-10">
+        <section className="band mt-6 p-8 md:p-10">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="h-section">{L.onlyTitle}</h2><span className="label">{L.onlyLabel}</span></div>
-          <div className="mt-6"><OnlyHere items={L.firsts} /></div>
+          <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {L.firsts.map((f) => <li key={f} className="flex items-start gap-3 rounded-md bg-white/[0.07] px-4 py-3"><Seal size={18} />{f}</li>)}
+          </ul>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/app" className="btn btn-red">{L.openMC}</Link>
             <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}>{L.design}</a>
