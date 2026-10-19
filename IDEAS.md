@@ -360,6 +360,149 @@ Inclusion angle. None directly.
 
 Build risk. Medium. Risky as a main entry because it is meta. Sharpest statement of where the field is going.
 
+## 26. Digital Qiaopi: one authenticated channel for family money (Topic C)
+
+The pitch. Migrant workers and students send money home to parents who often cannot use banking apps, and scammers now imitate the children's voices with a few seconds of audio. Qiaopi were the remittance letters of Guangdong and Fujian emigrants in the 19th and 20th century: money, a personal letter and a trusted courier network in one package (UNESCO Memory of the World, inscribed 2013). The agent rebuilds this. A transfer is bundled with a signed voice message from the child and handed over by a trusted local agent point in the village. Because family money arrives only through this one channel, every other request for money is suspicious by construction, and the parents' agent refuses it and alerts the family. The agent does not try to detect a fake voice. It makes the fake voice irrelevant.
+
+Why Shenzhen. Most Shenzhen residents were born elsewhere and send money to parents in other provinces. AI voice-clone calls that pretend to be a grandchild in trouble are a recurring police warning in China. Hong Kong students and workers with family on the mainland face the same pattern across a border with its own remittance rules.
+
+How it works.
+
+1. Sender side. The child's device holds a key. Every transfer carries the amount, a short voice or text message and a signature. Period caps (per transfer, per month) are set once by both sides.
+2. Channel. The transfer goes through a licensed partner in the sandbox (a bank and its rural agent points). Each step is signed and logged: sent, received by the agent point, handed over, confirmed.
+3. Last mile. The agent point sees the expected handover, the recipient confirms with a one-time code or a QR scan, and the parent hears the child's signed message. Cash-out or credit to the parent's account are both possible.
+4. Parents' agent. It knows only one valid source of family money. Any request outside the channel ("your grandson needs bail", "transfer to a safe account") gets a refusal in simple words, and the family is notified. The parent can ask the child back through the channel, never through the number that called.
+5. Child's dashboard. Status of each transfer, alerts about refused requests, caps.
+
+Demo moment. A student in Hong Kong sends 2,000 CNY with a voice note. The grandmother collects it at the village shop and hears his real message. Then a cloned voice calls and asks for 20,000 CNY for "bail". The agent answers that money from her grandson only arrives through Qiaopi, refuses, and notifies the son. The attack log shows the request, the rule that fired and the notification.
+
+Security story. The channel is the security model. Sender identity is bound to a device key, messages are signed, the agent point is authenticated, amounts are capped per period, and anything outside the channel is refused by a deterministic rule. There is no classifier and therefore no false-positive rate to tune on the core decision. Attack tests: replayed signed message, changed amount, unknown sender with a perfect voice clone, a fake agent point, a request to change the payout account, prompt injection inside the voice transcript.
+
+Compliance story. Cash-out through village shops is agent banking, which is a licensed payment activity in the PRC. Frame the last mile as the rural agent points a licensed bank already operates, with the agent as the coordinating layer. Hong Kong to mainland transfers sit under SAFE limits for individuals, so the caps respect them. Voice recordings are sensitive personal information under PIPL (and biometric data under GDPR Art. 9): explicit consent, short retention, no voiceprint database. All execution in sandbox, and the self-assessment says so.
+
+Inclusion angle. The strongest on the list: elderly, rural and migrant users, protected without having to learn a new app. It fits WeBank's mission and the national anti-fraud campaign at the same time.
+
+Competition. Topic C has 28 entries, almost all tuition, remittance and FX agents for international students. Scam shields for student remittances exist. Nobody uses an authenticated family channel as the security model, and nobody serves the receiving side.
+
+Jury view. Highest potential score of all our ideas (83.1 of 105, range 79.5 to 86.5). Champion for Chai Yunpeng, top 3 for six of eight mentors. The common praise: allow-listing at the level of family life, a security argument that is structural instead of statistical. The common criticism: the last mile (shop, handover) is where the real risk sits and it is easy to leave it as a story.
+
+What to improve.
+- Make the last mile a real piece of software: a small agent-point app with an authenticated handover (QR plus one-time code) and its own log. That is the part that turns the demo from narrated into completed.
+- Show the out-of-channel refusal as more than a new-payee hold: the agent offers a call-back through the channel, and the attack test runs against a cloned voice.
+- Put licensing and SAFE limits on one slide early instead of in the appendix. Every mentor flagged it.
+- Report all attack tests with results, including the ones that fail.
+
+Build risk. Medium. The authenticated channel, the caps and the refusal logic are real code. The bank partner and the village agent points are simulated and must be labelled as such.
+
+## 27. The robot that pays for itself (Topic F, told as a Topic E story)
+
+The pitch. Small factories in the Pearl River Delta need automation and cannot get credit for it: no property to pledge, thin financial records, cash flow nobody can verify. Yet every factory already has a reliable data source on the floor, the machine itself. A leasing company finances an industrial robot, and the robot repays its own financing from verified output. Every verified batch of parts triggers a repayment. An AI agent checks that the production numbers are physically plausible, adjusts the rate to utilisation, pays power and maintenance, and freezes repayment when the counter lies. The AI is a financial participant, not a financial assistant.
+
+Why Shenzhen. Labour is hard to find, prices keep falling, large manufacturers build fully automated factories, and thousands of small suppliers in Shenzhen, Dongguan and Bao'an face the same automation decision at the same time. Financial leasing (融资租赁) is already the standard way industrial equipment is financed in China.
+
+How it works.
+
+1. Ownership. Hire-purchase or financial lease. A licensed lessor buys the robot and owns it. The factory uses it. After the agreed total is paid, ownership passes to the factory. The robot is its own collateral: if payments stop, the lessor takes back its property, and a remote lock after a grace period works like pay-as-you-go solar in Kenya (M-KOPA).
+2. Pricing. A price per verified part (example: 0.80 CNY), a monthly minimum, a maximum term, and a total after which ownership transfers. The lessor shares part of the utilisation risk and prices it into the rate.
+3. Sensor. Machine data: part count, cycle time, energy per part, running pattern against the shift plan.
+4. Plausibility check (agent). Physics first: 10,000 parts an hour at a 12 second cycle is impossible, energy per part must stay stable, runtime must match the shifts. Then one statistical test on the joint distribution.
+5. Rate calculation. Amount due = rate × verified parts, inside an agreed band.
+6. Wallet. A ring-fenced sub-account of the factory, not property of the robot (a machine is not a legal person). For the demo a debit mandate pulls the amount due into the sub-account and on to the lessor. A stronger later version routes customer payments through a collection account (revenue-based financing).
+7. Rules outside the LLM. Daily cap, payee allowlist (lessor, power company, maintenance firm), minimum reserve for power and maintenance, kill switch, and a human sign-off for any rule change.
+8. Tamper response. Faked counter, replayed data or a disconnected sensor: repayment frozen, lessor and owner alerted, the monthly minimum still applies.
+9. Audit. Hash-chained log plus on-chain receipts the lessor can inspect.
+
+Demo moment. A 15 person workshop wants a 180,000 CNY robot arm. The sandbox lessor approves and the robot gets its wallet and rule set. The simulated arm produces, and each verified batch of 500 parts triggers a repayment with a transaction hash on the explorer. Orders drop to 40 percent utilisation and the agent lowers the rate inside the band while the power reserve stays untouched. Attack 1: the counter suddenly reports three times the output, energy and cycle time do not match, repayment is frozen and both sides are alerted. Attack 2: a fake maintenance invoice with a new bank account arrives by email, the allowlist blocks it. The lessor's dashboard shows progress, utilisation, incidents and the audit chain. Stretch: a real counter (ESP32 with a light barrier at the output bin) so a physical device pays off its loan on stage.
+
+Security story. No human sees each transaction, so the limits are hard and outside the model: caps, allowlist, reserve, kill switch, physical plausibility, and sign-off for rule changes. Two invariants are tested, not promised: never pay above verified output, never dip below the reserve. Attack tests: counter spoof, replayed telemetry, disconnected sensor, fake invoice, payee change by email, prompt injection in maintenance documents.
+
+Compliance story. The agent services the financing, it does not lend. Lending and leasing are licensed activities, so the lessor is a (sandbox) licensed institution and the agent measures, calculates, pays and checks. Settlement in the demo runs on a public testnet for the Topic F bonus and real transaction hashes. The deck frames production as a consortium chain (FISCO BCOS) with fiat settlement, because mainland companies cannot hold public tokens. Machine data is not personal data under PIPL, but its ownership between lessor and factory needs a stated rule.
+
+Inclusion angle. Credit for small manufacturers who have nothing to pledge except the machine. This is what inclusive finance (普惠金融) means in WeBank's own business: data-driven credit for firms traditional banks do not serve.
+
+Competition. Topic F is led by agent-to-agent payment, mandates and escrow (Agent Credit Bureau, LEASH, YINGLONG). Nobody has a physical machine as the borrower. Topic E is crowded with cash-flow copilots, none of which finances equipment from metered output.
+
+Jury view. Potential 81.9 of 105 (range 76.5 to 86.0) and the strongest personal pull of all ideas. Four of eight mentors would champion it in deliberation (Wang Shouyang, Li Wenrong, Li Jianqiang, Joshua Bongard). Li Wenrong's summary: output is the sensor, repayment is the actuator, tamper detection is the fault detector, the freeze is the defined failure mode. Dacheng Xiu's warning: catching the one fake in the demo proves nothing.
+
+What to improve.
+- Measure the plausibility model honestly: synthetic production data with injected tampering, held-out test cases, both detection rate and false-alarm rate on normal operation.
+- One economics slide: what financing costs a small factory today against this model. Without it the idea reads as a gimmick.
+- Make the LLM's role visible: reading maintenance invoices and emails, explaining incidents to the owner, negotiating the rate band. Otherwise the agent is a rule engine with a counter.
+- Register under Topic F explicitly and produce real hashes for every batch.
+- State the licensing and data-ownership rules on one slide.
+- The physical counter is the strongest differentiator a mechatronics team has. Even a simple one changes how the demo lands.
+
+Build risk. Medium to high. The finance is simple. The machine simulation is the main work, and the LLM part can end up thin if it is not designed in from the start.
+
+## 28. Guardian Wallet: an agent whose job is to say no (Topic A, optional F)
+
+Revised version of idea 3, with the mentor jury's feedback built in.
+
+The pitch. A wallet agent for elderly people and migrant workers whose main job is to refuse. It reads every incoming payment request and every outgoing instruction, matches them against known fraud scripts (fake police, fake family member, fake customs fee, fake investment, fake refund), explains in simple words why something looks like a scam, and holds anything suspicious until a trusted contact confirms. The user talks to it in plain language or by voice, in Mandarin or a dialect.
+
+Why Shenzhen. Telecom and online fraud is a national priority in China, and Shenzhen runs one of the most active anti-fraud centres. Older people are the most targeted group, and most Shenzhen residents have parents living elsewhere whom they cannot watch over.
+
+How it works.
+
+1. Setup by the user, not by the family. The elder chooses the trusted contact, the caps and the hold rules, and can change them. This is an explicit opt-in, recorded.
+2. Intake. Voice notes, messages and payment instructions are transcribed and treated as untrusted input.
+3. Scam check. A pattern library built from published police typologies, plus the LLM for explanation. Every flag names the script it matches.
+4. Decision outside the LLM. Deterministic rules: new payee plus urgency plus amount above cap means hold. A hold is a delay the owner can lift after the waiting time, never a seizure.
+5. Trusted-contact flow. The contact gets a short summary and confirms or rejects. Without an answer the hold expires on the agreed timeline.
+6. Optional Topic F variant. The wallet is a smart account with the trusted contact as guardian co-signer above the cap.
+
+Demo moment. A voice note in Mandarin from "the police" demands a transfer to a "safe account". The agent explains in simple words that real police never ask for this, holds the transfer and notifies the daughter. The user insists and the agent escalates to L3. Then a real urgent payment (a hospital bill to a known payee) goes through without delay, which shows the false-positive side.
+
+Security story. Here the security layer is the product: permission tiers, injection defence (scam scripts that try to instruct the agent), hallucination control (no flag without a matched script). The evaluation reports two numbers: the share of scam messages held and the share of legitimate payments wrongly held, on a held-out set the pattern author has not seen.
+
+Compliance story. Holds and trusted-contact confirmation mirror the delayed-arrival and anti-fraud controls Chinese payment providers already apply. Notifying a third party about an adult's payments needs the adult's consent on record (PIPL, GDPR). Stricter defaults by age are opt-in, never automatic.
+
+Inclusion angle. Very strong. WeBank's mission and the national anti-fraud campaign in one product.
+
+Competition. Fraud screening appears inside several strong entries (a cross-border tuition agent, a budgeting agent with a scam score), and three weak repos already use the name "Guardian Wallet". The differentiation has to be the elderly interaction (voice, dialect, simple explanations) and the measured error rates. A new name helps.
+
+Jury view. Potential 79.3 of 105, the most reliable delivery of all ideas and the top security score (8.7). In the top 3 of six mentors, champion of none. The repeated criticism: the mechanism exists in the field already, so innovation stays around 6.6.
+
+What to improve.
+- Report detection and false-alarm rates on held-out benign elderly transactions (Xiu, Härdle).
+- Show a legitimate urgent payment passing in the demo, so the failure mode "blocks a real emergency" is handled (Li Wenrong).
+- Make the voice interaction real, in Mandarin, with a grounded explanation of why it is a scam (Qiang Yang).
+- Consent design: the elder authors the rules and the trusted contact.
+- Rename it to stand apart from the existing "Guardian Wallet" repos.
+- Combine with idea 26: the family channel is the strongest possible whitelist for this wallet.
+
+Build risk. Low. One agent, one policy engine, a scam-pattern library and a trusted-contact flow. On-chain is optional.
+
+## 29. Hidden Coverage: double insurance and the cover you already own (Topic D)
+
+Revised version of idea 10, with the mentor jury's feedback built in. Idea 10 stays the full specification; this entry records what changes.
+
+The pitch. People pay twice for the same risk and do not know about cover they already have: credit-card purchase and travel protection, contents insurance that travels, university and employer group policies, cover embedded in platform purchases. The agent reads all policies into one coverage map, stops a pre-ticked add-on at checkout when the user is already covered, and after a loss works out which policies pay, in which order and how much, without ever claiming more than the loss. It finds cover instead of selling it.
+
+Why Shenzhen. Hong Kong and Shenzhen residents, cross-border commuters and exchange students hold policies in two or three legal systems at once. Embedded insurance is everywhere on mainland platforms, and NFRA bans forced bundling and pre-ticked insurance. Topic D has only two public entries, both US health insurance.
+
+How it works. As in idea 10: ingestion into one jurisdiction-neutral schema with a citation per field, a coverage graph with three other-insurance clause types (exclusion, excess, pro rata), cited rule packs for Germany (§ 78 VVG), China (Insurance Law Art. 56) and Hong Kong (indemnity principle), two real actions (checkout guard, claim split and filing in sandbox) and portfolio Q&A with clause, confidence and "a human should check this".
+
+Demo moment. A German exchange student at HKUST buys a laptop, the pre-ticked gadget insurance is unticked with the card clause that already covers it. The laptop is stolen in a Shenzhen café, the agent shows three policies, the payout order and the net amount, files two claims after one approval and refuses to claim the full amount twice.
+
+Security story. Tiers L0 to L3 in code. Hard denies: buy insurance, claim more than the loss, misstate facts, change the payout account. Policy PDFs and insurer emails are untrusted (hidden white text, phishing payout change). Health data minimised and processed locally.
+
+Compliance story. Consumer-side enforcement of the NFRA rule and of the no-double-recovery principle. The agent never sells or recommends a product. Filing claims for a user can count as insurance intermediation in Hong Kong (IA licensing) and the PRC, so filing stays in sandbox and the self-assessment says so explicitly.
+
+Inclusion angle. Protects students, migrants and cross-border workers who cannot read every clause in three languages. Saves money instead of selling.
+
+Jury view. Potential 81.4 of 105 (range 73.5 to 85.0), the most balanced profile (8.1 / 8.2 / 8.1). Li Wenrong put it first among concepts. Härdle confirmed that § 78 VVG and Art. 56 are the correct provisions. The repeated criticism: claim ordering across three legal systems is where corners get cut, and the checkout guard can end up as a mocked overlay.
+
+What to improve.
+- Measure extraction quality: precision and recall of the coverage schema on held-out real policy wordings, scored by a teammate who did not write the extractor (Xiu).
+- Publish the rule packs as data with tests, present them as cited sample rules with a visible confidence, not as legal determinations (Härdle, Wang).
+- Verify the NFRA Sales Conduct Measures Art. 23 citation against the current official text.
+- Show health-data consent in the product, not only in the self-assessment.
+- Make the checkout guard run against a real page (a local copy of a checkout flow), not a static overlay.
+- Self-Insure (idea 11) and Second Opinion (idea 12) fit as later modules on the same coverage map. Second Opinion alone scored 77.7 potential.
+
+Build risk. Medium. Breadth is the main danger: two real actions beat four mocked ones.
+
 ## If we swing for Best Innovation
 
 Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage. Minimal Disclosure is the alternative innovation pick if we want the academic board on our side. Hard Button can be added to any pick in one evening.
