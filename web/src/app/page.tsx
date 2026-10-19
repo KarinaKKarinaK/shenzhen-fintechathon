@@ -4,6 +4,7 @@ import { Hero3D } from "@/components/Hero3D";
 import { Seal } from "@/components/Logo";
 import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
+import { RoundSeal } from "@/components/RoundSeal";
 import { JudgeConsole } from "@/components/JudgeConsole";
 import * as attacksMod from "@/engine/attacks";
 import { DEFAULT_POLICY } from "@/engine/policy";
@@ -84,8 +85,8 @@ export default function Home() {
           ))}
         </dl>
 
-        <section className="relative grid grid-cols-1 gap-10 py-20 md:grid-cols-2">
-          <div className="watermark -left-10 -top-6" style={{ transform: "rotate(-6deg)" }}><Seal size={340} /></div>
+        <section className="relative grid grid-cols-1 gap-10 overflow-hidden py-20 md:grid-cols-2">
+          <RoundSeal size={380} opacity={0.12} rotate={-10} className="absolute -left-16 -top-10 z-0 hidden md:block" />
           <div className="relative">
             <span className="rule-gold" />
             <p className="statement mt-5">Money decisions are made in code, never by the model.</p>
@@ -93,8 +94,9 @@ export default function Home() {
           </div>
           <div className="relative">
             <span className="rule-gold" />
-            <p className="statement mt-5 text-seal">No slashing without proof.</p>
+            <p className="statement relative mt-5 text-seal">No slashing without proof.</p>
             <p className="mt-4 max-w-[46ch] text-lg text-ink-2">The bond is cut only on a signed intent that broke a rule. An unsigned claim is refused by the bond contract.</p>
+            <RoundSeal size={150} rotate={-12} className="absolute -bottom-20 right-2 z-0 hidden md:block" />
           </div>
         </section>
 
@@ -124,7 +126,7 @@ export default function Home() {
         </section>
 
         <section className="relative grid grid-cols-1 gap-6 py-14 lg:grid-cols-[1.1fr_1fr]">
-          <div className="watermark -bottom-10 left-[20%] hidden lg:block" style={{ transform: "rotate(7deg)" }}><Seal size={300} /></div>
+          <RoundSeal size={340} opacity={0.13} rotate={9} className="absolute -bottom-12 left-[22%] z-0 hidden lg:block" />
           <div className="relative">
             <span className="rule-gold mb-4" />
             <h2 className="h-section">What the policy engine checks</h2>
@@ -167,8 +169,8 @@ export default function Home() {
 
       </div>
 
-      <section className="duotone duotone-light mt-14 flex min-h-[90svh] items-end text-white">
-        <Image src="/photos/drone-paddy.jpg" alt="An agricultural drone spraying a paddy field" fill sizes="100vw" className="object-cover" />
+      <section className="duotone duotone-soft mt-14 flex min-h-[90svh] items-end text-white">
+        <Image src="/photos/drone-paddy.jpg" alt="An agricultural drone spraying a paddy field" fill sizes="100vw" className="paddy-zoom object-cover" />
         <div className="over mx-auto w-full max-w-[1440px] px-4 pb-16 md:px-8 md:pb-20">
           <span className="rule-gold" />
           <p className="statement mt-5 max-w-[18ch] text-white">A drone that pays for itself one mu at a time.</p>

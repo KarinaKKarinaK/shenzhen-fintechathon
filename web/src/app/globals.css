@@ -58,6 +58,23 @@ body {
 .duotone-light > img { filter: grayscale(1) contrast(1.15) brightness(1.45); }
 .duotone > .over { position: relative; z-index: 2; }
 
+/* Round seal that stamps once when scrolled into view. */
+.round-seal { opacity: 0; transform: scale(1.6) rotate(calc(var(--seal-rot, -8deg) - 12deg)); mix-blend-mode: multiply; pointer-events: none; }
+.round-seal.is-stamped { animation: seal-in 560ms cubic-bezier(.2,.9,.25,1) forwards; }
+@keyframes seal-in {
+  0% { opacity: 0; transform: scale(1.6) rotate(calc(var(--seal-rot, -8deg) - 12deg)); }
+  55% { opacity: var(--seal-op, 1); transform: scale(0.94) rotate(var(--seal-rot, -8deg)); }
+  72% { transform: scale(1.03) rotate(var(--seal-rot, -8deg)); }
+  100% { opacity: var(--seal-op, 1); transform: scale(1) rotate(var(--seal-rot, -8deg)); }
+}
+@media (prefers-reduced-motion: reduce) { .round-seal, .round-seal.is-stamped { animation: none; opacity: var(--seal-op, 1); transform: rotate(var(--seal-rot, -8deg)); } }
+
+/* Paddy photo: little red, zoomed onto the drone, the drone on the golden section (61.8 percent, 38.2 percent). */
+.duotone-soft::before { opacity: 0.32; }
+.duotone-soft::after { background: linear-gradient(90deg, rgba(31,26,23,0.78) 0%, rgba(31,26,23,0.35) 45%, transparent 70%), radial-gradient(40% 40% at 61.8% 38.2%, rgba(201,162,39,0.25), transparent 70%); mix-blend-mode: normal; }
+.duotone-soft > img { filter: saturate(0.55) contrast(1.08) brightness(1.02) sepia(0.15); }
+@media (min-width: 768px) { .paddy-zoom { transform-origin: 40% 46%; transform: translate(21.8%, -8.2%) scale(1.8); } }
+
 /* Page frame below the fixed top bar. */
 .page { margin-inline: auto; max-width: 1440px; padding: 6rem 1rem 4rem; }
 @media (min-width: 768px) { .page { padding-inline: 2rem; } }

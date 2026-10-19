@@ -32,7 +32,7 @@ export function Rail() {
             <span lang="zh-Hans" className={`cjk-serif block text-[13px] ${overPhoto ? "text-white/80" : "text-ink-2"}`}>自食其力</span>
           </span>
         </Link>
-        <nav className="ml-auto flex items-center gap-1 overflow-x-auto" aria-label="Sections">
+        <nav className="ml-auto flex min-w-0 items-center gap-1 overflow-x-auto" aria-label="Sections">
           {items.map((it) => {
             const on = path === it.href;
             return (
