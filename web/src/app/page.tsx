@@ -6,6 +6,9 @@ import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
 import { RoundSeal } from "@/components/RoundSeal";
 import { JudgeConsole } from "@/components/JudgeConsole";
+import { FlowTimeline } from "@/components/FlowTimeline";
+import { RulesBoard, type RuleGroup } from "@/components/RulesBoard";
+import { SafeByDesign, HoldsUp, OnlyHere } from "@/components/Pillars";
 import * as attacksMod from "@/engine/attacks";
 import { DEFAULT_POLICY } from "@/engine/policy";
 
@@ -16,33 +19,24 @@ const uses = [
   { who: "A household with a humanoid", line: "Lend the robot next door. The bond pays if a rule breaks.", tag: "Individual" },
   { who: "Software agents", line: "No bond, no payment. Jailbroken means slashed.", tag: "Agent" },
 ];
-const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Checks every job's economics", "Ranks the day's work, declines below the reserve"], ["One event per step", "Mirrored from the contracts"]];
 const firsts = ["An agent that loses its own money on proof", "Two agents with opposite incentives", "A machine as the borrower", "A bond that is earned, not posted", "Solvency proven before every task", "A physical button on top"];
-const steps = [["Plan", "Ranks the day's work, checks the economics"], ["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]];
+const steps: [string, string][] = [["Plan", "Ranks the day's work, checks the economics"], ["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]];
 
 // The rules the policy engine checks per intent kind (engine/policy.ts), with the limits it uses.
 const p = DEFAULT_POLICY;
-const rules = [
-  ["Signature", "The intent is signed by the key of the actor it names."],
-  ["Replay", "Each signature is accepted once, ever."],
-  ["Provenance", "A payee or amount read out of a message is never used."],
-  ["Allowlist and lookalike", `Money only goes to ${Object.keys(p.allowlist).length} known addresses; a near copy is named as a lookalike.`],
-  ["Instalment payee", "An instalment can only go to the lender."],
-  ["Per transaction cap", `No single payment above ${p.perTxCap}.`],
-  ["Daily cap", `No more than ${p.dailyCap} a day in total.`],
-  ["Rate limit", `At most ${p.maxPerHour} payments an hour.`],
-  ["Deviation", `A payment at most ${p.deviationPct} percent off the reference price.`],
-  ["Rate band", `The instalment stays between ${p.rateBand[0] * 100} and ${p.rateBand[1] * 100} percent of the fee.`],
-  ["Job checks", "Geofence, known contact, fee inside the listing and unit economics above the reserve before a job is accepted."],
-  ["Solvency and cover", "A task starts only with cover bound and a bond that covers the worst case."],
-  ["Confirmation", "A task counts as done only with the requester's signature."],
-  ["Operator only", "Raising a cap or topping up needs the operator key held by the button."],
+const ruleGroups: RuleGroup[] = [
+  { title: "Who may sign", note: "keys and replay", rules: [["Signature", "The intent is signed by the key of the actor it names."], ["Replay", "Each signature is accepted once, ever."], ["Operator only", "Raising a cap or topping up needs the operator key held by the button."]] },
+  { title: "Where money may go", note: "payees", rules: [["Provenance", "A payee or amount read out of a message is never used."], ["Allowlist and lookalike", "Only known addresses; a near copy is named as a lookalike.", `${Object.keys(p.allowlist).length} payees`], ["Instalment payee", "An instalment can only go to the lender."]] },
+  { title: "How much and how often", note: "live limits", rules: [["Per transaction cap", "No single payment above the cap.", `${p.perTxCap} yuan`], ["Daily cap", "A ceiling on the day's total.", `${p.dailyCap} yuan`], ["Rate limit", "Payments per hour.", `${p.maxPerHour} per hour`], ["Deviation", "At most this far off the reference price.", `${p.deviationPct} percent`], ["Rate band", "The instalment share of each fee.", `${p.rateBand[0] * 100} to ${p.rateBand[1] * 100} percent`]] },
+  { title: "When a job may run", note: "work rules", rules: [["Job checks", "Geofence, known contact, fee inside the listing, economics above the reserve."], ["Solvency", "A task starts only when bond plus floor covers the worst case.", "floor 200 yuan"], ["Confirmation", "A task counts as done only with the farmer's signature."]] },
 ];
+const strengthsIcons: [string, string, string][] = [["Four permission tiers", "A physical button holds the top one", "key"], ["Every message is data", "A gate decides before the agent reads it", "gate"], ["Every number from a tool", "The model explains, it never computes", "calc"], ["Plain words to a signed intent", "Nothing moves without a signature", "pen"], ["Checks every job's economics", "Ranks the day's work, declines below the reserve", "scale"], ["One event per step", "Mirrored from the contracts", "chain"]];
+
 
 export default function Home() {
   const attackN = attacksMod.ATTACKS.length;
   const benignN = (attacksMod as unknown as { BENIGN?: unknown[] }).BENIGN?.length;
-  const pillars = [["Finishes the job", "0 human decisions on the happy path, one labelled human arbiter on a flagged task"], ["Holds under attack", `${attackN} attack cases${benignN ? ` and ${benignN} benign messages` : " and a benign set"}, both error rates shown`], ["Nothing like it", "Machines that own themselves"], ["Honest on chain", "Three contracts written, engine mirrors their rules, every event anchored on Base Sepolia when a key is funded, labelled sim otherwise"]];
+  const holds = [{ n: 0, title: "Human decisions", line: "on the happy path; one labelled arbiter on a flagged task" }, { n: attackN, title: "Attack cases", line: `blocked, with ${benignN ?? 7} benign messages passed` }, { n: 3, title: "Contracts", line: "written and mirrored rule for rule in the engine" }, { n: 1, title: "Chain", line: "every event anchored on Base Sepolia when a key is funded, labelled sim otherwise" }];
   return (
     <div>
       <section className="duotone flex min-h-[100svh] items-end text-white">
@@ -107,14 +101,10 @@ export default function Home() {
 
         <section className="py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><span className="rule-gold mb-4" /><h2 className="h-section">How one task flows</h2><p className="mt-1 text-ink-2">Seven steps, each one an event mirrored from the contracts.</p></div>
+            <div><span className="rule-gold mb-4" /><h2 className="h-section">How one task flows</h2><p className="mt-1 text-ink-2">Seven steps, each one an event mirrored from the contracts. Hover a step.</p></div>
             <Link href="/app/fleet" className="link">Watch it live</Link>
           </div>
-          <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-rule bg-rule md:grid-cols-4 xl:grid-cols-7">
-            {steps.map(([t, b], i) => (
-              <li key={t} className="bg-surface p-5"><div className="kpi text-gold-text">{i}</div><div className="mt-3 text-lg font-semibold">{t}</div><div className="mt-1 text-[15px] text-ink-2">{b}</div></li>
-            ))}
-          </ol>
+          <FlowTimeline steps={steps} />
         </section>
 
         <section className="band band-gold p-8 md:p-10">
@@ -125,42 +115,26 @@ export default function Home() {
           <div className="mt-6"><Fan items={uses} /></div>
         </section>
 
-        <section className="relative grid grid-cols-1 gap-6 py-14 lg:grid-cols-[1.1fr_1fr]">
-          <RoundSeal size={340} opacity={0.13} rotate={9} className="absolute -bottom-12 left-[22%] z-0 hidden lg:block" />
-          <div className="relative">
-            <span className="rule-gold mb-4" />
-            <h2 className="h-section">What the policy engine checks</h2>
-            <p className="mt-1 max-w-[52ch] text-ink-2">Each signed intent is checked in code against the rules for its kind before money moves: payments, task starts, completions, limit changes. The model never decides. The limits shown are the live values.</p>
-            <Link href="/app/evidence" className="link mt-4 inline-block">See the attack results</Link>
+        <section className="relative py-14">
+          <RoundSeal size={340} opacity={0.1} rotate={9} className="absolute -right-10 -top-6 z-0 hidden lg:block" />
+          <div className="relative flex flex-wrap items-end justify-between gap-3">
+            <div><span className="rule-gold mb-4" /><h2 className="h-section">What the policy engine checks</h2><p className="mt-1 max-w-[52ch] text-ink-2">Fourteen rules in code, checked on every signed intent before money moves. The chips are the live limits.</p></div>
+            <Link href="/app/evidence" className="link">See the attack results</Link>
           </div>
-          <div className="card relative overflow-hidden">
-            <table className="ledger">
-              <thead><tr><th>Rule</th><th>What it enforces</th></tr></thead>
-              <tbody>{rules.map(([r, d]) => <tr key={r}><td className="whitespace-nowrap font-semibold">{r}</td><td className="text-ink-2">{d}</td></tr>)}</tbody>
-            </table>
-          </div>
+          <div className="relative mt-8"><RulesBoard groups={ruleGroups} /></div>
         </section>
 
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_1fr]">
+        <section className="py-6">
           <div className="card p-6 md:p-8">
-            <h2 className="text-[25px]">Safe by design</h2>
-            <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {strengths.map(([t, b]) => <li key={t} className="tile"><div className="font-semibold">{t}</div><div className="text-[15px] text-ink-2">{b}</div></li>)}
-            </ul>
+            <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="text-[25px]">Safe by design</h2><span className="label">Six rules the model cannot change</span></div>
+            <div className="mt-6"><SafeByDesign items={strengthsIcons} /></div>
           </div>
-          <div className="card p-6 md:p-8">
-            <h2 className="text-[25px]">Why it holds up</h2>
-            <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {pillars.map(([n, h]) => <li key={n} className="tile tile-seal"><div className="font-semibold">{n}</div><div className="text-[15px] text-ink-2">{h}</div></li>)}
-            </ul>
-          </div>
+          <div className="mt-6"><HoldsUp items={holds} /></div>
         </section>
 
         <section className="band band-gold mt-6 p-8 md:p-10">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="h-section">Only here</h2><span className="label">Six things nobody else built</span></div>
-          <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-            {firsts.map((f) => <li key={f} className="flex items-start gap-3 rounded-md bg-white/[0.07] px-4 py-3"><Seal size={18} />{f}</li>)}
-          </ul>
+          <div className="mt-6"><OnlyHere items={firsts} /></div>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/app" className="btn btn-red">Open mission control</Link>
             <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}>Design and research</a>
