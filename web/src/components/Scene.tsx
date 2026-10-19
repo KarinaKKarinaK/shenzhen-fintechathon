@@ -7,9 +7,14 @@ import * as THREE from "three";
 import type { ChainTx, Job, MachineState, Side } from "@/engine/types";
 
 // Every object here maps to engine state: the machine moves on machine events, money dots fly
-// on chain events, the fence turns coral on a slash, labels show live numbers.
+// on chain events, the fence turns coral on a geofence slash, the vault on any slash, labels show live numbers.
 
-const INK = "#121212", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#c8102e", PLUM = "#4b5563", BONE = "#f6f3ea";
+type Tele = { ratio?: number; areaClaimed?: number; areaSupported?: number; held?: boolean; ok?: boolean };
+type Extra = { slashed?: boolean; frozen?: boolean; worst?: number; telemetry?: Tele; geofence?: string };
+
+const INK = "#121212", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", CORAL = "#c8102e", PLUM = "#4b5563", BONE = "#f6f3ea";
+// Seeded generator so textures are identical on every load and nothing random runs during render.
+function lcg(seed: number) { let x = seed >>> 0 || 1; return () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
 
 // Deterministic value noise so the world is the same on every load.
 function hash(x: number, y: number) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -29,10 +34,11 @@ function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2
 
 function useTextures() {
   return useMemo(() => {
-    const grain = canvasTexture(256, 256, (ctx) => { const img = ctx.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 200 + Math.random() * 55; img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255; } ctx.putImageData(img, 0, 0); }, [12, 12]);
-    const rows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#8a7a3a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#b59a48" : "#6f6230"; ctx.fillRect(0, i * 16, 256, 9); for (let j = 0; j < 40; j++) { ctx.fillStyle = `rgba(${150 + Math.random() * 60},${180 + Math.random() * 50},90,0.5)`; ctx.fillRect(Math.random() * 256, i * 16 + Math.random() * 9, 2, 2); } } }, [3, 3]);
-    const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#c9a94a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#e2c66a" : "#a98b36"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 3); } }, [3, 3]);
-    const tiles = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#e7e0cf"; ctx.fillRect(0, 0, 256, 256); ctx.strokeStyle = "#cfc6b0"; ctx.lineWidth = 2; for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(i * 32, 0); ctx.lineTo(i * 32, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * 32); ctx.lineTo(256, i * 32); ctx.stroke(); } for (let k = 0; k < 300; k++) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } }, [6, 6]);
+    const r = lcg(11);
+    const grain = canvasTexture(256, 256, (ctx) => { const img = ctx.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 200 + r() * 55; img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255; } ctx.putImageData(img, 0, 0); }, [12, 12]);
+    const rows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#8a7a3a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#b59a48" : "#6f6230"; ctx.fillRect(0, i * 16, 256, 9); for (let j = 0; j < 40; j++) { ctx.fillStyle = `rgba(${150 + r() * 60},${180 + r() * 50},90,0.5)`; ctx.fillRect(r() * 256, i * 16 + r() * 9, 2, 2); } } }, [3, 3]);
+    const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#c9a94a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#e2c66a" : "#a98b36"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(r() * 256, r() * 256, 1, 3); } }, [3, 3]);
+    const tiles = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#e7e0cf"; ctx.fillRect(0, 0, 256, 256); ctx.strokeStyle = "#cfc6b0"; ctx.lineWidth = 2; for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(i * 32, 0); ctx.lineTo(i * 32, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * 32); ctx.lineTo(256, i * 32); ctx.stroke(); } for (let k = 0; k < 300; k++) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(r() * 256, r() * 256, 3, 3); } }, [6, 6]);
     const windows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#d8d2c2"; ctx.fillRect(0, 0, 256, 256); for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const lit = hash(x, y) > 0.55; ctx.fillStyle = lit ? "#ffd977" : "#3a3a3a"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 18); ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 4); } }, [1, 1]);
     const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#8e0e22"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#a3142b" : "#6e0a1a"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
     return { grain, rows, rice, tiles, windows, roof };
@@ -133,7 +139,9 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
   })}</>;
 }
 
+let SHOW_LABELS = true;
 function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
+  if (!SHOW_LABELS) return null;
   return (
     <Html position={[pos[0], y, pos[2]]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
       <div style={{ background: "rgba(255,255,255,0.95)", color: INK, padding: "5px 9px", borderRadius: 2, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-tech)", letterSpacing: "0.04em" }}>
@@ -144,10 +152,14 @@ function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [numbe
 }
 
 // The lender: a small bank hall with columns, a red roof and a gold plaque. Instalments fly here.
-function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; paid: number; total: number; windows: THREE.Texture }) {
+function Bank({ pos, paid, total, windows, owned = false, frozen = false }: { pos: [number, number, number]; paid: number; total: number; windows: THREE.Texture; owned?: boolean; frozen?: boolean }) {
   const pct = total > 0 ? Math.min(1, paid / total) : 0;
   return (
     <group position={pos}>
+      <Html position={[0, 0.95, 1.55]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
+        <div key={owned ? "op" : "ld"} className={owned ? "seal stamp" : ""} style={{ background: owned ? undefined : "rgba(255,255,255,0.95)", color: owned ? "white" : INK, padding: "4px 8px", fontSize: 10, fontFamily: "var(--font-tech)", letterSpacing: "0.12em", whiteSpace: "nowrap", borderLeft: owned ? undefined : `3px solid ${TURQ}` }}>TITLE: {owned ? "OPERATOR" : "LENDER"}</div>
+      </Html>
+      {frozen ? <Html position={[0, 4.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}><div className="stamp" style={{ background: CORAL, color: "white", padding: "4px 10px", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>FROZEN, NO NEW JOBS</div></Html> : null}
       <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[3.4, 0.3, 2.6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
       <mesh position={[0, 1.2, -0.3]} castShadow receiveShadow><boxGeometry args={[2.8, 1.8, 1.8]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
       {[-1.1, -0.37, 0.37, 1.1].map((x) => <mesh key={x} position={[x, 1.2, 0.85]} castShadow><cylinderGeometry args={[0.1, 0.12, 1.8, 10]} /><meshStandardMaterial color="#f4efe3" roughness={0.6} /></mesh>)}
@@ -162,7 +174,7 @@ function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; pa
 }
 
 // The bond contract: a glass vault with a gold liquid level that rises with the bond and drops on a slash.
-function Vault({ pos, bond, min, slashed }: { pos: [number, number, number]; bond: number; min: number; slashed: boolean }) {
+function Vault({ pos, bond, min, slashed, worst }: { pos: [number, number, number]; bond: number; min: number; slashed: boolean; worst?: number }) {
   const liquid = useRef<THREE.Mesh>(null);
   const cap = Math.max(min * 1.6, 1);
   useFrame((_, dt) => {
@@ -180,7 +192,7 @@ function Vault({ pos, bond, min, slashed }: { pos: [number, number, number]; bon
       <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#c8102e" : "#d4a017"} emissive={low ? "#c8102e" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
       <mesh position={[0, 0.25 + (Math.min(min, cap) / cap) * 1.6, 0]}><boxGeometry args={[1.55, 0.02, 1.55]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1.5} /></mesh>
       <mesh position={[0, 2.05, 0]}><torusGeometry args={[0.45, 0.05, 10, 40]} /><meshStandardMaterial color={TURQ} metalness={0.8} roughness={0.2} emissive={slashed ? CORAL : TURQ} emissiveIntensity={slashed ? 2 : 0.4} /></mesh>
-      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
+      <Label pos={pos} title="Bond vault" value={`${bond.toFixed(0)} locked, minimum ${min}${low ? ", below minimum" : ""}${worst !== undefined ? (bond >= worst ? `, covers ${worst}` : `, worst case ${worst} not covered`) : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
     </group>
   );
 }
@@ -231,10 +243,12 @@ function SprayedStrip({ job, machine }: { job?: Job; machine?: MachineState }) {
   );
 }
 
-function Sticker({ job, kind }: { job: Job; kind: "seal" | "flag" }) {
+function Sticker({ job, kind, tele }: { job: Job; kind: "seal" | "flag"; tele?: Tele }) {
+  const ratio = tele?.ratio ?? (tele?.areaSupported && tele.areaClaimed ? tele.areaClaimed / tele.areaSupported : undefined);
+  const flag = ratio ? `HELD, CLAIMED ${ratio.toFixed(ratio >= 10 ? 0 : 1)}X THE TRACK` : "HELD, LOG FAILED";
   return (
     <Html position={[job.to.x, 1.2, job.to.z]} center distanceFactor={10} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>已验证 CONFIRMED</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>HELD, LOG FAILED</div>}
+      {kind === "seal" ? <div className="seal stamp" style={{ padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>已验证 CONFIRMED</div> : <div className="stamp" style={{ background: "#c8102e", color: "white", padding: "6px 10px", fontSize: 12, fontFamily: "var(--font-tech)", letterSpacing: "0.15em" }}>{flag}</div>}
     </Html>
   );
 }
@@ -249,22 +263,25 @@ function Halo({ machine }: { machine?: MachineState }) {
 function Spray({ active, parent }: { active: boolean; parent: React.RefObject<THREE.Group | null> }) {
   const n = 240;
   const pts = useRef<THREE.Points>(null);
-  const data = useMemo(() => ({ pos: new Float32Array(n * 3), life: new Float32Array(n).map(() => Math.random()) }), []);
+  const pos = useMemo(() => new Float32Array(n * 3), []);
+  const life = useRef<Float32Array | null>(null);
   useFrame((_, dt) => {
     if (!pts.current || !parent.current) return;
+    if (!life.current) { const r = lcg(5); life.current = new Float32Array(n).map(() => r()); }
+    const lf = life.current;
     const p = parent.current.position;
     const a = pts.current.geometry.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < n; i++) {
-      data.life[i] += dt * 1.6;
-      if (data.life[i] > 1) { data.life[i] = active ? 0 : 1; }
-      const t = data.life[i];
+      lf[i] += dt * 1.6;
+      if (lf[i] > 1) { lf[i] = active ? 0 : 1; }
+      const t = lf[i];
       const ang = hash(i, 11) * Math.PI * 2, rad = t * (0.5 + hash(i, 12) * 0.5);
       a.setXYZ(i, p.x + Math.cos(ang) * rad, p.y - 0.25 - t * (p.y - 0.1), p.z + Math.sin(ang) * rad);
     }
     a.needsUpdate = true;
     (pts.current.material as THREE.PointsMaterial).opacity = active ? 0.55 : 0;
   });
-  return <points ref={pts}><bufferGeometry><bufferAttribute attach="attributes-position" args={[data.pos, 3]} /></bufferGeometry><pointsMaterial size={0.08} color={TURQ_SOFT} transparent opacity={0} depthWrite={false} /></points>;
+  return <points ref={pts}><bufferGeometry><bufferAttribute attach="attributes-position" args={[pos, 3]} /></bufferGeometry><pointsMaterial size={0.08} color={TURQ_SOFT} transparent opacity={0} depthWrite={false} /></points>;
 }
 
 function Drone({ state, trail, ambient }: { state?: MachineState; trail: THREE.Vector3[]; ambient?: { r: number; speed: number; phase: number; y: number } }) {
@@ -367,13 +384,36 @@ function Flat({ pos, label, active, windows }: { pos: [number, number, number]; 
   );
 }
 
-function Fence({ center, size, breached, height = 2.3 }: { center: [number, number, number]; size: [number, number]; breached: boolean; height?: number }) {
+function Fence({ center, size, breached, height = 2.3, name }: { center: [number, number, number]; size: [number, number]; breached: boolean; height?: number; name?: string }) {
   const col = breached ? CORAL : TURQ;
   const box = useMemo(() => new THREE.BoxGeometry(size[0], height, size[1]), [size, height]);
   return (
     <group position={[center[0], height / 2, center[2]]}>
       <mesh geometry={box}><meshStandardMaterial color={col} transparent opacity={breached ? 0.14 : 0.06} depthWrite={false} /></mesh>
       <lineSegments><edgesGeometry args={[box]} /><lineBasicMaterial color={col} transparent opacity={0.9} /></lineSegments>
+      <Label pos={[size[0] / 2 - 0.2, 0, -size[1] / 2 + 0.2]} title={`Geofence ${name ?? ""}`} value={breached ? "breached, slashed by proof" : "inside"} accent={breached ? CORAL : TURQ} y={height / 2 + 0.3} />
+    </group>
+  );
+}
+
+// Anyone who submits a signed violation. The bounty dot lands here.
+function Hunter({ pos, paid }: { pos: [number, number, number]; paid: number }) {
+  return (
+    <group position={pos}>
+      <mesh position={[0, 0.5, 0]} castShadow><coneGeometry args={[0.35, 1, 5]} /><meshStandardMaterial color={paid > 0 ? TURQ : "#bdb5a3"} emissive={paid > 0 ? TURQ : "#000"} emissiveIntensity={paid > 0 ? 0.8 : 0} metalness={0.5} roughness={0.4} /></mesh>
+      <Label pos={pos} title="Hunter" value={paid > 0 ? `bounty ${paid.toFixed(1)} received` : "watching for signed violations"} accent={paid > 0 ? "#d4a017" : "#7a7a76"} y={1.7} />
+    </group>
+  );
+}
+
+// Cover pool plinth. Flat cover for each task is bound here, not at the charging pad.
+function CoverPool({ pos, bound }: { pos: [number, number, number]; bound: number }) {
+  return (
+    <group position={pos}>
+      <mesh position={[0, 0.15, 0]} receiveShadow><cylinderGeometry args={[0.8, 0.9, 0.3, 6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
+      <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.28, 16, 16]} /><meshPhysicalMaterial color="#ffffff" transmission={0.8} thickness={0.4} roughness={0.1} transparent opacity={0.7} /></mesh>
+      <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.14, 12, 12]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={bound > 0 ? 2 : 0.3} /></mesh>
+      <Label pos={pos} title="Cover pool" value={bound > 0 ? `${bound.toFixed(0)} bound this run` : "flat cover per task"} accent="#d4a017" y={1.5} />
     </group>
   );
 }
@@ -420,7 +460,7 @@ function Lamp({ pos }: { pos: [number, number, number] }) {
   );
 }
 
-function World({ side, machine, txs, jobs, breached, live }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; live?: boolean }) {
+function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; live?: boolean; extra?: Extra }) {
   const tex = useTextures();
   const trailRef = useRef<THREE.Vector3[]>([]);
   const [trail, setTrail] = useState<THREE.Vector3[]>([]);
@@ -435,14 +475,21 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
   const bondPos: [number, number, number] = side === "fleet" ? [2.5, 0, 5.6] : [0, 0, 3.6];
   const boardPos: [number, number, number] = side === "fleet" ? [-6.5, 0, -5] : [3, 0.1, 0];
   const padPos: [number, number, number] = [-5.5, 0, 4.6];
+  const hunterPos: [number, number, number] = side === "fleet" ? [5.5, 0, 7.2] : [-3.2, 0, 4.4];
+  const coverPos: [number, number, number] = side === "fleet" ? [-1.2, 0, 7.2] : [3.4, 0, 3.8];
+  const railPos: [number, number, number] = [lenderPos[0], 0, lenderPos[2] + 1.2];
   const targets = useMemo(() => {
-    const v = (p: [number, number, number]) => new THREE.Vector3(p[0], 1.2, p[2]);
-    return { default: v(lenderPos), instalment: v(lenderPos), title: v(lenderPos), fee_in: v(boardPos), lock: v(boardPos), release: v(boardPos), refund: v(boardPos), bond_fill: v(bondPos), slash: v(bondPos), bounty: v(bondPos), top_up: v(bondPos), cover: v(padPos), energy: v(padPos) };
+    const v = (p: [number, number, number], y = 1.2) => new THREE.Vector3(p[0], y, p[2]);
+    return { default: v(lenderPos), instalment: v(lenderPos), title: v(lenderPos), fee_in: v(boardPos), lock: v(boardPos), release: v(boardPos), refund: v(boardPos), bond_fill: v(bondPos), slash: v(bondPos), top_up: v(bondPos), bounty: v(hunterPos, 0.9), cover: v(coverPos, 0.8), energy: v(padPos, 0.6), rail: v(railPos, 0.5) } as Record<string, THREE.Vector3>;
   }, [side]); // eslint-disable-line react-hooks/exhaustive-deps
+  const bountyPaid = txs.filter((t) => t.kind === "bounty").reduce((a, t) => a + t.amount, 0);
+  const coverBound = txs.filter((t) => t.kind === "cover").reduce((a, t) => a + t.amount, 0);
+  const titled = !!machine?.owned || txs.some((t) => t.kind === "title");
   const activeJob = Object.values(jobs).find((j) => j.status === "locked" || j.status === "running");
   const jobList = Object.values(jobs);
   const lastJob = activeJob ?? jobList[jobList.length - 1];
   const [recent, setRecent] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (lastJob?.status === "released") { setRecent(true); const t = setTimeout(() => setRecent(false), 2600); return () => clearTimeout(t); } }, [lastJob?.id, lastJob?.status]);
   const m = machine;
   return (
@@ -457,7 +504,7 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
         <Fields rows={tex.rows} rice={tex.rice} />
         <Trees />
         <Village windows={tex.windows} roof={tex.roof} />
-        <Fence center={[0, 0, 0]} size={[12, 7.5]} breached={!!breached} height={2.4} />
+        <Fence center={[0, 0, 0]} size={[12, 7.5]} breached={!!breached} height={2.4} name={extra.geofence ?? "field-north"} />
         <Sparkles count={120} scale={[14, 4, 9]} position={[0, 1.6, 0]} size={2} speed={0.3} color={TURQ_SOFT} />
         <Drone state={m} trail={trail} />
         <Drone trail={[]} ambient={{ r: 9.5, speed: 0.22, phase: 1.2, y: 3.2 }} />
@@ -466,7 +513,7 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
         <Pad pos={padPos} />
         <SprayedStrip job={lastJob} machine={m} />
         {lastJob && lastJob.status === "released" && recent ? <Sticker job={lastJob} kind="seal" /> : null}
-        {lastJob && lastJob.status === "held" ? <Sticker job={lastJob} kind="flag" /> : null}
+        {lastJob && lastJob.status === "held" ? <Sticker job={lastJob} kind="flag" tele={extra.telemetry} /> : null}
         <Halo machine={m} />
       </>) : (<>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow><planeGeometry args={[40, 40]} /><meshStandardMaterial map={tex.tiles} roughness={0.95} /></mesh>
@@ -474,24 +521,26 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
         <mesh position={[-12, 2.4, -2]} receiveShadow castShadow><boxGeometry args={[3, 4.8, 10]} /><meshStandardMaterial map={tex.windows} roughness={0.85} /></mesh>
         <Flat pos={[-3, 0, 0]} label="Owner, flat 4A" active={false} windows={tex.windows} />
         <Flat pos={[3, 0, 0]} label="Neighbour, flat 4B" active={!!activeJob} windows={tex.windows} />
-        <Fence center={[3, 0, 0]} size={[3.6, 2.9]} breached={!!breached} />
+        <Fence center={[3, 0, 0]} size={[3.6, 2.9]} breached={!!breached} name={extra.geofence ?? "flat-4b"} />
         <Lamp pos={[0, 0, 2.6]} /><Lamp pos={[-7, 0, 2.6]} /><Lamp pos={[7, 0, 2.6]} />
         <Trees count={70} />
         <Sparkles count={60} scale={[14, 3, 8]} position={[0, 1.5, 0]} size={1.6} speed={0.2} color={TURQ_SOFT} />
         <Humanoid state={m} />
         <Float speed={1.5} rotationIntensity={0} floatIntensity={0.6}><mesh position={[3, 2.2, 0]}><torusGeometry args={[1.3, 0.015, 8, 64]} /><meshStandardMaterial color={breached ? CORAL : TURQ} emissive={breached ? CORAL : TURQ} emissiveIntensity={1.5} /></mesh></Float>
       </>)}
-      <Bank pos={lenderPos} paid={m ? m.leaseTotal - m.leaseBalance : 0} total={m?.leaseTotal ?? 1} windows={tex.windows} />
-      <Vault pos={bondPos} bond={m?.bond ?? 0} min={m?.bondMin ?? 0} slashed={!!breached} />
+      <Bank pos={lenderPos} paid={m ? m.leaseTotal - m.leaseBalance : 0} total={m?.leaseTotal ?? 1} windows={tex.windows} owned={titled} frozen={!!extra.frozen || m?.status === "frozen"} />
+      <Vault pos={bondPos} bond={m?.bond ?? 0} min={m?.bondMin ?? 0} slashed={!!extra.slashed || !!breached} worst={extra.worst} />
+      <Hunter pos={hunterPos} paid={bountyPaid} />
+      <CoverPool pos={coverPos} bound={coverBound} />
       <MoneyDots txs={txs} from={origin} to={targets} />
     </>
   );
 }
 
-export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean }) {
+export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean } & Extra) {
   return (
     <Canvas shadows camera={{ position: side === "fleet" ? [13, 9, 15] : [9, 6.5, 10], fov: 34 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }} style={{ background: "transparent" }}>
-      <World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} />
+      <World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} />
       <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={0.85} intensity={0.9} mipmapBlur radius={0.6} />
         <Vignette eskil={false} offset={0.2} darkness={0.35} />

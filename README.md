@@ -1,58 +1,73 @@
-# Shenzhen FinTechathon 2026, International Track
+# JiXin (机信)
 
-Working repo for our entry to the 8th Shenzhen International FinTech Competition (FinTechathon), International Track. Theme: "AI as a Financial Participant".
+[![CI](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg)](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml)
 
-Deadline: 20 October 2026, 23:59 Beijing time. Registration and submission close at the same time.
+Entry to the 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F. Theme: "AI as a Financial Participant".
+
+A wallet for machines. A machine earns per verified unit of work, pays its lender and other agents, keeps a bond that is slashed on cryptographic proof of a rule break, and owns itself once the lease is paid. The demo is an agricultural drone on hire purchase.
 
 ## The app
 
-Live: https://jixin-fintechathon.vercel.app
+- Home: who it is for, how one task flows, the competition requirements mapped to code.
+- Dashboard (`/app`): attack count at request time, the live policy caps, the six stages.
+- Fleet (`/app/fleet`): the drone run. Economics check, a declined job, paid flights, a faked log held, a slash by proof, title transfer.
+- Neighbour (`/app/neighbour`): a humanoid cleaning a flat. Judge gate on the request, bond earned in from the fee, a redirect blocked, a slash, a top up through the button.
+- Evidence (`/app/evidence`): the attack lab. The attack set and the benign set run at request time, the naive comparison, a judge console to type your own attack, chain mode and model mode shown as they are.
 
-- Landing page: who it is for (agricultural pilots, fleets, households with a humanoid, small factories, software agents), how one task flows, the competition's requirements mapped to where they live, the scoring criteria, and what no other entry has.
-- Mission control (`/app`): a left rail with Overview, Neighbourhood, Fleet, Attack lab and Evidence.
-- Neighbourhood and Fleet: press Start to watch the agents act. A 3D scene shows the machine, the geofence, the lender and the bond contract, with money dots flying on every transaction. Panels show the agents talking, each signed intent through the policy engine line by line, the chain feed with hashes, the bond gauge, the lease bar and the balance sheet.
-- Attack lab: the hunter runs twenty attacks against a shadow agent, then a judge types their own and sees the gate verdict, the framed message and the shadow policy decision.
-- Evidence: the attack set runs at request time, with chain mode and model mode shown honestly.
+Every panel draws from the engine's event stream. The UI computes no number.
 
-### Run it locally
+## Chain mode
+
+Simulated with labelled hashes unless `SURETY_PRIVATE_KEY` and `DEMO_TOKEN` are set. With them, every event is anchored on Base Sepolia as a self transfer with the event as calldata, and each card links to the explorer. The contracts in `contracts/` are written and tested in CI, not deployed; the engine mirrors their rules in memory.
+
+## Run it
 
 ```
 cd web
 pnpm install
-pnpm dev
+pnpm dev          # app on localhost:3000
+pnpm test         # attack set blocked, benign set passes, normal flow allowed
+pnpm evidence     # writes a full run and the attack results to evidence/
+pnpm verify       # checks every hash in evidence/ against the chain or the labelled set
+cd ../contracts && forge test
 ```
 
-Optional environment (see `web/.env.example`): an AI gateway or Anthropic key lets the model write the agents' explanations (decisions stay in code), and a funded Base Sepolia key makes every transaction real with explorer links. Without them the engine runs scripted explanations on a simulated chain and labels every hash as simulated.
+Environment is optional, see `web/.env.example`. An AI gateway or Anthropic key lets the model write the agents' explanations; decisions stay in code either way.
 
-### Layout
+## Layout
 
-- `web/src/engine`: the backend. Policy engine, SCP style message framing and judge gate, in-memory mirrors of the three contracts, the three agents, the twenty attack cases, the scenario runners, and the chain adapter. `selfcheck.ts` runs the attack set and a normal flow: `npx tsx src/engine/selfcheck.ts`.
-- `web/src/app/api`: `run` streams a scenario as server sent events, `judge` is the judge console, `attacks` returns the attack results.
-- `web/src/components`: the 3D scene, the panels, the run hook, the rail.
-- `contracts`: `IBonded`, `Bond`, `JobBoard`, `Lease` in Solidity with Foundry tests for the bond. Written, not yet compiled on this machine (no Foundry installed). See `contracts/README.md`.
+- `web/src/engine`: policy engine, framing and judge gate, contract mirrors, agents, model wrapper, attack set, scenarios, chain adapter, selfcheck.
+- `web/src/app/api`: `run` streams a scenario as server sent events, `judge` is the console, `attacks` returns the results.
+- `web/src/components`: scene, panels, stages, graphs, attack grid, judge console, run hook.
+- `contracts`: `IBonded`, `Bond`, `JobBoard`, `Lease` with Foundry tests. See `contracts/README.md`.
 
-## Files
+## Deliverables
 
-- `HACKATHON.md`: everything we know about the competition. Rules, topics, scoring, deliverables, timeline, prizes, contacts, judge profile, and open questions to confirm with the organizers.
-- `IDEAS.md`: the full brainstorm. Thirty-five ideas, each with the pitch, the local hook, the demo moment, the security story, and the build risk.
-- `FINAL_IDEAS.md`: the top four ideas for Topic F scored on the rubric, the layers to add, the recommendation, and the three competitors to beat with how to beat them.
-- `BONDED_AGENT.md`: JiXin (机信), the final idea. One wallet standard for machines that earn, pay and post a bond, with two sides: commercial fleets and individuals lending a robot to a neighbour. Flows, the bond, the hunter, CoverAI and competitor comparison, scoring, risks, demo, app, SCP, autoresearch, market.
-- `CORE_IDEA.md`: the ranked shortlist and the one we are building, with scope, architecture, and demo script.
-- `SECURITY.md`: the security layer that goes into whichever idea we pick. Permission tiers, policy engine, injection defense, and the attack test cases we ship with the code.
-- `PLAN.md`: hour by hour plan to the deadline and the submission checklist.
-- `COMPETITION.md`: scan of all 113 public competitor repos for this track (18 Oct), each code reviewed and scored against the official rubric, with the overlaps for every one of our ideas.
-- `FIELD_REVIEW.md`: every competitor repo read file by file and checked against our top ideas. Which ideas nobody has, the bars to match, the weaknesses to exploit.
-- `JUDGE_REVIEW.md`: blind review of all twelve ideas by three simulated judges (WeBank industry, academic, security and compliance), with expected and potential scores.
+1. Technical documentation: `TECHNICAL.md`.
+2. Security self-assessment: `SELF_ASSESSMENT.md`.
+3. Execution evidence: `evidence/` (run log, attack results, hashes).
+4. Contracts: `contracts/README.md`.
+5. Video: `web/public/demo.mp4` (placeholder, record before submitting).
+6. Deck: `deck.pdf` (placeholder, cut from `BONDED_AGENT.md`).
+
+## Other files
+
+- `BONDED_AGENT.md`: the idea, with the built and not built table at the top.
+- `HACKATHON.md`: rules, scoring, deadlines, contacts, deployment note.
+- `FINAL_IDEAS.md`, `FIELD_REVIEW.md`, `COMPETITION.md`, `JUDGE_REVIEW.md`, `IDEAS.md`, `CORE_IDEA.md`, `PLAN.md`: competitor analysis and planning.
+
+Repository visibility: the competitor analysis files above are in this repo. Decide before submitting whether they stay in a public repo or move out.
 
 ## Status
 
-- [ ] Team locked (2 to 5 people, at least 60 percent non-Chinese nationals)
-- [ ] Passport bio pages collected
-- [ ] Eligibility confirmed by email with the organizers
-- [ ] Idea chosen
-- [ ] Repo, testnet wallet, faucet funds
-- [ ] Happy path with a real transaction hash
-- [ ] Attack tests passing
+- [x] Idea chosen
+- [x] Policy engine, framing, judge gate, contract mirrors, chain adapter
+- [x] Attack set, benign set, selfcheck
+- [x] Contracts written and tested in CI
+- [x] Technical doc and self-assessment
+- [ ] Deployment re-pointed (see `HACKATHON.md`)
+- [ ] Funded key set so the evidence run has real hashes
 - [ ] Demo video recorded
-- [ ] Tech doc, security self-assessment, deck
+- [ ] Deck
+- [ ] Team locked, passports collected, eligibility confirmed
 - [ ] Submitted

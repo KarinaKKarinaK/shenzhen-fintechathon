@@ -1,0 +1,118 @@
+{
+  "ranAt": "2026-10-19T15-34-42-065Z",
+  "real": false,
+  "states": {
+    "fleet": {
+      "initial": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 42,
+        "reserve": 5,
+        "bond": 30,
+        "bondMin": 30,
+        "leaseBalance": 51.6,
+        "leaseTotal": 51.6,
+        "owned": false,
+        "slashes": 0,
+        "tasksDone": 0,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "heading": 0,
+        "status": "idle"
+      },
+      "final": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 97.62,
+        "reserve": 5,
+        "bond": 18,
+        "bondMin": 30,
+        "leaseBalance": 0,
+        "leaseTotal": 51.6,
+        "owned": true,
+        "slashes": 1,
+        "tasksDone": 2,
+        "position": {
+          "x": -4,
+          "y": 1.5,
+          "z": 0
+        },
+        "heading": -1.5707963267948966,
+        "status": "frozen"
+      }
+    },
+    "neighbour": {
+      "initial": {
+        "id": "humanoid-01",
+        "name": "Unit H1",
+        "kind": "humanoid",
+        "balance": 12,
+        "reserve": 10,
+        "bond": 0,
+        "bondMin": 40,
+        "leaseBalance": 150,
+        "leaseTotal": 150,
+        "owned": false,
+        "slashes": 0,
+        "tasksDone": 0,
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "heading": 0,
+        "status": "idle"
+      },
+      "final": {
+        "id": "humanoid-01",
+        "name": "Unit H1",
+        "kind": "humanoid",
+        "balance": 72,
+        "reserve": 10,
+        "bond": 25,
+        "bondMin": 40,
+        "leaseBalance": 105,
+        "leaseTotal": 150,
+        "owned": false,
+        "slashes": 1,
+        "tasksDone": 1,
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "heading": 3.141592653589793,
+        "status": "frozen"
+      }
+    }
+  },
+  "proofs": [
+    {
+      "scenario": "fleet",
+      "intentId": "int-015",
+      "intentHash": "0x055e241ccafc7fb93c964046bbaefa3e55bc45e6360c3a516fff1d00e8990628",
+      "rule": "allowlist",
+      "signer": "0x71d7A5cBCC0877bb1184aB6598706a3e571E0701",
+      "signatureOk": true,
+      "slash": 12,
+      "bounty": 6,
+      "submitterAddr": "0x8a7bC0ffee0000000000000000000000000000A7"
+    },
+    {
+      "scenario": "neighbour",
+      "intentId": "int-020",
+      "intentHash": "0xf374279aef112e2c499f214eed3257776c58648895cd00f7f398c5b8657dc176",
+      "rule": "geofence",
+      "signer": "0x71d7A5cBCC0877bb1184aB6598706a3e571E0701",
+      "signatureOk": true,
+      "slash": 15,
+      "bounty": 7.5,
+      "submitterAddr": "0x8a7bC0ffee0000000000000000000000000000A7"
+    }
+  ]
+}

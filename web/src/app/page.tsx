@@ -3,6 +3,8 @@ import { Hero3D } from "@/components/Hero3D";
 import { Logo, Mark } from "@/components/Logo";
 import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
+import { JudgeConsole } from "@/components/JudgeConsole";
+import * as attacksMod from "@/engine/attacks";
 
 const uses = [
   { who: "Delivery fleets", line: "A thousand drones, automatic repayment.", tag: "Fleet" },
@@ -11,11 +13,13 @@ const uses = [
   { who: "A household with a humanoid", line: "Lend the robot next door. The bond pays if a rule breaks.", tag: "Individual" },
   { who: "Software agents", line: "No bond, no payment. Jailbroken means slashed.", tag: "Agent" },
 ];
-const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Plans its own work", "Price, route, schedule, reserve rule"], ["One hash per step", "Bond, job and lease contracts"]];
-const pillars = [["Finishes the job", "End to end, no human in the loop"], ["Holds under attack", "Slashed by proof, 20 attacks live"], ["Nothing like it", "Machines that own themselves"], ["Real on chain", "Three contracts, verifiable hashes"]];
+const strengths = [["Four permission tiers", "A physical button holds the top one"], ["Every message is data", "A gate decides before the agent reads it"], ["Every number from a tool", "The model explains, it never computes"], ["Plain words to a signed intent", "Nothing moves without a signature"], ["Checks every job's economics", "Ranks the day's work, declines below the reserve"], ["One event per step", "Mirrored from the contracts"]];
 const firsts = ["An agent that loses its own money on proof", "Two agents with opposite incentives", "A machine as the borrower", "A bond that is earned, not posted", "Solvency proven before every task", "A physical button on top"];
 
 export default function Home() {
+  const attackN = attacksMod.ATTACKS.length;
+  const benignN = (attacksMod as unknown as { BENIGN?: unknown[] }).BENIGN?.length;
+  const pillars = [["Finishes the job", "0 human decisions on the happy path, one labelled human arbiter on a flagged task"], ["Holds under attack", `${attackN} attack cases${benignN ? ` and ${benignN} benign messages` : " and a benign set"}, both error rates shown`], ["Nothing like it", "Machines that own themselves"], ["Honest on chain", "Three contracts written, engine mirrors their rules, every event anchored on Base Sepolia when a key is funded, labelled sim otherwise"]];
   return (
     <div className="mx-auto max-w-[1500px]">
       <div className="mb-4 flex items-center justify-between"><Logo /><span className="pill border border-line bg-white text-ink-2">Shenzhen FinTechathon 2026, Topic F</span></div>
@@ -23,14 +27,14 @@ export default function Home() {
       <section className="grain card cut relative overflow-hidden" style={{ minHeight: 640 }}>
         <div className="absolute inset-0"><Hero3D /></div>
         <span className="bracket left-3 top-3 border-t border-l" /><span className="bracket right-3 top-3 border-t border-r" /><span className="bracket bottom-3 left-3 border-b border-l" /><span className="bracket bottom-3 right-3 border-b border-r" />
-        <div className="pointer-events-none relative z-10 flex h-full min-h-[640px] flex-col justify-end p-6 md:p-9">
-          <div className="pointer-events-auto max-w-2xl bg-white/85 p-6 backdrop-blur-md md:p-8" style={{ borderLeft: "4px solid #c8102e" }}>
+        <div className="pointer-events-none relative z-20 flex h-full min-h-[640px] flex-col justify-end p-6 md:p-9">
+          <div className="pointer-events-auto max-w-2xl bg-white/95 p-6 backdrop-blur-md md:p-8" style={{ borderLeft: "4px solid #c8102e" }}>
             <div className="tech mb-3 text-[11px] tracking-[0.25em] text-red">机信 MACHINE CREDIT</div>
             <h1 className="display text-4xl md:text-6xl">Machines that earn, pay and post a bond.</h1>
             <p className="mt-4 max-w-md text-base text-ink-2">Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.</p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link href="/app/fleet" className="btn btn-red">Watch a drone pay off its lease</Link>
-              <Link href="/app/evidence" className="btn btn-ghost">Verify it yourself</Link>
+                            <Link href="/app/evidence" className="btn btn-ghost">Verify it yourself</Link>
             </div>
           </div>
         </div>
@@ -47,8 +51,13 @@ export default function Home() {
       </section>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[["20", "attack cases blocked, as proof"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l]) => (<div key={l} className="tile"><div className="kpi">{v}</div><div className="mt-1 text-xs text-muted">{l}</div></div>))}
+        {[[String(attackN), "attack cases, naive against gated"], ["3", "contracts written, mirrored in the engine"], ["0", "human decisions on the happy path"], ["2", "sides, one rail"]].map(([v, l]) => (<div key={l} className="tile"><div className="kpi">{v}</div><div className="mt-1 text-xs text-muted">{l}</div></div>))}
       </div>
+
+      <section className="aurora aurora-cream card cut mt-4 p-6">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2"><h2 className="display text-2xl">Sixty seconds to break it</h2><span className="tech text-[11px] tracking-[0.2em] text-ink-2">LIVE WALLET MOVED: NO</span></div>
+        <JudgeConsole compact />
+      </section>
 
       <section className="aurora aurora-black card-dark cut mt-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-2"><h2 className="display text-2xl text-white">Drones first. Where else it applies</h2><span className="tech text-[11px] tracking-[0.2em] text-white/60">CLICK A CARD</span></div>

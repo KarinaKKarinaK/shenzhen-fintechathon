@@ -1,5 +1,7 @@
 // Chain adapter. SimChain produces deterministic hashes and is labelled simulated.
-// RealChain talks to Base Sepolia through viem when the env is set. Same interface.
+// RealChain anchors each event on Base Sepolia through viem. Same interface.
+// Real mode only runs when the caller proves it holds the demo token, so the funded key
+// cannot be drained by anyone who finds the route.
 
 import { keccak256, toHex } from "viem";
 import type { ChainTx } from "./types";
@@ -21,9 +23,10 @@ export class SimChain implements Chain {
   }
 }
 
-// ponytail: the real adapter sends a value transfer carrying the event as calldata and
-// returns the mined hash. Contract calls through the ABI in abi.ts are the next step once
-// the contracts in /contracts are deployed and their addresses are in the env.
+// The real adapter sends a value transfer carrying the event as calldata and returns the
+// mined hash. The label says "anchor" because the demo units are not moved on chain, the
+// record of the event is. Contract calls through the ABI are the next step once the
+// contracts in /contracts are deployed and their addresses are in the env.
 export class RealChain implements Chain {
   readonly simulated = false;
   private ready = false;
@@ -47,7 +50,7 @@ export class RealChain implements Chain {
     const receipt = await c.waitForTransactionReceipt({ hash });
     return {
       hash,
-      label,
+      label: `anchor: ${label}`,
       kind,
       amount,
       from,
@@ -59,9 +62,21 @@ export class RealChain implements Chain {
   }
 }
 
-export function makeChain(): Chain {
+export function realChainAvailable(): boolean {
+  const pk = process.env.SURETY_PRIVATE_KEY;
+  return !!pk && pk.startsWith("0x") && pk.length === 66;
+}
+
+// A request is allowed real mode only when it carries the demo token.
+export function demoAuthorised(headers: Headers): boolean {
+  const token = process.env.DEMO_TOKEN;
+  if (!token) return false;
+  return headers.get("x-jixin-demo") === token;
+}
+
+export function makeChain(opts: { real?: boolean } = {}): Chain {
   const pk = process.env.SURETY_PRIVATE_KEY as `0x${string}` | undefined;
   const rpc = process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";
-  if (pk && pk.startsWith("0x") && pk.length === 66) return new RealChain(pk, rpc);
+  if (opts.real && pk && realChainAvailable()) return new RealChain(pk, rpc);
   return new SimChain();
 }

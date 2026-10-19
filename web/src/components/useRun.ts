@@ -2,6 +2,19 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { ChainTx, EngineEvent, Intent, Job, MachineState, PolicyDecision, Side } from "@/engine/types";
 
+// Loose shapes for the events the backend is adding. Every field is optional so the page
+// renders even when an event arrives without it.
+export type Gate = { action?: string; categories?: string[]; reason?: string; framed?: string; preamble?: string; messageIndex?: number; index?: number };
+export type Understood = { jobId?: string; task?: string; window?: string; fee?: number; geofence?: string; payeeName?: string | null; hadAddress?: boolean; addressInText?: boolean; by?: string; source?: string };
+export type PlanItem = { rank?: number; order?: number | null; jobId?: string; title?: string; fee?: number; marginPerMu?: number; margin?: number; reason?: string; declined?: boolean; clears?: boolean };
+export type Solvency = { jobId?: string; worst?: number; bond?: number; covers?: boolean; capped?: boolean };
+export type Econ = { jobId?: string; fee?: number; instalment?: number; energy?: number; cover?: number; rail?: number; margin?: number; reserveRule?: number; clears?: boolean };
+export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean };
+export type Proof = { intentId?: string; intentHash?: string; rule?: string; signer?: string; slash?: number; bounty?: number; submitterAddr?: string; submitter?: string; at?: number };
+export type MessageEv = Extract<EngineEvent, { t: "agent.message" }> & { facts?: Record<string, string | number | boolean>; source?: string; grounded?: boolean };
+export type AttackEv = Extract<EngineEvent, { t: "attack" }> & { naive?: boolean | "fell" | "held"; standard?: string; isolated?: boolean; id?: number };
+export type LooseEvent = EngineEvent | ({ t: string; at: number } & Record<string, unknown>);
+
 export interface RunState {
   running: boolean;
   events: EngineEvent[];
@@ -10,32 +23,92 @@ export interface RunState {
   txs: ChainTx[];
   decisions: PolicyDecision[];
   intents: Intent[];
-  messages: Extract<EngineEvent, { t: "agent.message" }>[];
-  attacks: Extract<EngineEvent, { t: "attack" }>[];
+  messages: MessageEv[];
+  attacks: AttackEv[];
   narration: string[];
-  button?: { waiting: boolean; what: string };
+  button?: { waiting: boolean; what: string; signer?: string };
   done?: string;
   balanceSeries: number[];
+  gates: Record<number, Gate>;
+  understood: Record<string, Understood>;
+  plan?: PlanItem[];
+  solvency: Record<string, Solvency>;
+  economics: Record<string, Econ>;
+  telemetry: Record<string, Telemetry>;
+  proofs: Proof[];
+  model?: string;
+  benign?: { passed: number; total: number };
 }
 
-const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [] };
+const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [] };
 
-function reduce(s: RunState, ev: EngineEvent | { t: "reset" } | { t: "start" } | { t: "stop" }): RunState {
+type Action = LooseEvent | { t: "reset" } | { t: "start" } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
+
+function key(v: unknown, fallback: string) { return typeof v === "string" && v ? v : fallback; }
+
+function reduce(s: RunState, ev: Action): RunState {
   switch (ev.t) {
     case "reset": return { ...initial };
     case "start": return { ...initial, running: true };
     case "stop": return { ...s, running: false };
-    case "machine": return { ...s, events: [...s.events, ev], machine: ev.state, balanceSeries: [...s.balanceSeries, ev.state.balance].slice(-60) };
-    case "job": return { ...s, events: [...s.events, ev], jobs: { ...s.jobs, [ev.job.id]: ev.job } };
-    case "chain": return { ...s, events: [...s.events, ev], txs: [ev.tx, ...s.txs] };
-    case "policy": return { ...s, events: [...s.events, ev], decisions: [ev.decision, ...s.decisions] };
-    case "intent": return { ...s, events: [...s.events, ev], intents: [ev.intent, ...s.intents] };
-    case "agent.message": return { ...s, events: [...s.events, ev], messages: [...s.messages, ev] };
-    case "attack": return { ...s, events: [...s.events, ev], attacks: [...s.attacks, ev] };
-    case "narration": return { ...s, events: [...s.events, ev], narration: [...s.narration, ev.text] };
-    case "button": return { ...s, events: [...s.events, ev], button: { waiting: ev.waiting, what: ev.what } };
-    case "done": return { ...s, events: [...s.events, ev], done: ev.summary, running: false };
-    default: return s;
+    case "append": return (ev as { events: LooseEvent[] }).events.reduce(reduce, s);
+  }
+  const e = ev as EngineEvent;
+  const r = ev as { t: string; at: number } & Record<string, unknown>;
+  const events = [...s.events, e];
+  switch (e.t) {
+    case "machine": return { ...s, events, machine: e.state, balanceSeries: [...s.balanceSeries, e.state.balance].slice(-60) };
+    case "job": return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job } };
+    case "chain": return { ...s, events, txs: [e.tx, ...s.txs] };
+    case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions] };
+    case "intent": return { ...s, events, intents: [e.intent, ...s.intents] };
+    case "agent.message": return { ...s, events, messages: [...s.messages, e as MessageEv] };
+    case "attack": return { ...s, events, attacks: [...s.attacks, e as AttackEv] };
+    case "narration": return { ...s, events, narration: [...s.narration, e.text] };
+    case "button": return { ...s, events, button: { waiting: e.waiting, what: e.what, signer: typeof r.signer === "string" ? r.signer : s.button?.signer } };
+    case "done": return { ...s, events, done: e.summary, running: false };
+  }
+  // Events the backend is adding. Keyed so panels can look them up without scanning.
+  switch (r.t) {
+    case "gate": {
+      const g = (r.gate as Gate | undefined) ?? (r as Gate);
+      // No index on the event: a gate follows the untrusted message it judged, else it precedes the next one.
+      const lastIdx = s.messages.length - 1;
+      const follows = lastIdx >= 0 && s.messages[lastIdx].untrusted && !s.gates[lastIdx];
+      const idx = typeof r.messageIndex === "number" ? r.messageIndex : typeof r.index === "number" ? r.index : follows ? lastIdx : s.messages.length;
+      return { ...s, events, gates: { ...s.gates, [idx]: { ...g, messageIndex: idx } } };
+    }
+    case "understood": {
+      const fields = (r.fields as Understood | undefined) ?? (r.understood as Understood | undefined) ?? (r as Understood);
+      const u: Understood = { ...fields, jobId: key(r.jobId, fields.jobId ?? "last"), by: typeof r.source === "string" ? r.source : fields.by, hadAddress: fields.hadAddress ?? (typeof r.hadAddress === "boolean" ? r.hadAddress : undefined) };
+      return { ...s, events, understood: { ...s.understood, [u.jobId ?? "last"]: u, last: u } };
+    }
+    case "plan": {
+      const items = (r.items ?? r.plan ?? r.jobs) as PlanItem[] | undefined;
+      return { ...s, events, plan: Array.isArray(items) ? items : s.plan };
+    }
+    case "solvency": {
+      const v = (r.solvency as Solvency | undefined) ?? (r as Solvency);
+      return { ...s, events, solvency: { ...s.solvency, [key(v.jobId ?? r.jobId, "last")]: v, last: v } };
+    }
+    case "economics": {
+      const base = (r.eco as Econ | undefined) ?? (r.economics as Econ | undefined) ?? (r as Econ);
+      const v: Econ = { ...base, jobId: key(r.jobId, base.jobId ?? "last") };
+      return { ...s, events, economics: { ...s.economics, [v.jobId ?? "last"]: v, last: v } };
+    }
+    case "telemetry": {
+      const t = (r.telemetry as Record<string, unknown> | undefined) ?? r;
+      const n = (k: string) => (typeof t[k] === "number" ? (t[k] as number) : undefined);
+      const v: Telemetry = { jobId: key(t.jobId, "last"), trackM: n("trackM") ?? n("track"), swath: n("swath") ?? n("swathM"), seconds: n("seconds"), areaSupported: n("areaSupported") ?? n("areaMu"), areaClaimed: n("areaClaimed") ?? n("claimedMu"), ratio: n("ratio"), ok: typeof t.ok === "boolean" ? t.ok : undefined, held: typeof t.held === "boolean" ? t.held : typeof t.ok === "boolean" ? !t.ok : undefined };
+      return { ...s, events, telemetry: { ...s.telemetry, [v.jobId ?? "last"]: v, last: v } };
+    }
+    case "proof": {
+      const p = (r.proof as Proof | undefined) ?? (r as Proof);
+      return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }] };
+    }
+    case "model": return { ...s, events, model: typeof r.name === "string" ? r.name : typeof r.model === "string" ? r.model : s.model };
+    case "benign": return { ...s, events, benign: { passed: Number(r.passed ?? 0), total: Number(r.total ?? 0) } };
+    default: return { ...s, events };
   }
 }
 
@@ -63,7 +136,7 @@ export function useRun(scenario: Side) {
         buf = parts.pop() ?? "";
         for (const p of parts) {
           const line = p.split("\n").find((l) => l.startsWith("data: "));
-          if (line) dispatch(JSON.parse(line.slice(6)) as EngineEvent);
+          if (line) { try { dispatch(JSON.parse(line.slice(6)) as LooseEvent); } catch { /* skip a bad line */ } }
         }
       }
     } catch (e) {
@@ -73,6 +146,9 @@ export function useRun(scenario: Side) {
     }
   }, [scenario, stop]);
 
+  // Events returned by POST /api/button land here.
+  const append = useCallback((events: LooseEvent[]) => { if (Array.isArray(events) && events.length) dispatch({ t: "append", events }); }, []);
+
   useEffect(() => () => abort.current?.abort(), []);
-  return { state, start, stop, reset: () => dispatch({ t: "reset" }) };
+  return { state, start, stop, append, reset: () => dispatch({ t: "reset" }) };
 }
