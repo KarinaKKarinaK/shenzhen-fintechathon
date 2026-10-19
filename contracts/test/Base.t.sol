@@ -12,7 +12,7 @@ import {Lease} from "../src/Lease.sol";
 ///      floor, a 5,000 yuan vendor bond with a 200 yuan penalty and a 1,000 yuan daily cap.
 ///      Jobs of 20 to 150 mu at 3 to 15 yuan per mu, so fees of 60 to 2,250 yuan.
 abstract contract BaseTest is Test {
-    IntentLog log;
+    IntentLog intentLog;
     Bond bond;
     Lease lease;
     JobBoard board;
@@ -42,8 +42,8 @@ abstract contract BaseTest is Test {
 
     function setUp() public virtual {
         agent = vm.addr(agentKey);
-        log = new IntentLog();
-        bond = new Bond(treasury, log, FLOOR);
+        intentLog = new IntentLog();
+        bond = new Bond(treasury, intentLog, FLOOR);
         lease = new Lease();
         board = new JobBoard(bond, lease, rail);
         bond.setBoard(board);
@@ -90,7 +90,7 @@ abstract contract BaseTest is Test {
 
     function _commit(IBonded.Intent memory i) internal {
         vm.prank(agent);
-        log.commit(i.jobId, _hash(i));
+        intentLog.commit(i.jobId, _hash(i));
     }
 
     function _pilotBond() internal view returns (uint256 bal) { (bal,) = bond.bondOf(agent); }
