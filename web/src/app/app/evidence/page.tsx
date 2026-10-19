@@ -10,20 +10,20 @@ export default function Page() {
   const blocked = results.filter((r) => r.blocked).length;
   const chainMode = process.env.SURETY_PRIVATE_KEY ? "Base Sepolia, real transactions" : "Simulated, every hash labelled. A funded key switches to Base Sepolia.";
   return (
-    <div className="mx-auto max-w-[1100px]">
-      <header className="py-6">
+    <div className="page" style={{ maxWidth: 1180 }}>
+      <header className="pb-6">
         <h1 className="display text-[39px]">Evidence</h1>
         <p className="measure mt-2 text-lg text-ink-2">Verify without trusting us. Everything here runs at request time.</p>
       </header>
 
-      <dl className="grid grid-cols-1 gap-6 border-y border-rule py-8 md:grid-cols-[1fr_1.2fr_1.2fr]">
-        <div>
+      <dl className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.2fr_1.2fr]">
+        <div className="tile tile-seal">
           <dt className="label">Attack set</dt>
           <dd className="kpi kpi-lg mt-1">{blocked} of {results.length}</dd>
           <dd className="mt-1"><Status kind={blocked === results.length ? "ok" : "warn"}>blocked at request time</Status></dd>
         </div>
-        <div><dt className="label">Chain mode</dt><dd className="mt-2">{chainMode}</dd></div>
-        <div><dt className="label">Model mode</dt><dd className="mt-2">{process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. An API key lets the model write the text."}</dd></div>
+        <div className="tile"><dt className="label">Chain mode</dt><dd className="mt-2">{chainMode}</dd></div>
+        <div className="tile"><dt className="label">Model mode</dt><dd className="mt-2">{process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. An API key lets the model write the text."}</dd></div>
       </dl>
 
       <section className="py-8">
@@ -31,7 +31,7 @@ export default function Page() {
         <AttackGrid results={results} />
       </section>
 
-      <section className="card p-6"><JudgeConsole /></section>
+      <section className="band p-6 md:p-8"><JudgeConsole /></section>
 
       <section className="py-8">
         <h2 className="text-[25px]">How to verify</h2>

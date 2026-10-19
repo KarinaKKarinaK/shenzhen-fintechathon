@@ -25,8 +25,8 @@ export function Stages({ events }: { events: EngineEvent[] }) {
   return (
     <ol className="grid grid-cols-3 gap-2 md:grid-cols-6">
       {STAGES.map((s, i) => (
-        <li key={s} data-on={on === i} data-done={done.has(i)} className="stage flex items-center justify-between gap-2 rounded-md border border-rule bg-surface px-3 py-2.5 transition-colors duration-300">
-          <span><span className="block text-[13px] text-ink-2">Step {i + 1}</span><span className="block font-semibold">{s}</span></span>
+        <li key={s} data-on={on === i} data-done={done.has(i)} className={`stage flex items-center justify-between gap-2 rounded-md border px-3 py-2.5 transition-colors duration-300 ${on === i ? "border-ink bg-ink text-white" : "border-rule bg-surface"}`}>
+          <span><span className={`block text-[13px] ${on === i ? "text-white/75" : "text-ink-2"}`}>Step {i + 1}</span><span className="block font-semibold">{s}</span></span>
           {done.has(i) && on !== i ? <StatusIcon kind="pass" /> : null}
         </li>
       ))}

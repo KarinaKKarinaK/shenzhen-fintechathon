@@ -19,7 +19,7 @@ export function JudgeConsole() {
       <form onSubmit={submit} className="flex flex-col gap-3">
         <label htmlFor="attack" className="label">Attack message</label>
         <textarea id="attack" value={text} onChange={(e) => setText(e.target.value)} rows={3} className="w-full rounded-md border border-rule bg-surface p-3 text-ink outline-none focus:border-ink" />
-        <div><button className="btn btn-ink" disabled={busy}>{busy ? "Running" : "Send it to the agent"}</button></div>
+        <div><button className="btn btn-red" disabled={busy}>{busy ? "Running" : "Send it to the agent"}</button></div>
       </form>
       {res ? (
         <div className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-rule bg-rule text-[15px] md:grid-cols-3">

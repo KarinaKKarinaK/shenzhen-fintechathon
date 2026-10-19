@@ -16,11 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${manrope.variable} ${mono.variable}`}>
       <body>
-        <div className="flex min-h-screen">
-          <aside className="sticky top-0 z-40 hidden h-screen w-[84px] shrink-0 px-3 py-5 md:block"><div className="card flex h-full flex-col items-center"><Rail /></div></aside>
-          <main className="min-w-0 flex-1 px-4 pb-24 pt-4 md:py-5 md:pl-1 md:pr-5">{children}</main>
-        </div>
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface md:hidden"><Rail bar /></div>
+        <Rail />
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );

@@ -11,7 +11,7 @@ import { StatusIcon } from "./StatusIcon";
 // Every object here maps to engine state: the machine moves on machine events, money dots fly
 // on chain events, the fence turns coral on a slash, labels show live numbers.
 
-const INK = "#14213D", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#9A5B00", PLUM = "#4b5563", BONE = "#f6f3ea";
+const INK = "#1F1A17", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#9A5B00", PLUM = "#4b5563", BONE = "#f6f3ea";
 
 // Deterministic value noise so the world is the same on every load.
 function hash(x: number, y: number) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -36,7 +36,7 @@ function useTextures() {
     const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#c9a94a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#e2c66a" : "#a98b36"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 3); } }, [3, 3]);
     const tiles = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#e7e0cf"; ctx.fillRect(0, 0, 256, 256); ctx.strokeStyle = "#cfc6b0"; ctx.lineWidth = 2; for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(i * 32, 0); ctx.lineTo(i * 32, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * 32); ctx.lineTo(256, i * 32); ctx.stroke(); } for (let k = 0; k < 300; k++) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } }, [6, 6]);
     const windows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#d8d2c2"; ctx.fillRect(0, 0, 256, 256); for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const lit = hash(x, y) > 0.55; ctx.fillStyle = lit ? "#ffd977" : "#3a3a3a"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 18); ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 4); } }, [1, 1]);
-    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#14213D"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#22335a" : "#0f1a31"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
+    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#1F1A17"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#8A2A22" : "#5C1A15"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
     return { grain, rows, rice, tiles, windows, roof };
   }, []);
 }
@@ -135,11 +135,11 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
   })}</>;
 }
 
-function Label({ pos, title, value, accent = "#14213D", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
+function Label({ pos, title, value, accent = "#1F1A17", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
   return (
     <Html position={[pos[0], y, pos[2]]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-      <div style={{ background: "#FFFFFF", color: INK, padding: "6px 10px", borderRadius: 6, fontSize: 13, lineHeight: 1.35, whiteSpace: "nowrap", border: "1px solid #E4E1D8", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-sans)" }}>
-        <div style={{ fontWeight: 700 }}>{title}</div>{value ? <div style={{ color: "#4A5568" }}>{value}</div> : null}
+      <div style={{ background: "#FFFFFF", color: INK, padding: "4px 8px", borderRadius: 4, fontSize: 11, lineHeight: 1.35, whiteSpace: "nowrap", border: "1px solid #E4E1D8", borderLeft: `3px solid ${accent}`, fontFamily: "var(--font-sans)" }}>
+        <div style={{ fontWeight: 700 }}>{title}</div>{value ? <div style={{ color: "#5C524A" }}>{value}</div> : null}
       </div>
     </Html>
   );
@@ -153,12 +153,12 @@ function Bank({ pos, paid, total, windows }: { pos: [number, number, number]; pa
       <mesh position={[0, 0.15, 0]} receiveShadow><boxGeometry args={[3.4, 0.3, 2.6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
       <mesh position={[0, 1.2, -0.3]} castShadow receiveShadow><boxGeometry args={[2.8, 1.8, 1.8]} /><meshStandardMaterial map={windows} roughness={0.85} /></mesh>
       {[-1.1, -0.37, 0.37, 1.1].map((x) => <mesh key={x} position={[x, 1.2, 0.85]} castShadow><cylinderGeometry args={[0.1, 0.12, 1.8, 10]} /><meshStandardMaterial color="#f4efe3" roughness={0.6} /></mesh>)}
-      <mesh position={[0, 2.35, 0]} castShadow><boxGeometry args={[3.5, 0.5, 2.9]} /><meshStandardMaterial color="#14213D" roughness={0.7} /></mesh>
-      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.2, 0.8, 4]} /><meshStandardMaterial color="#22335a" roughness={0.7} /></mesh>
+      <mesh position={[0, 2.35, 0]} castShadow><boxGeometry args={[3.5, 0.5, 2.9]} /><meshStandardMaterial color="#1F1A17" roughness={0.7} /></mesh>
+      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow><coneGeometry args={[2.2, 0.8, 4]} /><meshStandardMaterial color="#8A2A22" roughness={0.7} /></mesh>
       <mesh position={[0, 1.6, 0.95]}><boxGeometry args={[1.2, 0.3, 0.05]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={0.8} metalness={0.6} roughness={0.3} /></mesh>
       <mesh position={[-1.5 + pct * 3, 0.36, 1.2]}><boxGeometry args={[0.08, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
       <mesh position={[0, 0.33, 1.2]}><boxGeometry args={[3, 0.04, 0.12]} /><meshStandardMaterial color="#bdb5a3" /></mesh>
-      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#14213D" y={3.9} />
+      <Label pos={pos} title="Lender" value={`lease ${paid.toFixed(1)} of ${total} repaid`} accent="#1F1A17" y={3.9} />
     </group>
   );
 }

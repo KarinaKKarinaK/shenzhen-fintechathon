@@ -30,8 +30,8 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
   ];
 
   return (
-    <div className="mx-auto max-w-[1440px]">
-      <header className="flex flex-wrap items-end justify-between gap-4 py-6">
+    <div className="page">
+      <header className="flex flex-wrap items-end justify-between gap-4 pb-6">
         <div>
           <div className="label">{side === "fleet" ? "Agricultural drone on hire purchase" : "Household humanoid"}</div>
           <h1 className="display mt-1 text-[39px]">{title}</h1>
@@ -44,9 +44,9 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
         </div>
       </header>
 
-      <div className="border-y border-rule py-6">
-        <dl className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {kpis.slice(0, 3).map((k) => (<div key={k.label}><dt className="label">{k.label}</dt><dd className="kpi kpi-lg mt-1">{k.value}</dd></div>))}
+      <div>
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {kpis.slice(0, 3).map((k, i) => (<div key={k.label} className={`tile ${i === 1 ? "tile-seal" : ""}`}><dt className="label">{k.label}</dt><dd className="kpi kpi-lg mt-1">{k.value}</dd></div>))}
         </dl>
         <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-[15px]">
           {kpis.slice(3).map((k) => (<div key={k.label} className="flex items-baseline gap-2"><dt className="text-ink-2">{k.label}</dt><dd className="num font-semibold">{k.value}</dd></div>))}

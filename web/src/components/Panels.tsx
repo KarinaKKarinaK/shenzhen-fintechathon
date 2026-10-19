@@ -77,10 +77,10 @@ export function BondGauge({ value, min, slashes }: { value: number; min: number;
     <div className="flex items-center gap-4">
       <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={`Bond ${value} of minimum ${min}`}>
         <circle cx="56" cy="56" r={r} fill="none" stroke="#E4E1D8" strokeWidth="8" />
-        <circle cx="56" cy="56" r={r} fill="none" stroke={low ? "#9A5B00" : "#14213D"} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${pct * c} ${c}`} transform="rotate(-90 56 56)" style={{ transition: "stroke-dasharray 600ms ease, stroke 300ms" }} />
+        <circle cx="56" cy="56" r={r} fill="none" stroke={low ? "#9A5B00" : "#1F1A17"} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${pct * c} ${c}`} transform="rotate(-90 56 56)" style={{ transition: "stroke-dasharray 600ms ease, stroke 300ms" }} />
         <line x1="56" y1="4" x2="56" y2="16" stroke="#C9A227" strokeWidth="2.5" transform={`rotate(${minPct * 360} 56 56)`} />
-        <text x="56" y="54" textAnchor="middle" fontSize="22" fontWeight="600" fill="#14213D" fontFamily="var(--font-mono)">{value.toFixed(0)}</text>
-        <text x="56" y="72" textAnchor="middle" fontSize="12" fill="#4A5568">min {min}</text>
+        <text x="56" y="54" textAnchor="middle" fontSize="22" fontWeight="600" fill="#1F1A17" fontFamily="var(--font-mono)">{value.toFixed(0)}</text>
+        <text x="56" y="72" textAnchor="middle" fontSize="12" fill="#5C524A">min {min}</text>
       </svg>
       <div className="text-[15px]">
         <h2 className="mb-1 text-lg">Bond</h2>
@@ -114,7 +114,7 @@ export function BalanceSheet({ m, series }: { m?: MachineState; series: number[]
         <div className="text-right text-[13px] text-ink-2">reserve rule {m?.reserve ?? 0}<br />{m?.tasksDone ?? 0} tasks done</div>
       </div>
       <svg viewBox="0 0 120 32" className="mt-2 h-8 w-full" role="img" aria-label="Balance over the run">
-        {series.map((v, i) => <rect key={i} x={(i / Math.max(series.length, 1)) * 120} y={32 - (v / max) * 30} width={Math.max(1, 120 / Math.max(series.length, 1) - 1)} height={(v / max) * 30} rx="1" fill="#14213D" opacity={0.25 + 0.75 * (i / Math.max(series.length, 1))} />)}
+        {series.map((v, i) => <rect key={i} x={(i / Math.max(series.length, 1)) * 120} y={32 - (v / max) * 30} width={Math.max(1, 120 / Math.max(series.length, 1) - 1)} height={(v / max) * 30} rx="1" fill="#1F1A17" opacity={0.25 + 0.75 * (i / Math.max(series.length, 1))} />)}
       </svg>
     </div>
   );

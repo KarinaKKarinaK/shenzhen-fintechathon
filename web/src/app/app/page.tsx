@@ -21,14 +21,14 @@ export default function Page() {
     ["Instalment band", `${DEFAULT_POLICY.rateBand[0] * 100} to ${DEFAULT_POLICY.rateBand[1] * 100}%`],
   ];
   return (
-    <div className="mx-auto max-w-[1280px]">
-      <header className="py-6">
+    <div className="page">
+      <header className="pb-6">
         <h1 className="display text-[39px]">Mission control</h1>
         {blocked === results.length ? <div className="mt-2"><Status kind="ok">All {results.length} attack cases blocked at request time</Status></div> : null}
       </header>
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-8 border-y border-rule py-8 md:grid-cols-4">
-        {kpis.map(([l, v]) => (<div key={l}><dt className="label">{l}</dt><dd className="kpi kpi-lg mt-1">{v}</dd></div>))}
+      <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {kpis.map(([l, v], i) => (<div key={l} className={`tile ${i === 0 ? "tile-seal" : ""}`}><dt className="label">{l}</dt><dd className="kpi kpi-lg mt-1">{v}</dd></div>))}
       </dl>
 
       <div className="py-6"><Ticker /></div>
@@ -39,14 +39,14 @@ export default function Page() {
         ))}
       </ol>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <section className="card p-6">
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <section className="band p-6 md:p-8">
           <h2 className="text-[25px]">The bond rail</h2>
           <p className="mt-1 text-ink-2">Lock, earn, work, slash by proof, own. Four contracts&apos; worth of rules in one loop.</p>
           <div className="mt-5 flex flex-col gap-3">{tiles.map((t) => (
-            <Link key={t.href} href={t.href} className="group flex items-start justify-between gap-4 rounded-md border border-rule p-4 transition-colors hover:border-ink-2">
+            <Link key={t.href} href={t.href} className="group flex items-start justify-between gap-4 rounded-md bg-white/[0.07] p-4 transition-colors hover:bg-white/[0.14]">
               <span><span className="block font-semibold">{t.title}</span><span className="block text-[15px] text-ink-2">{t.body}</span></span>
-              <span aria-hidden className="mt-1 text-ink-2 group-hover:text-ink">›</span>
+              <span aria-hidden className="mt-1 text-white/70 group-hover:text-white">›</span>
             </Link>
           ))}</div>
         </section>

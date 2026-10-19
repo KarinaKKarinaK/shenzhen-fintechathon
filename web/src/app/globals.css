@@ -4,39 +4,68 @@
 @theme {
   --color-paper: #faf9f6;
   --color-surface: #ffffff;
-  --color-ink: #14213d;
-  --color-ink-2: #4a5568;
+  --color-ink: #1F1A17;
+  --color-ink-2: #5C524A;
   --color-rule: #e4e1d8;
   --color-seal: #b8322a;
+  --color-seal-deep: #7a231c;
   --color-gold: #c9a227;
   --color-gold-text: #8a6a1f;
   --color-warn: #9a5b00;
 
   /* Older names, mapped onto the palette so existing classes keep working. */
   --color-paper-2: #faf9f6;
-  --color-muted: #4a5568;
+  --color-muted: #5C524A;
   --color-line: #e4e1d8;
   --color-red: #b8322a;
-  --color-red-deep: #14213d;
+  --color-red-deep: #1F1A17;
   --color-red-soft: #faf9f6;
   --color-gold-deep: #8a6a1f;
   --color-gold-soft: #faf9f6;
-  --color-slate: #4a5568;
-  --color-black: #14213d;
+  --color-slate: #5C524A;
+  --color-black: #1F1A17;
 
   --font-sans: var(--font-manrope), "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-tech: var(--font-sans);
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
+@layer base {
 :root { color-scheme: light; }
-html { background: var(--color-paper); }
+html { background: var(--color-paper); overflow-x: clip; }
 body {
   color: var(--color-ink); font-family: var(--font-sans); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
   background-color: var(--color-paper);
-  background-image: linear-gradient(rgba(228,225,216,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(228,225,216,0.45) 1px, transparent 1px);
-  background-size: 48px 48px;
 }
+
+}
+
+@layer components {
+/* Section headings and key statements: bigger and heavier than body headings. */
+.h-section { font-size: clamp(2rem, 3.4vw, 2.75rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+.statement { font-size: clamp(1.75rem, 3.6vw, 3.25rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.08; }
+.rule-gold { display: block; width: 56px; height: 3px; background: var(--color-gold); border-radius: 2px; }
+
+/* Large seals in the background. */
+.watermark { position: absolute; pointer-events: none; z-index: 0; opacity: 0.07; }
+.watermark-strong { opacity: 0.14; }
+
+/* Red and gold duotone over a photo. */
+.duotone { position: relative; isolation: isolate; overflow: hidden; background: #1f1a17; }
+.duotone > img { filter: grayscale(1) contrast(1.2) brightness(0.95); }
+.duotone::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(160deg, #b8322a 0%, #7a231c 55%, #3a0f0b 100%); mix-blend-mode: multiply; pointer-events: none; }
+.duotone::after { content: ""; position: absolute; inset: 0; z-index: 1; background: radial-gradient(60% 50% at 55% 85%, rgba(201,162,39,0.55), transparent 70%); mix-blend-mode: screen; pointer-events: none; }
+.duotone-light > img { filter: grayscale(1) contrast(1.15) brightness(1.45); }
+.duotone > .over { position: relative; z-index: 2; }
+
+/* Page frame below the fixed top bar. */
+.page { margin-inline: auto; max-width: 1440px; padding: 6rem 1rem 4rem; }
+@media (min-width: 768px) { .page { padding-inline: 2rem; } }
+
+/* Dark band: ink surface for the sections that carry the brand, as in the first design. */
+.band { background: var(--color-seal-deep); color: #fff; border-radius: 6px; position: relative; overflow: hidden; }
+.band h2, .band h3 { color: #fff; }
+.band::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(201,162,39,0.55); }
 h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; color: var(--color-ink); line-height: 1.15; }
 
 /* Type roles. */
@@ -53,7 +82,9 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; color: var(--color-ink);
 
 /* Surfaces. One card style; hierarchy comes from size and position. */
 .card, .tile { background: var(--color-surface); border: 1px solid var(--color-rule); border-radius: 6px; position: relative; }
-.tile { padding: 1rem 1.25rem; }
+.tile { padding: 1rem 1.25rem 1rem 1.5rem; }
+.tile::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; background: var(--color-gold); }
+.tile-seal::before { background: var(--color-seal); }
 .card-dark { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 6px; }
 .pill { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 13px; font-weight: 600; background: var(--color-surface); border: 1px solid var(--color-rule); color: var(--color-ink); }
 .hairline { border-top: 1px solid var(--color-rule); }
@@ -113,3 +144,9 @@ h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; color: var(--color-ink);
 .ledger th { text-align: left; font-size: 13px; font-weight: 500; color: var(--color-ink-2); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-ink-2); }
 .ledger td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--color-rule); vertical-align: top; }
 .ledger .r { text-align: right; }
+}
+
+/* Text inside the dark bands. Important so it wins over the .text-ink-2 utility; white cards inside a band go back to ink. */
+.band .text-ink-2, .band .label { color: rgba(255,255,255,0.75) !important; }
+.band .bg-surface { color: var(--color-ink); }
+.band .bg-surface .label, .band .bg-surface .text-ink-2 { color: var(--color-ink-2) !important; }

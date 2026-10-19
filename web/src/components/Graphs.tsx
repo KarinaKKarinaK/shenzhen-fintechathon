@@ -4,7 +4,7 @@ import { StatusIcon } from "./StatusIcon";
 
 // Small SVG charts. Thin marks, ink for money in, gold for money out, a hatch for slashes. No red, no green.
 
-const IN = "#14213D", OUT = "#C9A227", BAD = "url(#hatch)", WARN = "#9A5B00", GRID = "#E4E1D8", INK = "#14213D", MUTED = "#4A5568";
+const IN = "#1F1A17", OUT = "#C9A227", BAD = "url(#hatch)", WARN = "#9A5B00", GRID = "#E4E1D8", INK = "#1F1A17", MUTED = "#5C524A";
 
 const Hatch = () => <defs><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff" /><rect width="2" height="4" fill={INK} /></pattern></defs>;
 const Key = ({ fill, label }: { fill: string; label: string }) => <span className="flex items-center gap-1.5"><svg width="10" height="10" aria-hidden><Hatch /><rect width="10" height="10" rx="2" fill={fill} stroke={INK} strokeWidth={fill === BAD ? 1 : 0} /></svg>{label}</span>;
