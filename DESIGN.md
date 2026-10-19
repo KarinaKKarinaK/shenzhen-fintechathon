@@ -2,7 +2,7 @@
 
 Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, built for one machine: an agricultural spraying drone on hire purchase. Name Zishi (自食其力), zì shí qí lì, to feed yourself by your own labour: the robot that pays for itself. The bond is a surety bond, the real product where a party posts money to guarantee it will perform.
 
-Decisions and the implementation spec are in `docs/research/BONDED_AGENT_FIXES.md`. Where this file and that one differ, that one wins.
+The implementation is described in `TECHNICAL.md`. Where this file and the code differ, the code wins.
 
 ## Built, partly built, not built
 
@@ -22,7 +22,7 @@ Same list as `SELF_ASSESSMENT.md`. Anything not in the built rows is not on a sl
 | Built | Telemetry plausibility check |
 | Built | Evidence and verify scripts |
 | Built | Contracts written and tested in CI |
-| In this pass (Part B of `docs/research/BONDED_AGENT_FIXES.md`) | Two bonds, the per-job intent log, proof checked against `JobBoard` records, party only reporting, hunters on shadow jobs, the starting floor, cover removed |
+| In this pass (the bonded agent design (Part B)) | Two bonds, the per-job intent log, proof checked against `JobBoard` records, party only reporting, hunters on shadow jobs, the starting floor, cover removed |
 | Partly | Chain anchoring: self transfer with the event as calldata, needs a funded key |
 | Partly | Model mode: needs a gateway key, falls back to templates |
 | Not built | Contract deployment and ABI calls from the engine |
@@ -174,7 +174,7 @@ Because slashing is by proof, an attacker is a feature. The hunter earns bountie
 
 ## Scope
 
-Frozen. The build is Part B of `docs/research/BONDED_AGENT_FIXES.md` plus the seven step demo story below. Nothing else goes on a slide as done. Cut first if time runs out: the fleet map (keep the lender dashboard as a table), the overnight chart, the judge console. Never cut the confirmed job with the split, the slash from the log, the chain feed, or the title transfer.
+Frozen. The build is the bonded agent design (Part B) plus the seven step demo story below. Nothing else goes on a slide as done. Cut first if time runs out: the fleet map (keep the lender dashboard as a table), the overnight chart, the judge console. Never cut the confirmed job with the split, the slash from the log, the chain feed, or the title transfer.
 
 ## The agent that learns to run a business (future work, not built)
 
@@ -209,7 +209,7 @@ The only shared element is signed telemetry from a simulated machine, used for t
 | Topic E cash flow copilots (35 entries) | Forecasts and financing applications for a human | The borrower is the machine and repayment is automatic. |
 | FinLinkChile/Keel, sucsage, AegisPay | Milestone escrow for business deals | Per job release to a machine wallet, plus bond, lease and geofence. |
 
-Nobody in about 150 public entries has a machine as the borrower, income per verified unit of work, a bond slashed by proof against records, a lender agent, or title transfer on chain. Details in `docs/research/FIELD_REVIEW.md`.
+Nobody in about 150 public entries has a machine as the borrower, income per verified unit of work, a bond slashed by proof against records, a lender agent, or title transfer on chain. The review of those entries is in the working notes, kept out of the repository.
 
 ## How it scores
 

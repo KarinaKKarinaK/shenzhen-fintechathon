@@ -404,9 +404,11 @@ Revert order: `unknown agent`, `proof already used`, `not the agent's signature`
 | Mode | When | What a transaction is |
 |---|---|---|
 | Simulated | Default | `SimChain`: keccak hash of the event, `simulated: true` on every tx, labelled in the UI |
-| Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...`, explorer link, confirmed at one receipt, finalised at two more blocks |
+| Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: every signed intent is `IntentLog.commit(jobId, intentHash)` on the deployed contract (69,288 gas); every money event is a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...` (28,880 gas). Explorer link on both, confirmed at one receipt, finalised at two more blocks |
 
 The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). The four contracts are deployed on Base Sepolia (section 7). In real mode every signed intent is committed to the deployed IntentLog by a contract call (`RealChain.commit`, emitted as a `chain` event of kind `log` with the explorer link); a hash the log already holds falls back to a calldata anchor and says so. Money events are anchored as calldata, and the Bond, JobBoard and Lease rules run in the mirrors; their calls are the next step.
+
+One wallet signs for the whole demo, and a run sends transactions a few hundred milliseconds apart, so `RealChain` sends one at a time through an in-memory queue, fetches the pending nonce for each, and retries up to three times on a nonce clash from another instance on the same key (`nonce too low`, `replacement transaction underpriced`). A commit is simulated first (`simulateContract`), so a hash the log already holds costs no gas and is anchored with the reason in its label. A full real run of the fleet scenario is 15 commits and about 30 anchors, 0.000013 ETH at 0.006 gwei.
 
 ## 9. Bring your own data
 
@@ -517,6 +519,7 @@ Vercel, Next.js 16, Node 22, pnpm 10. Root directory `web`. The route `/api/run`
 | `SURETY_PRIVATE_KEY` | no | `0x` plus 64 hex. Funded Base Sepolia key that anchors events |
 | `BASE_SEPOLIA_RPC` | no | Default `https://sepolia.base.org` |
 | `DEMO_TOKEN` | no | Real chain only for requests carrying this token. Unset means never real |
+| `ZISHI_INTENT_LOG` | no | IntentLog address for real mode. Default: the Base Sepolia deployment in `contracts/deployments/base-sepolia.json` |
 
 Without any variable the app runs fully: scripted explanations, simulated chain, labelled as such. See `web/.env.example`.
 
@@ -528,6 +531,7 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 | `npx tsc --noEmit` | `web` | Types, including both dictionaries |
 | `pnpm test` | `web` | The engine self check (section 11), including every learned metric assertion |
 | `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
+| `pnpm charts` | `web` | The nine charts in `docs/charts`, redrawn from the seeds |
 | `forge test` | `contracts` | 43 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (27, three fuzzed), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 
@@ -559,3 +563,21 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 | Insurance and physical damage | Not in the build. Named as the one human decision path |
 
 Risks, what is built against each and what production would do are in `SELF_ASSESSMENT.md`.
+
+## 16. By the numbers
+
+Measured on 2026-10-20 from the self check, the bench, the charts script and Base Sepolia receipts.
+
+| Measure | Value | Source |
+|---|---|---|
+| Fleet scenario, simulated, fast | 293 events in 1.3 s: 15 signed intents, 15 policy decisions over 113 rule lines, 25 transactions, 7 gate verdicts, 3 flight logs scored, 1 proof | `scenarios.ts` |
+| Fleet scenario, real chain | 15 `IntentLog.commit` calls, about 30 anchors, 0.000013 ETH | Base Sepolia receipts |
+| Contract deployment | 4 contracts, 4,491,890 gas, block 48,335,911 | `contracts/deployments/base-sepolia.json` |
+| Foundry | 43 tests, 3 fuzzed at 256 runs | `forge test` |
+| Attack set | 52 cases, 7 benign, naive baseline falls to 51 of 52 | `attacks.ts` |
+| Classifier | 401 messages, 124 of them paraphrases, 100 held out, 2^14 hashed buckets | `ml/gate.ts`, `ml/corpus.ts` |
+| Oracle | 2,000 flights, 312 tampered, 750 fit, 634 honest calibration, 500 held out | `ml/plausibility.ts` |
+| MDP | 46,800 states, 26 weeks, 200 seasons | `economics/mdp.ts` |
+| Stress test | 2,000 seasons, 7 skip rates on the chart | `economics/stress.ts` |
+| Drift | 500 benign then 100 attack scores, 600 quiet | `drift/eval.ts` |
+| Code | 10,294 lines: engine 4,921, interface 3,179, Solidity 593, API routes 300, dictionaries 1,300 | `wc -l` |

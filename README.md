@@ -10,20 +10,29 @@ Entry to the 2026 Shenzhen International FinTech Competition, International Trac
 
 ![Landing](docs/screenshots/landing.png)
 
-## At a glance
+## By the numbers
 
-| | |
+Every figure is measured, not estimated. The engine ones come from `pnpm test`, `pnpm bench` and `pnpm charts` on fixed seeds; the chain ones from Base Sepolia receipts.
+
+| What | Number |
 |---|---|
-| Contracts on Base Sepolia | 4, source verified, exact match ([addresses](#contracts-on-base-sepolia)) |
-| Foundry tests | 43 passing, three of them fuzzed over amounts, nonces and payees |
-| Policy rules, checked on every signed intent | 21 lines, 4 trust tiers |
-| Attack set at request time | 52 of 52 blocked, 7 of 7 benign messages pass, naive wallet falls to 51 of 52 |
-| Learned and optimising components | 10, each with a fixed seed and a held out set |
-| Message classifier, held out | accuracy 95.0%, recall 95.5%, false alarm 5.4% |
-| Telemetry tamper detection, held out | 100% on five tamper classes at 3.0% false alarm |
-| Lender loss given default, p95 | 25,593 yuan without bonds, 19,739 with |
-| Hash chained run log | 293 events per run, same head on the same seed, tamper caught at its position |
-| Engine | 4,200 lines of TypeScript, no framework, runs with no key and no chain |
+| Contracts on Base Sepolia, source verified | 4, deployed in one block for 4.49 M gas ([addresses](#contracts-on-base-sepolia)) |
+| Foundry tests | 43, three fuzzed over amounts, nonces and payees, 256 runs each |
+| One full demo run, simulated | 293 events, 15 signed intents, 113 policy rule lines checked, 25 transactions, 1.3 s |
+| One full demo run, real chain | 15 IntentLog commits and about 30 calldata anchors, 0.000013 ETH in gas |
+| IntentLog commit | 69,288 gas, one `Committed` event, simulated before sending so a duplicate costs nothing |
+| Event anchor | 28,880 gas at 0.006 gwei |
+| Policy rules | 21 lines over 7 intent kinds, 4 trust tiers |
+| Attack set, run at request time | 52 of 52 blocked, 7 of 7 benign pass, a naive wallet falls to 51 of 52 |
+| Message classifier, held out | 401 messages plus 124 paraphrases, 100 held out: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
+| Telemetry oracle, held out | 2,000 flights, 312 tampered, 500 held out: 100% detection on five tamper classes at 3.0% false alarm |
+| Kalman smoothing | false alarms at full detection cut from 13.8% to 0.0% |
+| Lease MDP | 46,800 states, 26 weeks, 200 seasons: 41 to 215 yuan a season over the greedy rule |
+| Bond stress test | 2,000 seasons: p95 loss given default 25,593 yuan without bonds, 19,739 with |
+| Drift monitor | alarm 5 observations after a shift, 0 false alarms in 600 benign scores |
+| Replay log | 293 events hash chained, same head on the same seed, tamper caught at position 7 |
+| Code | 10,294 lines: engine 4,921, interface 3,179, Solidity 593, no backend framework |
+| Charts drawn from the engine | 9, in `docs/charts` |
 | Languages, themes | 2 and 2 |
 
 ## Why it is different
@@ -326,7 +335,6 @@ README.md              this file
 TECHNICAL.md           architecture, data model, rules, learned components, contracts, API, BYOD
 SELF_ASSESSMENT.md     security self assessment
 DESIGN.md              product design, economics, demo story
-HACKATHON.md           the competition, rubric, submission
 CONTRIBUTING.md        setup, checks, commit style
 LICENSE                MIT
 web/                   Next.js app: engine, API routes, UI, i18n (map in web/README.md)
@@ -340,11 +348,11 @@ web/                   Next.js app: engine, API routes, UI, i18n (map in web/REA
   src/app/api/         run, run-custom, live, samples, judge, attacks, button, metrics, ratchet, replay
   src/components/      RunView, LiveView, EvidenceView, DashboardView, LandingView, Learned, Monitors
   src/i18n/            en.ts, zh.ts, LangProvider
-  scripts/             evidence.ts, verify.ts, bench.ts
+  scripts/             evidence.ts, verify.ts, bench.ts, charts.ts
   evidence/            committed runs
 contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 43 tests, Deploy script, deployments/
 docs/screenshots/      the images above
-docs/research/         ideas, field review, competition scan, judge simulation, plan, design fixes, deck text
+docs/charts/           nine SVG charts drawn by pnpm charts
 .github/workflows/     ci.yml: lint, type check, self check, build, forge test
 ```
 
@@ -352,11 +360,9 @@ docs/research/         ideas, field review, competition scan, judge simulation, 
 
 1. Technical documentation: `TECHNICAL.md`
 2. Security self assessment: `SELF_ASSESSMENT.md`
-3. Deck text: `docs/research/DECK.md`
-4. Contracts and deployment: `contracts/README.md`, `contracts/deployments/base-sepolia.json`
-5. Execution evidence: the Evidence page at request time, `web/evidence/` from `pnpm evidence`, and the Base Sepolia explorer
-6. Design: `DESIGN.md`, with the decisions in `docs/research/BONDED_AGENT_FIXES.md`
-7. Research: `docs/research/` and `HACKATHON.md`
+3. Contracts and deployment: `contracts/README.md`, `contracts/deployments/base-sepolia.json`
+4. Execution evidence: the Evidence page at request time, `web/evidence/` from `pnpm evidence`, the charts in `docs/charts`, and the Base Sepolia explorer
+5. Design and economics: `DESIGN.md`
 
 ## Status
 
@@ -365,7 +371,7 @@ docs/research/         ideas, field review, competition scan, judge simulation, 
 - [x] Contracts tested, deployed to Base Sepolia and source verified
 - [x] Funded key, real hashes in production
 - [x] English and Chinese, light and dark
-- [x] Technical doc, self assessment, deck text
+- [x] Technical doc, self assessment, charts
 - [x] Bring your own data and a live feed
 - [x] Ten measured components with a benchmark
 - [ ] Demo video recorded
