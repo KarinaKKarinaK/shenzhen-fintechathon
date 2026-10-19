@@ -6,8 +6,8 @@ Scores are expected points out of 100 if built from zero in the time left, on th
 
 | Rank | Idea | Topic | Task | Security | Innovation | Bonus | Expected | Main risk |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Bonded Agent with Sky Cover as first customer (15 and 16) | F | 25 | 22 | 26 | 3 | 76 | Scope: two agents, a contract, an oracle |
-| 2 | Hidden Coverage (10) | D | 30 | 23 | 22 | 0 | 75 | Cross-border claim order is hard to get exactly right |
+| 1 | Bonded Agent with Sky Cover as first customer (15 and 16) | F | 25 | 22 | 26 | 3 | 76 | Scope: two agents, a contract, an oracle. signal8-wallet owns the typhoon trigger, so the oracle must be flight telemetry, not weather. |
+| 2 | Hidden Coverage (10) | D | 30 | 23 | 19 | 0 | 72 | covercompass already splits claims with a no double recovery rule in code (FIELD_REVIEW.md). Card terms and the checkout guard remain ours. |
 | 3 | Minimal Disclosure (20) | E or C | 27 | 24 | 24 | 0 | 75 | Can look like a protocol demo, not a product |
 | 4 | Honeypot Guardian (17) | A or F | 26 | 22 | 27 | 0 | 75 | Bank panel may find deception edgy |
 | 5 | Prepaid Guard (18) | F | 30 | 24 | 17 | 3 | 74 | Escrow mechanism already in the field |

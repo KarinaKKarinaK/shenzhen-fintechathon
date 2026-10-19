@@ -1,20 +1,25 @@
 # Field review: our ideas against the competitor repos
 
-19 October 2026. Every repo linked in COMPETITION.md was cloned and read file by file (nothing was run). Two of three groups are done: the ten wallet and mandate repos, and the eleven Topic A, B and C repos. The Topic D and E group plus a fresh GitHub search will be added when finished.
+19 October 2026. Every repo linked in COMPETITION.md was cloned and read file by file (nothing was run). All three groups are done: the ten wallet and mandate repos, the eleven Topic A, B and C repos, and the eight Topic D and E repos, plus a fresh GitHub search that found about forty more public entries.
 
 ## Short answer
 
-None of our seven candidates is built by anyone in the field. Across 21 repos:
+Four of our seven candidates are built by nobody. Two are partially covered by entries the first scan missed. Across 29 repos plus the search:
 
 | Our idea | Anyone doing it | Closest thing found |
 |---|---|---|
 | Bonded Agent (agent posts a bond, slashed on breach, buys liability cover) | Nobody | Agent Credit Bureau demotes an agent's tier and freezes it on chain, but no money at risk. Signet refuses execution without a valid certificate, but no stake. |
-| Sky Cover (machine buys per-flight cover from an insurer agent, telemetry settles) | Nobody | No drone, oracle or premium pricing anywhere |
-| Hidden Coverage (coverage map, add-on blocker, claim split, no double recovery) | Nobody | YINGLONG has an escrow coverage gap card. fundbun finds duplicate subscriptions. carrypay reconciles one bill. |
+| Sky Cover (machine buys per-flight cover from an insurer agent, telemetry settles) | Partial, one repo | beaaan/signal8-wallet has a mock parametric insurer on Base Sepolia that pays a fixed sum per storm when HKO Signal 8 is attested on chain. No premium pricing, no telemetry, no machine customer, insurer is a mock. |
+| Hidden Coverage (coverage map, add-on blocker, claim split, no double recovery) | Partial, two repos | FarrelNayakaaa/covercompass flags duplicate premiums across policies and splits one claim across policies so the total never exceeds the bill, in code. ClaimWise decides primary and secondary payer but hardcoded to demo clause ids. Nobody reads card terms or blocks pre-ticked add-ons at checkout. |
 | Minimal Disclosure (agents negotiate the minimum data for a credit decision) | Partial, one repo | YINGLONG proves mandate compliance with a zero knowledge enforcer. carrypay tokenises PII before the model. Bluefin issues a signed payment passport. Nobody negotiates. |
 | Honeypot Guardian (engage the scammer, extract the mule account, shared blocklist) | Nobody | Every scam handler refuses and logs. Three repos are called Guardian Wallet. |
 | Prepaid Guard (escrow released per visit, refund on deregistration) | Partial, four repos | Milestone escrow with refund paths in agentic-wallet, AegisPay, Agent Credit Bureau, YINGLONG. None per visit or consumer prepaid. |
-| Hard Button (dedicated device holds the only key, top tier is a physical press) | Partial, one repo | YINGLONG verifies phone passkeys on chain. Nobody has a physical device. |
+| Hard Button (dedicated device holds the only key, top tier is a physical press) | Partial, one repo | YINGLONG verifies phone passkeys on chain. No ESP32, hardware wallet or secure element in any repo or search result. |
+| Signal 8 (idea 14, parametric rider cover on typhoon warnings) | Done, one repo | beaaan/signal8-wallet: SME treasury on a Safe with a storm plan that switches on when HKO Signal 8 is attested, claims mock typhoon cover, 111 tests, deck, video. Drop idea 14. |
+
+## Our repo is public
+
+This repository appears in a GitHub search for "fintechathon". Competitors can read every idea file. Make it private until submission, or accept that the ideas are visible.
 
 ## What is table stakes now
 
@@ -78,8 +83,45 @@ Topic A, B and C group
 - guardian (ahammadshawki8, F): two markdown files, no code.
 - Guardian-Wallet (beingmushfiq, F): vault with caps and allowlists, 25 Foundry tests with fuzz, 14 case attack suite. Evidence doc admits no funded keys and no live transactions while the README claims on-chain settlement.
 
+## Topic D and E group
+
+- runway (E): 13 week forecast, rules engine with tiers T0 to T4, Ed25519 signed two person approvals embedded as a QR in the financing PDF, hash chained audit anchored to a notary file or any EVM chain. 466 tests, live DeepSeek traces. Anchors on local Anvil only, no video, Streamlit, single developer.
+- DuitDuit (tanhongsheng, E): 96k lines, PII tokenised before any model call, maker checker payments, lender passports with HMAC signed banded metrics. Agent registry screens are stubs. Audit anchoring is a GitHub Actions job, not a chain. Vercel blocked in the mainland.
+- KhataPilot (E): guard pipeline, tiers where any block wins, provider refuses anything not signed by the guard key, scheduled payments rechecked at time of use, a deliberately gullible mock model so every offline run is a worst case. Live Claude red team 54 of 54 with cost reported, video and deck in repo, an architecture test proving the agent layer cannot import the database or the key. No chain.
+- cashbridge (E): forecast, three way match, funding pack with a verifiable hash chain, every claim tagged verified, calculated, estimate or assumption. LLM planning intentionally disabled. Demo OTP secret is public. No video, no deck, no chain.
+- tidewise-copilot (E): tiers with provenance taint, lookalike domain check, Merkle log with inclusion proofs. 41 tests, one commit, security self-assessment marked TODO.
+- Setu (E): milestone escrow state machine (simulated), KYB, forged bill of lading forensics, a hash registry so one document cannot back two lenders. Model capped at read only tools. 598 tests. No chain, no deck, no video yet.
+- ClaimWise (D): policy PDF upload, hybrid retrieval with citation checks, coverage comparison written by the model, primary and secondary payer hardcoded to demo clause ids, single policy payable calculation, sandbox submission. The "AI tier" in code is a subscription tier. 357 tests, no public video.
+- claimshield-ai (D): tiers with HMAC sessions and single use OTP, regex prompt firewall, bill auditor, appeal drafts. The API hands out the OTP for demo convenience. 11 tests, single commit, US centric.
+
+Found by the search and not in the first scan (the ones that matter):
+
+- beaaan/signal8-wallet (F): the Signal 8 storm plan entry above. Public Base Sepolia, 111 Foundry tests, deck, video, live demo.
+- FarrelNayakaaa/covercompass (D): multi policy student assistant with the overlap and payout split tools above.
+- Exile404/Qwen-Hufu (F): student wallet with an off-chain guard and an on-chain vault on Sepolia, 70 forge tests.
+- Trong-Tra/Lantern (F): ERC-8004 passport plus soulbound reputation on Monad testnet, score gated permissions. Closest thing to agent reputation after the Agent Credit Bureau.
+- Brandon962Leong/null-wallet (F): value moves only after an "Evidence Court", signer isolated from the language layer, receipts anchored on Base and Sepolia.
+- himoji/kassa (C): passkey signed mandates, Ed25519 signed credit records a landlord or bank can verify, Sepolia anchors, deck and video.
+- AsylkhanKali/fintechathon (F): treasury agent with a founder signed policy enforced by a contract on Base Sepolia.
+- hung230206/AI4S and pinkerparker/WeBank_TuiDui (D): China regulation insurance Q&A and plan matching. Document assistants.
+- About twenty more Topic A, B, C and E entries with the same shape as the groups above, plus two empty templates.
+
+Topic F is larger than the first scan counted and at least eight entries have mined transactions with explorer links. The on-chain bonus is contested.
+
+Additional bars from this group:
+
+| Repo | What they do that we must match or beat |
+|---|---|
+| FarhanKO/KhataPilot (E) | Live model red team with cost and commit hash reported, a scripted demo checked step by step, and an architecture test proving the model layer cannot reach the database or the signing key. |
+| gabi200/runway (E) | Human approvals as Ed25519 signatures a third party can verify from the PDF, and a forged history demo against an anchored audit head. |
+| Ebratul/Setu (E) | Depth on one mechanism: model capped at read only tools, escrow and deal state machines with 800 tests, a registry so one document cannot back two loans. |
+| beaaan/signal8-wallet (F) | A real external trigger (HKO Signal 8) attested on a public chain and a plan that switches on from it. The closest anyone comes to a parametric participant. |
+
 ## What this means for our pick
 
-- Bonded Agent, Sky Cover, Hidden Coverage and Honeypot Guardian are open ground on mechanism and scenario. Minimal Disclosure is open on the negotiation but YINGLONG owns the zero knowledge angle. Prepaid Guard is a new scenario on a mechanism four teams have.
+- Bonded Agent, Honeypot Guardian, Prepaid Guard (as a scenario) and Hard Button are built by nobody. Minimal Disclosure is open on the negotiation, though YINGLONG owns the zero knowledge angle and three entries issue one way signed attestations.
+- Hidden Coverage is less open than the first scan suggested. covercompass already splits a claim across policies with a no double recovery rule in code. Our version still has the card terms, the checkout guard and three jurisdictions, but the core mechanism is no longer unique.
+- Sky Cover is open on the machine customer, live pricing and telemetry settlement. signal8-wallet owns the typhoon trigger and the mock parametric insurer. Drop Signal 8 (idea 14).
+- Insurance entries in the field are all document assistants. Nobody has an insurer that is itself an agent with its own incentives. An insurer agent that prices and pays is open ground in Topic D.
 - The field's two biggest holes are economic accountability for the agent and two agents transacting. Bonded Agent with Sky Cover fills both.
 - Whatever we build must ship: public testnet hashes with one transaction per claim, a verify script, live model transcripts in the repo, a self hosted video, a deck, and a try to break it moment for the judges.
