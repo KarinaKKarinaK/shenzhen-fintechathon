@@ -20,15 +20,10 @@ export function Rail() {
   const path = usePathname();
   const { t } = useLang();
   const [progress, setProgress] = useState(0);
-  const [overPhoto, setOverPhoto] = useState(false);
   useEffect(() => {
     const on = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
-      // Over the landing photo the bar is see through (light theme only, see globals.css). It appears
-      // once the photo has scrolled past: 64 is the bar, 110 the fade at the photo's foot (.hero-fade).
-      const hero = document.querySelector<HTMLElement>(".landing-root > .duotone");
-      setOverPhoto(!!hero && window.scrollY < hero.offsetHeight - 64 - 110);
     };
     const raf = requestAnimationFrame(on);
     window.addEventListener("scroll", on, { passive: true });
@@ -36,7 +31,7 @@ export function Rail() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", on); window.removeEventListener("resize", on); };
   }, [path]);
   return (
-    <header className={`navbar fixed inset-x-0 top-0 z-50 ${overPhoto ? "over-photo" : ""}`}>
+    <header className="navbar fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-4 px-4 md:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t("rail.homeAria")}>
           <Seal size={34} />
