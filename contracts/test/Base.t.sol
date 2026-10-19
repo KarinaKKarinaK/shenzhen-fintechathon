@@ -12,7 +12,7 @@ import {Lease} from "../src/Lease.sol";
 ///      floor, a 5,000 yuan vendor bond with a 200 yuan penalty and a 1,000 yuan daily cap.
 ///      Jobs of 20 to 150 mu at 3 to 15 yuan per mu, so fees of 60 to 2,250 yuan.
 abstract contract BaseTest is Test {
-    IntentLog log;
+    IntentLog intentLog;
     Bond bond;
     Lease lease;
     JobBoard board;
@@ -40,14 +40,21 @@ abstract contract BaseTest is Test {
     bytes32 fieldSeven = keccak256("field-7");
     uint256 leaseId;
 
+    // Cached in setUp so _hash and _sign make no external calls. A helper that calls `bond`
+    // would consume a pending vm.prank or vm.expectRevert meant for the next real call.
+    bytes32 intentTypehash;
+    bytes32 domainSeparator;
+
     function setUp() public virtual {
         agent = vm.addr(agentKey);
-        log = new IntentLog();
-        bond = new Bond(treasury, log, FLOOR);
+        intentLog = new IntentLog();
+        bond = new Bond(treasury, intentLog, FLOOR);
         lease = new Lease();
         board = new JobBoard(bond, lease, rail);
         bond.setBoard(board);
         bond.setHunter(hunter, true);
+        intentTypehash = bond.INTENT_TYPEHASH();
+        domainSeparator = bond.DOMAIN_SEPARATOR();
 
         vm.deal(vendor, VENDOR_BOND);
         vm.prank(vendor);
@@ -79,18 +86,18 @@ abstract contract BaseTest is Test {
     }
 
     function _hash(IBonded.Intent memory i) internal view returns (bytes32) {
-        return keccak256(abi.encode(bond.INTENT_TYPEHASH(), i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.confirmed, i.nonce, i.expiry));
+        return keccak256(abi.encode(intentTypehash, i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.confirmed, i.nonce, i.expiry));
     }
 
     function _sign(uint256 key, IBonded.Intent memory i) internal view returns (bytes memory) {
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", bond.DOMAIN_SEPARATOR(), _hash(i)));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, _hash(i)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, digest);
         return abi.encodePacked(r, s, v);
     }
 
     function _commit(IBonded.Intent memory i) internal {
         vm.prank(agent);
-        log.commit(i.jobId, _hash(i));
+        intentLog.commit(i.jobId, _hash(i));
     }
 
     function _pilotBond() internal view returns (uint256 bal) { (bal,) = bond.bondOf(agent); }

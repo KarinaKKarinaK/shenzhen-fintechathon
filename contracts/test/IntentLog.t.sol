@@ -12,9 +12,9 @@ contract IntentLogTest is BaseTest {
         vm.warp(1234);
         _commit(i);
         bytes32 h = _hash(i);
-        assertEq(log.committedAt(h), 1234);
-        assertEq(log.jobOf(h), _jobId(id));
-        assertEq(log.agentOf(h), agent);
+        assertEq(intentLog.committedAt(h), 1234);
+        assertEq(intentLog.jobOf(h), _jobId(id));
+        assertEq(intentLog.agentOf(h), agent);
     }
 
     function testCommitTwiceReverts() public {
@@ -42,7 +42,7 @@ contract IntentLogTest is BaseTest {
         IBonded.Intent memory i = _pay(address(0xdead), 50 ether, one, 1);
         bytes memory sig = _sign(agentKey, i);
         vm.prank(agent);
-        log.commit(_jobId(two), _hash(i));
+        intentLog.commit(_jobId(two), _hash(i));
         vm.prank(farmer);
         vm.expectRevert("not in log");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
@@ -54,7 +54,7 @@ contract IntentLogTest is BaseTest {
         IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
         bytes memory sig = _sign(agentKey, i);
         vm.prank(stranger);
-        log.commit(_jobId(id), _hash(i));
+        intentLog.commit(_jobId(id), _hash(i));
         vm.prank(farmer);
         vm.expectRevert("not in log");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
