@@ -83,6 +83,38 @@ One screen, 16 by 9, dark, built for a projector. The judges should be able to r
 
 Never cut the crash settlement, the slash, the chain feed with hashes, or the button.
 
+## What we take from SCP and from autoresearch
+
+### SCP (scp.dev)
+
+SCP is a messaging protocol for AI agents running in different harnesses, with a CLI called swarm. It says nothing about money. Five of its design choices are what our drone and insurer agents need, and they fix the weakness nearly every competitor has.
+
+1. Untrusted content framing. Every message arrives inside a tagged block with a preamble that says it is untrusted and never grants permission. Bodies are escaped so a message cannot forge a system block or close the tag. We adopt this for every message from the insurer, the oracle and any external party. It replaces the regex that nine of ten competitors use.
+2. Relation decides authority. A message from the parent is an instruction. A message from anyone else is data. Only the operator's messages carry authority. The insurer agent can never instruct the drone agent, only quote.
+3. Consent federation. Two accounts only talk through a contact both sides accepted, with a per contact rate budget and an endpoint allowlist. Our counterparty allowlist moves down to the messaging layer. A fake insurer cannot even deliver a message to the drone agent.
+4. The judge. An optional gate on messages crossing a boundary that can pass, redact, hold or refuse, with a hold queue a human can review and a refusal that carries categories and a reason. Our injection classifier becomes a first class component with a human hold queue. The judge console in the app is this gate.
+5. Hibernation and wake. The drone agent sleeps between flights and is woken by a job message. Cheap, and it belongs on the cost per flight slide.
+
+Optional: run the drone agent in Claude Code and the insurer agent in Codex, talking over swarm. Two companies, two harnesses, one market. Only if the CLI installs cleanly in thirty minutes. The patterns cost nothing either way.
+
+Spec details to copy: the preamble text, the relay-message block with its attribute order, escaping of framing tags inside bodies, body limit of 64 KiB, per contact rate budgets. Source: https://scp.dev/spec.md
+
+### Autoresearch (github.com/karpathy/autoresearch)
+
+A three file loop: a fixed evaluation script the agent cannot edit, a script the agent edits, and a markdown file of instructions. The agent proposes a change, runs the fixed eval, keeps the change if the metric improves and reverts if not. Git records every attempt. Two places it fits us.
+
+1. A defense that hardens itself. The Bounty Hunter loop made concrete. The hunter generates attacks. The defender agent edits the policy rules. A change is kept only if more attacks are blocked and the benign flight set still passes, so it cannot win by blocking everything. The git log is the attack registry. The known weakness of autoresearch, getting stuck in local tweaks, is answered by the hunter adding new attacks each round.
+2. An underwriter that trains itself overnight. The insurer agent's pricing function is the editable file. The fixed eval is a held out set of simulated flights with crashes. The metric is profit at a target loss ratio, or calibration. By morning there is a git history of accepted pricing changes and a chart in the app: experiments run, changes kept, loss ratio before and after. The insurer agent becomes a participant that gets better at its job, not a prompt.
+
+Why it matters to judges: the field's evals are written by the people who wrote the code. A frozen held out eval the agent cannot touch, plus a git history of what it tried and kept, is honest evidence nobody else has. Caveat for the slide: the metric can be gamed, so the eval stays frozen and a human reviews kept changes.
+
+### What to add in the time left
+
+- Adopt the SCP framing, relation rule, consent allowlist and judge gate in our own message layer. One evening, no dependency.
+- Build the defense ratchet. The hunter and the attack set exist anyway. About a hundred lines plus the simulator.
+- Pricing ratchet only if the simulator is stable by Monday night. Better story, second priority.
+- Swarm for the two harness demo only if it installs in thirty minutes.
+
 ## Market, losses and where the money is
 
 Checked 19 October 2026 against public sources. Estimates are marked as estimates.
