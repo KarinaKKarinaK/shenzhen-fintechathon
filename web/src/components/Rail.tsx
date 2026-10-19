@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mark } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 
 const items = [
   { href: "/", label: "Home", icon: <path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" /> },
@@ -21,7 +22,7 @@ export function Rail() {
           <span className="tip">{it.label}</span>
         </Link>
       ))}
-      <div className="mt-auto flex flex-col items-center gap-2"><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>机信 JIXIN</span><span className="h-6 w-px bg-gold" /></div>
+      <div className="mt-auto flex flex-col items-center gap-2"><ThemeToggle /><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>机信 JIXIN</span><span className="h-6 w-px bg-gold" /></div>
     </nav>
   );
 }

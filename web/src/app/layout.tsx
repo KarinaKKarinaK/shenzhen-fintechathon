@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${mono.variable} ${chakra.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${mono.variable} ${chakra.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('jixin-theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}" }} />
+      </head>
       <body>
         <div className="flex min-h-screen">
           <aside className="sticky top-0 z-40 h-screen w-[84px] shrink-0 px-4 py-5"><div className="card flex h-full flex-col items-center bg-white"><Rail /></div></aside>
