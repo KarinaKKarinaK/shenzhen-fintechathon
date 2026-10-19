@@ -325,8 +325,10 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 
 /* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
 body:has(.landing-root) .page-main { padding: 0 !important; }
-/* A bounce shows the page base, the same colour as the top bar, so it is seamless in both themes.
+/* A bounce shows the page base. On the landing that base is the photo's dark, so pulling past the
+   top under the see-through bar shows dark above the photo, never cream. Elsewhere it is the bar's colour.
    LandingView sets html.on-landing; the build drops html:has() and body:has() rules. */
+html.on-landing { background: #1f1a17; }
 html.on-landing body { background-color: var(--color-paper); }
 html.on-landing .page-main { padding: 0; }
 html.on-landing .landing-root { margin: 0; }
@@ -353,7 +355,16 @@ body:has(.landing-root) .landing-root { margin: 0; }
 /* Top bar, after the reference site: full width, solid page base in light so a bounce above it is
    seamless, blurred see-through glass in dark, hairline underneath, pill links (red on the
    current page, soft gold on hover), a gradient progress line on the bottom edge. */
-.navbar { background: var(--color-paper); border-bottom: 1px solid rgba(31,26,23,0.1); transform: translateZ(0); will-change: transform; }
+.navbar { background: var(--color-paper); border-bottom: 1px solid rgba(31,26,23,0.1); transform: translateZ(0); will-change: transform; transition: background-color 250ms, border-color 250ms; }
+/* Light theme, landing photo still under the bar: no bar at all, white text on the photo. */
+:root[data-theme="light"] .navbar.over-photo { background: transparent; border-bottom-color: transparent; }
+:root[data-theme="light"] .navbar.over-photo .navbar-brand, :root[data-theme="light"] .navbar.over-photo .navbar-brand .text-ink-2 { color: #fff; }
+:root[data-theme="light"] .navbar.over-photo .navlink:not([aria-current="page"]) { color: rgba(255,255,255,0.85); }
+:root[data-theme="light"] .navbar.over-photo .navlink:not([aria-current="page"]):hover { color: #fff; }
+:root[data-theme="light"] .navbar.over-photo .navbar-right .lang-toggle, :root[data-theme="light"] .navbar.over-photo .navbar-right .theme-toggle { color: rgba(255,255,255,0.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3); }
+:root[data-theme="light"] .navbar.over-photo .lang-toggle .text-ink { color: #fff; }
+:root[data-theme="light"] .navbar.over-photo .lang-toggle .text-muted { color: rgba(255,255,255,0.55); }
+:root[data-theme="light"] .navbar.over-photo .navbar-progress { opacity: 0; }
 :root[data-theme="dark"] .navbar { background: rgba(18,16,14,0.88); backdrop-filter: blur(30px) saturate(1.1); -webkit-backdrop-filter: blur(30px) saturate(1.1); border-bottom-color: rgba(201,162,39,0.3); }
 .navbar .navlink { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.95rem; font-size: 14px; font-weight: 600; color: var(--color-ink-2); transition: color 160ms; }
 .navbar .navlink::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); }
