@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Poster } from "@/components/Poster";
-import { Logo } from "@/components/Logo";
+import Image from "next/image";
+import { Seal } from "@/components/Seal";
 import { Ticker } from "@/components/Ticker";
 import { JudgeConsole } from "@/components/JudgeConsole";
 import * as attacksMod from "@/engine/attacks";
@@ -11,22 +11,26 @@ export default function Home() {
   const attackN = attacksMod.ATTACKS.length;
   return (
     <div className="mx-auto max-w-[1500px]">
-      <div className="mb-4 flex items-center justify-between"><Logo /><span className="pill border border-line bg-white text-ink-2">Shenzhen FinTechathon 2026, Topic F</span></div>
-
-      <section className="card cut relative min-h-[520px] overflow-hidden md:min-h-[640px]">
-        <Poster alt="An agricultural drone spraying a rice field at dawn" priority />
-        <span className="bracket left-3 top-3 z-10 border-t border-l" /><span className="bracket right-3 top-3 z-10 border-t border-r" /><span className="bracket bottom-3 left-3 z-10 border-b border-l" /><span className="bracket bottom-3 right-3 z-10 border-b border-r" />
-        <div className="pointer-events-none relative z-20 flex min-h-[520px] flex-col justify-end p-6 md:min-h-[640px] md:p-9">
-          <div className="pointer-events-auto max-w-2xl bg-white/95 p-6 backdrop-blur-md md:p-8" style={{ borderLeft: "4px solid #c8102e" }}>
-            <div className="tech mb-3 text-[11px] tracking-[0.25em] text-red">机信 MACHINE CREDIT</div>
-            <h1 className="display text-4xl md:text-6xl">A drone that pays for itself, one mu at a time.</h1>
-            <p className="mt-4 max-w-md text-base text-ink-2">Paid per mu sprayed. Repays the lender per job. Posts a bond from fees. Owns itself at zero.</p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/app/fleet" className="btn btn-red">Watch the live demo</Link>
-              <Link href="/app/evidence" className="btn btn-ghost">Try to break it</Link>
+      <section className="duotone cut flex min-h-[88svh] items-end text-white">
+        <Image src="/photos/shenzhen-tower.jpg" alt="China Resources Tower over Shenzhen Bay at night" fill priority sizes="100vw" className="object-cover object-[50%_35%]" />
+        <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>
+        <div className="over mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 md:px-8 md:pb-20">
+          <div className="flex items-center gap-5">
+            <Seal size={96} />
+            <div>
+              <div lang="zh-Hans" className="cjk-serif text-[40px] leading-none">自食其力</div>
+              <div className="mt-2 text-[15px] text-white/85">The robot that pays for itself</div>
             </div>
           </div>
+          <h1 className="display mt-8 max-w-[15ch] text-[46px] font-extrabold text-white md:text-[80px]">Machines that earn, pay and post a bond.</h1>
+          <span className="rule-gold mt-6" />
+          <p className="mt-5 max-w-[46ch] text-lg text-white/90 md:text-xl">Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.</p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="/app/fleet" className="btn btn-red" style={{ boxShadow: "inset 0 0 0 1px rgba(201,162,39,0.8)" }}>Watch a drone pay off its lease</Link>
+            <Link href="/app/evidence" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45)" }}>Verify it yourself</Link>
+          </div>
         </div>
+        <a href="https://commons.wikimedia.org/wiki/File:China_Resources_Tower_View_from_Shenzhen_Bay_20210825.jpg" target="_blank" rel="noreferrer" className="over absolute bottom-3 right-4 text-[12px] text-white/70 hover:text-white">Photo: 歪歪, CC BY-SA 4.0, via Wikimedia Commons</a>
       </section>
 
       <div className="mt-4"><Ticker /></div>

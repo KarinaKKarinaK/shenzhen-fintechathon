@@ -167,3 +167,13 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 
 /* Photo poster. The fallback block is designed, so a missing file still looks finished. */
 .poster-fallback { background-size: 56px 56px; }
+
+/* Hero from the design branch: a duotone photo in seal red with a gold glow. */
+.duotone { position: relative; isolation: isolate; overflow: hidden; background: #1f1a17; }
+.duotone > img { filter: grayscale(1) contrast(1.2) brightness(0.95); }
+.duotone::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(160deg, #b8322a 0%, #7a231c 55%, #3a0f0b 100%); mix-blend-mode: multiply; pointer-events: none; }
+.duotone::after { content: ""; position: absolute; inset: 0; z-index: 1; background: radial-gradient(60% 50% at 55% 85%, rgba(201,162,39,0.55), transparent 70%); mix-blend-mode: screen; pointer-events: none; }
+.duotone > .over { z-index: 2; }
+.duotone > .over:not(.absolute) { position: relative; }
+.rule-gold { display: block; width: 56px; height: 3px; background: var(--color-gold); border-radius: 2px; }
+.cjk-serif { font-family: "Songti SC", "STSong", "SimSun", serif; font-weight: 700; letter-spacing: 0; }
