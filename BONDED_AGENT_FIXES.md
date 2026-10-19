@@ -12,7 +12,7 @@ A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what w
 | 2 | Nobody outside the pilot can submit proof, so the bond can never be slashed | Private log per job, delivered to every party, hashes on chain | No. And the contract can be drained with made-up evidence (10) |
 | 3 | The bond starts at zero, so it protects the lender least when risk is highest | Limits scale with the bond, a 200 yuan starting floor, the vendor bond covers the start (with 11) | Partly. Job size scales with the bond, but the minimum blocks a new machine from ever starting (11) |
 | 4 | Where insurance fits | Not in the build, only above the bonds | Partly. Physical damage is out, but "cover bound" is still required and insurance is still in the market section |
-| 5 | The document mixes delivery drone, agricultural drone, robot arm and humanoids | Open | Worse. Now two sides: drone fleet and a neighbour hiring a humanoid |
+| 5 | The document mixes delivery drone, agricultural drone, robot arm and humanoids | Agricultural drone pilot only; delivery, robot arms, robotaxis and humanoids become one closing statement | Worse. Now two sides: drone fleet and a neighbour hiring a humanoid |
 | 6 | The market section argues for insurance pricing, which the product section rules out | Open | Still there |
 | 7 | Spraying is seasonal; a fixed monthly minimum causes default in the off-season | Open | Not addressed |
 | 8 | Scope is far bigger than the time left | Open | Worse. Both sides are in the required demo |
@@ -114,6 +114,44 @@ The answer. Bonds and insurance cover different sizes of loss.
 - Insurance covers losses bigger than the bonds can hold. Two cases: the vendor's agent fails across many wallets at once and the claims exceed the vendor bond; or the drone physically crashes, damages a crop or injures someone. The physical case is outside our project entirely; pilots carry drone liability cover for it today.
 
 The decision. No insurance in the build. The flat per flight cover and the cover pool are dropped. In the pitch, one line: the vendor bond is the first layer, and in production the vendor backs it with AI liability insurance for losses beyond the bond. Physical crash damage stays with the pilot's existing drone insurance. This also keeps us clear of CoverAI.
+
+## 5. One scenario: the agricultural drone pilot
+
+The problem. JiXin describes several products at once: a drone fleet (delivery in Shenzhen or spraying in Guangdong) as Side A, a household lending its humanoid to a neighbour as Side B, and robot arms, robotaxis, port vehicles and software agents in the generalisation table. Both sides are in the required demo. That doubles the build (a farmland map, flight logs and per mu payments on one side; a floor plan, geofences inside a flat, neighbour negotiation and a damage dispute flow on the other), splits a five minute pitch into two half stories, and leaves the market story, seasonality and scope undecidable.
+
+The decision. Build and demo only the agricultural drone pilot. Everything else is one closing statement.
+
+Why this one:
+
+- Real users with sourced numbers: over 200,000 agricultural drone pilots in China, 3 to 5 yuan per mu for most field crops, a drone of about 55,000 yuan.
+- A clean unit of work: a mu sprayed, from the GPS track, confirmed by the farmer, who pays and so has no reason to confirm work not done.
+- The strongest inclusion story for a WeBank panel: a rural pilot with nothing to pledge.
+- The team's web app already shows farmland.
+- Delivery drones in Shenzhen belong to Meituan, so a small delivery operator is fiction. Humanoids are a speculative market today and a robot in someone's home adds privacy and safety questions.
+
+The demo story:
+
+1. A pilot with nothing to pledge gets a drone financed by a licensed lessor (sandbox).
+2. The bond starts at zero, so the drone takes small jobs inside the starting floor (11).
+3. Farmers post spraying jobs, the drone sprays, the farmers confirm, the fee splits automatically: instalment, bond, rail fee, the pilot's share.
+4. The bond grows, bigger jobs unlock, the lender lowers the rate.
+5. A faked flight log is caught by the plausibility check.
+6. The agent is tricked by an injected message, the policy engine blocks it, the vendor bond is slashed by proof (1, 2, 10).
+7. The lease reaches zero and the drone belongs to the pilot.
+
+The branching statement, for the closing slide and the end of the video:
+
+> The same rail works for any machine that does paid work someone can verify. Delivery drones paid per drop. Robot arms paid per part. Robotaxis paid per trip. Port vehicles paid per container move. And one day the humanoid in your building, paid per errand for your neighbour. Every one of them can earn, pay its own way, post a bond and pay off its own financing. The agricultural drone is the first.
+
+What changes in BONDED_AGENT.md (for whoever owns it):
+
+- Side B (the neighbour and the humanoid) moves out of the build and the required demo into the closing statement and a short "next" section.
+- Side A becomes the agricultural drone only. The delivery flow (Nanshan to Futian, recipient confirmation) is replaced by the spraying flow (per mu, farmer confirmation).
+- The demo in three acts becomes the single story above.
+- Mission control loses the neighbourhood view and keeps the farmland view.
+- `JobBoard` stays one contract; nothing in it is humanoid specific, so the contracts do not change for this decision.
+
+This unblocks 6 (market story), 7 (seasonality) and 8 (scope).
 
 ## Check against JiXin (19 Oct)
 
