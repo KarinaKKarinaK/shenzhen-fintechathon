@@ -9,7 +9,7 @@ A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what w
 | # | Problem | Decided | In JiXin |
 |---|---|---|---|
 | 1 | Who pays when the AI agent makes a mistake | Two bonds, the vendor is liable for the AI | No. One bond per agent, still described as protection against a compromised agent |
-| 2 | Nobody outside the pilot can submit proof, so the bond can never be slashed | Public intent log | No. And the contract can be drained with made-up evidence (10) |
+| 2 | Nobody outside the pilot can submit proof, so the bond can never be slashed | Private log per job, delivered to every party, hashes on chain | No. And the contract can be drained with made-up evidence (10) |
 | 3 | The bond starts at zero, so it protects the lender least when risk is highest | Limits scale with the bond, the vendor bond covers the start | Partly. Job size scales with the bond, but the minimum blocks a new machine from ever starting (11) |
 | 4 | Where insurance fits | Not in the build, only above the bonds | Partly. Physical damage is out, but "cover bound" is still required and insurance is still in the market section |
 | 5 | The document mixes delivery drone, agricultural drone, robot arm and humanoids | Open | Worse. Now two sides: drone fleet and a neighbour hiring a humanoid |
@@ -76,14 +76,15 @@ What the log is and is not. It is not a place where people claim something never
 
 The other direction, "this never happened", is a different problem with a different fix. A pilot claiming 100 mu that was never sprayed is caught by the farmer's confirmation: the farmer pays, so the farmer only signs if the work was done. No signature, no money, and claiming the job anyway is itself a rule break that hits the pilot bond.
 
-Who can see and who can report. The worry is that random people or hunters flag actions and mess up payouts. They cannot, once fix 10 is in: the contract checks every report against the signed intent and the on-chain agreement, so a false report fails and pays nothing. Who reports is not the risk; a contract that believed the reporter was. So reporting stays open to anyone. What changes is who sees the details:
+Decision (revised): the log is private to each job. "Public" was the wrong word. What matters is not that strangers can read it but that no party can hide, edit or delete an entry.
 
-- The log is kept per job. Each entry is filed under the job it belongs to, so a customer sees everything the agent did for their job in one place.
-- Only the hash goes on chain. The full intent (amounts, payees, location) is visible to the parties of that job: the customer, the operator, the lender. Strangers see that entry 57 exists for job 12, not what is in it.
-- Anyone who has the full intent can submit it as proof. The contract checks it matches the hash. Customers and the lender always have it. Hunters have it for the shadow copies they attack.
-- Payouts are fixed by the agreement, not by the reporter. A bounty goes to whoever proved the violation. Compensation goes to whoever the job agreement says lost the money, never to the reporter. Penalties are capped per day so mass reporting cannot drain a bond.
+- Who sees an entry: only the parties to that job. The customer, the operator (pilot or fleet), the lender, and the vendor of the agent. Every intent the agent signs for a job is delivered to all of them, including the ones the policy engine blocked. That delivery guarantee is the point: the operator can no longer quietly drop a blocked scam attempt.
+- What goes on chain: only a hash of each entry, with a timestamp. It reveals nothing (no amount, payee or location) but proves the entry existed at that time in that form. Nobody, including us, can later delete it or swap it for a different version.
+- Who can report: only the parties to the job. Each of them has the full entry and can submit it as proof; the contract checks it against the hash and the job agreement (fix 10). The lender is a party, has its own money at stake and does not depend on the customer noticing, which covers a customer who never checks or who colludes with the operator.
+- Hunters: they never see live jobs. They attack shadow copies of the agent and submit the intents from those runs, so their bounties come from the vendor bond without anyone outside a job seeing its data.
+- Payouts are fixed by the agreement, not by the reporter. A bounty goes to the party that proved the violation. Compensation goes to whoever the job agreement says lost the money. Penalties are capped per day.
 
-Why not a log only the customer can use: customers rarely check, and a customer who colludes with the operator would never report. Keeping reporting open means the lender and hunters can still catch what a customer misses.
+Why this fits China: job data (locations, a neighbour's flat, a farmer's fields) is personal or business data under PIPL. Keeping it among the parties and putting only hashes on chain is also how a FISCO BCOS consortium chain would be used in production.
 
 - Public intent log: catches the agent trying things it should not. Vendor bond.
 - Farmer's confirmation: catches the pilot claiming work that was not done. Pilot bond.
