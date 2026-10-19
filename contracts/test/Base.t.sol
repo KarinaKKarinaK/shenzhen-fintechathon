@@ -40,6 +40,11 @@ abstract contract BaseTest is Test {
     bytes32 fieldSeven = keccak256("field-7");
     uint256 leaseId;
 
+    // Cached in setUp so _hash and _sign make no external calls. A helper that calls `bond`
+    // would consume a pending vm.prank or vm.expectRevert meant for the next real call.
+    bytes32 intentTypehash;
+    bytes32 domainSeparator;
+
     function setUp() public virtual {
         agent = vm.addr(agentKey);
         intentLog = new IntentLog();
@@ -48,6 +53,8 @@ abstract contract BaseTest is Test {
         board = new JobBoard(bond, lease, rail);
         bond.setBoard(board);
         bond.setHunter(hunter, true);
+        intentTypehash = bond.INTENT_TYPEHASH();
+        domainSeparator = bond.DOMAIN_SEPARATOR();
 
         vm.deal(vendor, VENDOR_BOND);
         vm.prank(vendor);
@@ -79,11 +86,11 @@ abstract contract BaseTest is Test {
     }
 
     function _hash(IBonded.Intent memory i) internal view returns (bytes32) {
-        return keccak256(abi.encode(bond.INTENT_TYPEHASH(), i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.confirmed, i.nonce, i.expiry));
+        return keccak256(abi.encode(intentTypehash, i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.confirmed, i.nonce, i.expiry));
     }
 
     function _sign(uint256 key, IBonded.Intent memory i) internal view returns (bytes memory) {
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", bond.DOMAIN_SEPARATOR(), _hash(i)));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, _hash(i)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, digest);
         return abi.encodePacked(r, s, v);
     }
