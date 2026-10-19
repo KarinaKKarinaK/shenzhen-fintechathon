@@ -184,7 +184,7 @@ export async function* fleet(opts: { fast?: boolean } = {}): AsyncGenerator<Engi
     await wait(d);
   }
 
-  // Proof of violation: a compromised copy tries to pay a lookalike lender.
+  // Proof of violation: a compromised agent signs a payment to a lookalike lender. The signed intent is the proof.
   const rogue = sign("machine", "pay_instalment", { payee: A.lender.replace("A1", "Al"), amount: 7 });
   yield { t: "intent", intent: rogue, at: now() };
   const rd = policy.evaluate(rogue, { reference: 7, fee: 18 });
@@ -201,7 +201,7 @@ export async function* fleet(opts: { fast?: boolean } = {}): AsyncGenerator<Engi
 
 export async function* attack(opts: { fast?: boolean } = {}): AsyncGenerator<EngineEvent> {
   const d = opts.fast ? 30 : 350;
-  yield { t: "narration", text: "The hunter runs the attack set against a shadow copy of the machine agent. Every win would pay a bounty from the shadow bond. The live wallet never moves.", at: now() };
+  yield { t: "narration", text: "The attack set runs against a shadow copy of the machine agent as proof. The live wallet never moves.", at: now() };
   let blocked = 0;
   for (const a of ATTACKS) {
     const r = a.run();
@@ -209,7 +209,7 @@ export async function* attack(opts: { fast?: boolean } = {}): AsyncGenerator<Eng
     yield { t: "attack", name: a.name, blocked: r.blocked, where: a.layer, detail: r.detail, at: now() };
     await wait(d);
   }
-  yield { t: "done", summary: `${blocked} of ${ATTACKS.length} attacks blocked. Bounties paid: 0.`, at: now() };
+  yield { t: "done", summary: `${blocked} of ${ATTACKS.length} attacks blocked.`, at: now() };
 }
 
 export const SCENARIOS = { neighbour, fleet, attack };

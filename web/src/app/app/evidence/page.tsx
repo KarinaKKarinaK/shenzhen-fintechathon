@@ -1,4 +1,5 @@
 import { runAll } from "@/engine/attacks";
+import { JudgeConsole } from "@/components/JudgeConsole";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +10,15 @@ export default function Page() {
   return (
     <div className="mx-auto max-w-[1100px]">
       <h1 className="display text-4xl md:text-5xl">Evidence</h1>
-      <p className="mt-2 max-w-2xl text-sm text-ink-2">What the judges can verify without trusting us. This page runs the attack set at request time, so the numbers are live, not pasted.</p>
+      <p className="mt-2 max-w-2xl text-sm text-ink-2">What you can verify without trusting us. The attack set is proof, not a product: it runs at request time, so the numbers are live, not pasted.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="card p-4"><div className="text-xs text-muted">Attack set</div><div className="kpi">{blocked} of {results.length}</div><div className="text-sm text-muted">blocked at request time</div></div>
         <div className="card p-4"><div className="text-xs text-muted">Chain mode</div><div className="mt-1 text-sm">{chainMode}</div></div>
         <div className="card p-4"><div className="text-xs text-muted">Model mode</div><div className="mt-1 text-sm">{process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. Set an API key to let the model write the text."}</div></div>
       </div>
+
+      <section className="grad card mt-4 p-5"><JudgeConsole /></section>
 
       <section className="card mt-4 p-4">
         <h2 className="mb-3 text-sm font-semibold">Attack results</h2>

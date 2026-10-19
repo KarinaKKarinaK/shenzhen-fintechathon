@@ -29,7 +29,7 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
     <div className="mx-auto max-w-[1560px]">
       <header className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-sm text-muted">{side === "fleet" ? "Side A, commercial" : "Side B, individual"}</div>
+          <div className="text-sm text-muted">{side === "fleet" ? "Agricultural drone on hire purchase" : "Household humanoid"}</div>
           <h1 className="display text-4xl md:text-5xl">{title}</h1>
           <p className="mt-2 max-w-xl text-sm text-ink-2">{intro}</p>
         </div>

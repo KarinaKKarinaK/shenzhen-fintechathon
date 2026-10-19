@@ -9,10 +9,8 @@ export default function Page() {
   const blocked = results.filter((r) => r.blocked).length;
   const byLayer = ["message", "policy", "contract"].map((l) => ({ l, n: results.filter((r) => r.layer === l).length, b: results.filter((r) => r.layer === l && r.blocked).length }));
   const tiles = [
-    { href: "/app/neighbourhood", title: "Neighbourhood", body: "Humanoid, neighbour, geofence, split, slash by proof." },
-    { href: "/app/fleet", title: "Fleet", body: "Drone, lender, declined job, faked log, title transfer." },
-    { href: "/app/attack", title: "Attack lab", body: `${ATTACKS.length} attacks, then yours.` },
-    { href: "/app/evidence", title: "Evidence", body: "Verify every claim." },
+    { href: "/app/fleet", title: "Live demo", body: "Drone, lender, declined job, faked log, slash by proof, title transfer." },
+    { href: "/app/evidence", title: "Evidence", body: `${ATTACKS.length} attack cases as proof, and a console to try your own.` },
   ];
   return (
     <div className="mx-auto max-w-[1500px]">
