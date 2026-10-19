@@ -9,7 +9,7 @@ Deadline: 20 October 2026, 23:59 Beijing time. Registration and submission close
 - `HACKATHON.md`: everything we know about the competition. Rules, topics, scoring, deliverables, timeline, prizes, contacts, judge profile, and open questions to confirm with the organizers.
 - `IDEAS.md`: the full brainstorm. Thirty-five ideas, each with the pitch, the local hook, the demo moment, the security story, and the build risk.
 - `FINAL_IDEAS.md`: the top four ideas for Topic F scored on the rubric, the layers to add, the recommendation, and the three competitors to beat with how to beat them.
-- `BONDED_AGENT.md`: how the bonded drone and insurer agent idea works end to end, and the mission control app design that makes it look good on a projector.
+- `BONDED_AGENT.md`: Surety, the combined idea. Machines that earn per unit of work, pay their own costs to other agents, post a bond slashed by proof, and own themselves once financed. Drone demo, CoverAI and competitor comparison, app design, SCP and autoresearch, market.
 - `CORE_IDEA.md`: the ranked shortlist and the one we are building, with scope, architecture, and demo script.
 - `SECURITY.md`: the security layer that goes into whichever idea we pick. Permission tiers, policy engine, injection defense, and the attack test cases we ship with the code.
 - `PLAN.md`: hour by hour plan to the deadline and the submission checklist.

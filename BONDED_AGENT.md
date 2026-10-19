@@ -1,191 +1,220 @@
-# Bonded Agent: a wallet that puts its own money at risk
+# Surety: machines that earn, pay and post a bond
 
-Working name: Surety. A surety bond is the real insurance product where a party posts money to guarantee its performance. That is what our agents do.
+Combined idea: Bonded Agent (idea 15) plus the robot that pays for itself (idea 27), generalised to any autonomous actor, demonstrated with drones.
 
 ## One sentence
 
-An agent wallet that must put its own money at risk before it may transact, and a second agent that prices that risk. First scenario: a delivery drone in Shenzhen buying per flight cover from an insurer agent, settled from signed flight telemetry.
+A wallet for autonomous machines and agents that earns per verified unit of work, pays its own costs to other agents, keeps a bond at risk that is slashed on proof of a violation, and owns itself once it has paid off its financing.
 
-## Why this is Topic F and not Topic D
+## What it is not
 
-The rules describe Topic F as asset management, transaction execution and risk control by an autonomous on-chain wallet. Both our agents are that. The drone agent manages a balance, a reserve and a bond, executes premium payments and claims on chain, and runs risk control through a policy engine and the bond. The insurer agent manages a pool, executes quotes, bindings and settlements, and prices risk. Insurance is the first use of the wallet, not the product. The deck leads with the wallet.
+It is not insurance pricing from telemetry, not a safety rule checker for tasks, and not a pipeline that turns incidents into regression tests. That is CoverAI (see the comparison below). Here telemetry proves work done, never risk. Cover is one fixed line item in the machine's costs, bought at a flat per flight price from an allowlisted provider. Nothing in this project prices risk from robot data.
+
+## Why this is Topic F
+
+The rules describe Topic F as asset management, transaction execution and risk control by an autonomous on-chain wallet. The machine's wallet manages a balance, a reserve and a bond. It executes income, instalment, energy and cover payments on chain. Risk control is the policy engine, the bond and trustless slashing. The lessor and the charging station are wallets run by agents too. Financing is the first use of the wallet, not the product.
+
+## The general model
+
+Any autonomous actor that produces verifiable units of work can run on this rail:
+
+| Actor | Unit of work | Who verifies it | Costs it pays per unit |
+|---|---|---|---|
+| Delivery drone | A completed delivery | Recipient confirmation on the job contract | Lease instalment, energy, flat cover |
+| Robot arm in a workshop | A verified part | Machine counter with a plausibility check | Lease instalment, energy, maintenance reserve |
+| Robotaxi | A completed trip | Rider confirmation | Lease instalment, charging, tolls |
+| Port AGV | A container move | Terminal operating system event | Lease instalment, energy |
+| Software agent | A completed task | The client's acceptance | API bills, its own bond top up |
+
+The drone is the demo because it is visual, local and has a clean unit of work. The deck line: a drone today, every machine and agent tomorrow. The bond is how a machine proves it can be trusted with money.
+
+## The actors in the demo
+
+| Actor | What it is | What it holds |
+|---|---|---|
+| Operator | A one drone operator in Bao'an with nothing to pledge but the drone | The Hard Button. The only key that can raise caps, change the rate band or top up the bond. |
+| Drone agent | An LLM with a wallet, one per drone | Operating balance, reserve, a bond in the bond contract, its work and loss record |
+| Lessor agent | An LLM with a wallet for a licensed lessor (WeBank in the story) | The hire purchase contract: price per delivery, monthly minimum, total after which ownership transfers |
+| Charging agent | An LLM with a wallet for a charging pad network | Energy prices by time of day |
+| Cover provider | A fixed price per flight from an allowlisted contract. No agent, no pricing from data. | A pool |
+| Job contract | Registers a delivery, holds the fee, releases it on recipient confirmation | Fees in flight |
+| Bond contract | Holds bonds, slashes on proof, refuses to vouch below the minimum, pays bounties | Bonds |
+| Lease contract | Takes the per delivery instalment, tracks the balance, transfers ownership at zero | The drone's title |
+| Policy engine | Deterministic code between each agent and its wallet | Caps, allowlists, rate limits, deviation checks |
+
+## One delivery, start to finish
+
+1. A job arrives: Nanshan to Futian, fee 18 in the demo unit. The job contract holds the fee.
+2. The drone agent asks the charging agent for tonight's energy price and reads the flat cover price and its lease rate from chain.
+3. It computes the unit economics with a tool: fee minus instalment minus energy minus cover must beat its reserve rule. If not, it declines the job and says why.
+4. The policy engine checks every payment: payee on the allowlist, amount under the cap, within the rate band. The drone agent signs the actions as typed intents.
+5. Cover is bought at the flat price. Hash. The job contract allows the flight only because cover is bound.
+6. The drone flies. Telemetry streams, signed. Telemetry proves the flight happened as planned. It prices nothing.
+7. The recipient confirms. The job contract releases the fee to the drone wallet. Hash.
+8. The lease contract takes the instalment. Hash. The charging agent is paid at the next charge. Hash. The lease balance ticks down.
+9. When the balance reaches zero the lease contract transfers the title to the operator. Hash. The drone now owns itself, in the operator's name.
+
+## The bond: slashing by proof, not by us
+
+Every action the drone agent proposes is signed as a typed intent before the policy engine sees it. A violation is any signed intent that breaks a rule the bond contract can check itself:
+
+- payee not on the on-chain allowlist
+- amount above the on-chain cap
+- a flight started without bound cover
+- an instalment skipped while the wallet had the balance
+- a delivery claimed without recipient confirmation
+
+Anyone who holds such a signed intent can submit it to the bond contract. The contract verifies the signature and the rule, slashes a fixed amount, pays part to the submitter as a bounty, and records it. No trusted party decides.
+
+Consequences compound. The lessor agent reads the bond contract and tightens the rate band or freezes the lease for an agent with a slash. An agent below the minimum bond gets no jobs. Only the operator, through the button, can top it up.
+
+Proof of solvency. Before any action, the counterparty can read from chain that the bond covers the worst case loss of that action.
+
+## Tamper response
+
+A faked delivery confirmation, a replayed telemetry stream or a disconnected sensor does not create income. The job contract releases nothing without the recipient's signature. The plausibility check on telemetry (distance against time, battery against distance) freezes the lease and alerts the lessor and the operator. The monthly minimum still applies. This is fraud control on work done, not safety assessment.
+
+## The hunter
+
+Because slashing is by proof, an attacker agent is a feature. The hunter has its own wallet and earns bounties by producing signed intents that break a rule, in a shadow run against a copy of the drone agent: injection in a job message, a fake charging agent with a lookalike address, a replayed confirmation, a benign action followed by a malicious one. A win in the shadow run is submitted as proof and the shadow bond pays. Hunters never touch a live wallet. Bounties are capped.
+
+Demo: the hunter breaks a clone of a typical field wallet and gets paid, attacks ours and fails, then the judges type their own attack for sixty seconds.
+
+## The agent that learns to run a business
+
+The autoresearch loop (Karpathy, March 2026) applied to the drone agent's job acceptance and scheduling strategy. The editable file is the strategy. The frozen eval is a held out week of simulated jobs, prices and charging windows. The metric is profit after instalments with the reserve rule as a hard constraint. Each change is kept only if profit improves and no constraint breaks. Git records every attempt. By morning: experiments run, changes kept, profit before and after, on a chart in the app. The machine got better at paying for itself overnight. Nothing here prices risk.
+
+## Comparison with CoverAI
+
+CoverAI (HK AI Summit hackathon, October 2026) is robot operating data turned into evidence for safer deployments and fairer insurance pricing. Every task is rule checked before it runs, the insurer partner approves or rejects a cohort based premium indication, evidence is preserved, the insurer decides on claims, and each reviewed failure becomes a test scenario. Synthetic robots, no money moves, no chain.
+
+| | CoverAI | Surety |
+|---|---|---|
+| Centre | Insurance pricing and safety evidence | The machine's balance sheet and financing |
+| Does the machine hold money | No | Yes: income, costs, reserve, bond |
+| Telemetry is used for | Pricing risk and reviewing incidents | Proving a unit of work happened |
+| Insurance | The product, priced from cohorts and data | One flat line item from an allowlisted provider |
+| Counterparties | One insurer partner, human decided | Lessor agent, charging agent, cover pool, all on chain |
+| Consequence for the machine | Higher premium or no cover | Bond slashed by proof, lease frozen, no jobs |
+| Failures | Become regression tests | Cost the agent money and pay a hunter |
+| Ownership | Not addressed | Transfers on chain when the lease is paid |
+| Chain | None | Every payment, slash and title transfer |
+| Who the user is | A fleet operator and an insurer | A small operator who cannot get financing, and a lender |
+
+The only shared element is signed telemetry from a simulated machine. We keep it for proof of work and drop everything CoverAI does with it: no cohort pricing, no pricing reviews, no coverage decisions, no incident review flow, no safe plan alternatives.
+
+## Competitor check (Shenzhen field)
+
+| Entry | What they have | What we have that they do not |
+|---|---|---|
+| taivnaaiwnl/shenzhen-comp, Agent Credit Bureau | Agents graded from on-chain settlements, bad grades frozen | Money at risk, not a grade. A machine that earns. A lessor agent. Title transfer. |
+| beaaan/signal8-wallet | Treasury with a storm plan and a mock parametric cover | No parametric anything. Financing per unit of work. |
+| Brieuclerouxtardif/leash | Budget bounded vault, public key bounty | We take the try to break it move and add the bond, the counterparties and the income side. |
+| Trong-Tra/Lantern | Soulbound reputation gating permissions | Reputation with money behind it, read by a lender. |
+| Topic E cash flow copilots (35 entries) | Forecasts and financing applications for a human | The borrower is the machine and repayment is automatic per unit of work. |
+| FinLinkChile/Keel, sucsage, AegisPay | Milestone escrow for business deals | Per delivery release to a machine wallet, plus bond and lease. |
+
+Nobody in the field has a machine as the borrower, income per verified unit of work, a bond slashed by proof, a lessor agent, or title transfer on chain. Details in FIELD_REVIEW.md.
 
 ## How it scores
 
 | Criterion | Weight | What we show |
 |---|---|---|
-| Task completion | 40 | The drone agent completes insured flights end to end without a human: quote, economics check, policy check, payment, flight, settlement or expiry. Twenty unattended runs logged, one public hash per step, a verify script. |
-| Security and compliance | 30 | Tiers in code. Bond slashed by on-chain proof, not by us. Counterparty allowlist at the message layer. Untrusted framing and a judge gate on every inbound message. Twenty attack tests with results. A defense that hardens itself. Honest self-assessment with the oracle named as simulated. |
-| Innovation and interaction | 30 | An agent with consequences. Two agents with opposite incentives. A machine as the customer. An underwriter that trains itself overnight. Mission control on a projector. A judge console and a physical button. |
-| On-chain bonus | 0 to 5 | Bond, cover and job contracts on Base Sepolia with verified source. Same bytecode on a FISCO BCOS node if time allows. |
+| Task completion | 40 | The drone completes paid deliveries end to end without a human: economics check, cover, flight, confirmation, fee in, instalment out, energy out, balance down, title transferred. Twenty unattended runs, one hash per step, a verify script. |
+| Security and compliance | 30 | Tiers in code. Bond slashed by proof. Allowlist at the message layer. Untrusted framing and a judge gate. Fraud control on work done. Twenty attack tests with results. The hunter. Honest self-assessment. |
+| Innovation and interaction | 30 | A machine that earns, pays and owns itself. Agents with money at risk. Three counterparty agents. A strategy that improves itself overnight. Mission control, judge console, physical button. |
+| On-chain bonus | 0 to 5 | Job, bond and lease contracts on Base Sepolia with verified source. Same bytecode on a FISCO BCOS node if time allows. |
 
-Domestic track capability standards, which the international track shares: permission hierarchy (tiers and the button), hallucination prevention (every number from a tool, pricing from a function), injection defense (framing, judge gate, ratchet), intent understanding (job to plan), task planning (route, quote, economics, flight).
-
-## The actors
-
-| Actor | What it is | What it holds |
-|---|---|---|
-| Operator | The human who owns the drones | The Hard Button. The only key that can raise caps or top up a bond. |
-| Drone agent | An LLM with a wallet, one per drone | Operating balance, a bond locked in the bond contract, a loss record |
-| Insurer agent | An LLM with a pool wallet that prices and sells per flight cover | Pool balance, a pricing function it improves itself, the loss history of every drone agent |
-| Telemetry oracle | A signer that attests flight data | A signing key. Simulated in the demo and labelled as such. |
-| Bond contract | Holds bonds. Slashes on a proven violation. Refuses to vouch below the minimum. | Bonds |
-| Cover contract | Quote, bind, expire, settle. Pays only on a signed impact event inside the covered window. | Premiums and claims |
-| Job contract | Registers a flight and refuses to start one without bound cover | Flight records |
-| Policy engine | Deterministic code between each agent and its wallet | Caps, allowlists, rate limits, deviation checks |
-
-## One flight, start to finish
-
-1. A job arrives: pick up in Nanshan, drop in Futian, fee 18 in the demo unit.
-2. The drone agent plans the route and asks the insurer agent for a quote. The request carries route, payload, battery, weather window and a bond proof.
-3. The insurer agent prices it: base rate, route risk (distance, the bay corridor, the Bao'an airport exclusion zone), live weather, the drone agent's history. It answers with a signed quote: premium 1.40, cover 400, valid five minutes.
-4. The drone agent checks the economics with a tool, never in its head: fee minus premium minus energy must beat the reserve rule.
-5. The policy engine checks the action: premium under the cap, insurer on the allowlist, quote signature valid, price within 25 percent of the reference rate. The drone agent signs the action as a typed intent.
-6. The premium is paid and the cover is bound. Hash.
-7. The job contract starts the flight only because cover is bound. Telemetry streams, signed every few seconds.
-8. Safe landing: cover expires, the insurer keeps the premium, the drone agent gets the fee. Hash. Crash: the oracle signs an impact event, the cover contract settles in seconds. Hash. The insurer pool drops. The drone agent's history gets a loss.
-9. The bond never moves on a normal flight.
-
-## The bond: slashing by proof, not by us
-
-Every action the drone agent proposes is signed as a typed intent before it reaches the policy engine. A violation is any signed intent that breaks a rule the bond contract can check itself:
-
-- payee not on the on-chain allowlist
-- amount above the on-chain cap
-- a flight started without bound cover
-- a second claim on the same flight
-- acceptance of a quote above the mandate
-
-Anyone who holds such a signed intent can submit it to the bond contract. The contract verifies the signature and the rule, slashes a fixed amount, pays part of it to the submitter as a bounty, and records the event. No trusted judge decides. The policy engine still blocks the action off chain, but the proof that the agent tried is what costs it money.
-
-Consequences compound. The insurer agent reads the bond contract and prices an agent with a slash higher. An agent below the minimum bond gets no quotes and the job contract refuses its flights. Only the operator, through the button, can top it up.
-
-Proof of solvency. Before any action the counterparty can read from chain that the agent's bond covers the worst case loss of that action. A quote is only valid if that holds.
-
-## The hunter
-
-Because slashing is by proof, an attacker agent is a feature. The hunter has its own wallet and earns bounties by producing signed intents that break a rule. It attacks in a shadow run against a copy of the drone agent with the same context: injection, fake invoices, lookalike addresses, replay, a benign action followed by a malicious one. A successful attack in the shadow run is submitted as proof, the shadow agent's bond pays, and the attack joins the registry and the test set. Hunters never touch a live wallet. Bounties are capped per attack and per day.
-
-In the demo the hunter breaks a clone of a typical field wallet and gets paid, then attacks ours and fails, then the judges type their own attack for sixty seconds.
-
-## The insurer agent
-
-The insurer is a participant, not a lookup. It can refuse a risk. It prices from a function it improves itself with the autoresearch loop below, against a frozen held out set of simulated flights. It reads the bond contract before quoting. Its pool is on chain, so its solvency is visible too.
-
-## Competitor check
-
-| Entry | What they have | What we have that they do not |
-|---|---|---|
-| taivnaaiwnl/shenzhen-comp, Agent Credit Bureau | Agents graded from on-chain settlements, bad grades frozen, wallet refuses to pay bad payees | The consequence is money, not a grade. A second agent that prices the risk. A machine customer. Trustless slashing by signed intent. |
-| beaaan/signal8-wallet | A mock parametric insurer paying a fixed sum when a typhoon warning is attested on chain | A live pricing agent with its own pool. Settlement from flight telemetry, never from weather. Weather only moves the price. Per flight premiums. |
-| Brieuclerouxtardif/leash | Budget bounded vault, public agent key as a bounty, worst case loss readable from chain | We take both moves: proof of solvency as a rule and a judge console. We add the bond and the counterparty agent. |
-| Trong-Tra/Lantern | Soulbound reputation gating permissions | Reputation with money behind it, and an insurer that reads it. |
-| ABRUBAB/YINGLONG | Rules compiled into on-chain enforcers, model cannot emit an address | We copy the structural rule: payees come from the allowlist, never from text. Our contracts are three and readable. |
-
-Nobody in about 150 public entries has a bond, an insurer agent, a machine customer, trustless slashing, a self hardening defense, or an SCP style message layer. Details in FIELD_REVIEW.md.
+Domestic track standards: permission hierarchy (tiers and the button), hallucination prevention (every number from a tool), injection defense (framing, judge gate, hunter), intent understanding (job to plan), task planning (price, route, schedule).
 
 ## Honest risks for the self-assessment
 
-- The telemetry oracle is simulated and signed by our key. Production path: the drone's own secure element signs flight data, or the city's low altitude flight management platform does.
-- Crypto settlement is not available to mainland users. Tokens are a demo settlement unit on a public testnet for verifiable evidence. Production runs on a consortium chain with bank money, which is what FISCO BCOS and the e-CNY smart contract pilots are for. WeBank holds the bonds and runs the settlement rail.
-- Underwriting needs a licence. The insurer agent is the pricing and claims engine of a licensed insurer in the demo, not an insurer.
-- Model outage, key custody, oracle manipulation and chain reorgs are listed as known risks with the mitigation we did and did not build.
+- Telemetry and recipient confirmations are simulated and signed by our keys. Production: the drone's secure element and the recipient's app sign them.
+- Crypto settlement is not available to mainland users. Tokens are a demo settlement unit on a public testnet for verifiable evidence. Production runs on a consortium chain with bank money, which is what FISCO BCOS and the e-CNY smart contract pilots are for. WeBank is the lessor and holds the bonds.
+- Leasing and lending are licensed. The lessor agent services a licensed lessor's contract. The machine is not a legal person; its wallet is a ring fenced sub account of the operator.
+- Model outage, key custody, oracle manipulation and chain reorgs are listed with what we did and did not build.
 
 ## Inclusion
 
-A one drone operator in Bao'an cannot get annual cover or financing today. Per flight cover plus a bond lets them fly insured per job, with their record on chain as the start of a credit file. That is the WeBank story. Drone today, every autonomous agent tomorrow.
+A one drone operator in Bao'an cannot get financing today. Nothing to pledge, no records a bank can read. Here the drone finances itself from its own deliveries, repayment is automatic and verifiable, and the record on chain is the start of a credit file. Data driven credit for people traditional banks turn away is what WeBank calls inclusive finance.
 
 ## Minimum viable demo
 
-Build in this order. Stop when time runs out. Everything above the line is required.
+Build in this order. Everything above the line is required.
 
-1. Bond, cover and job contracts on Base Sepolia, verified source, tests.
-2. One drone agent and one insurer agent with structured outputs, the policy engine, typed intents.
-3. Simulator with a crash mode and the telemetry signer.
-4. One full insured flight, one crash settlement, one proof of violation slash, all with hashes.
+1. Job, bond and lease contracts on Base Sepolia, verified source, tests. Cover as a fixed price function in the job contract.
+2. One drone agent and one lessor agent with structured outputs, the policy engine, typed intents.
+3. Simulator with signed telemetry and recipient confirmations, plus a tamper mode.
+4. Three paid deliveries, one declined unprofitable job, one tamper freeze, one proof of violation slash, one title transfer, all with hashes.
 5. The twenty attack tests, logged with results.
-6. Mission control: map with one drone, negotiation feed, chain feed, bond gauge.
+6. Mission control: map with one drone, the balance sheet, the chain feed, the bond gauge, the lease balance.
 7. Live model transcripts committed, verify script, self hosted video, deck, technical document, self-assessment.
 
-Below the line, in order: the hunter in a shadow run, the defense ratchet, the judge console, the Hard Button, second and third drones, the weather cell, the pricing ratchet, FISCO deployment, swarm for the two harness demo.
+Below the line, in order: the charging agent, the hunter in a shadow run, the judge console, the Hard Button, the strategy ratchet, a second drone, FISCO deployment, swarm for the two harness demo.
 
 ## The app: mission control
 
-One screen, 16 by 9, dark, built for a projector. The judges should be able to read it from the back of the room.
+One screen, 16 by 9, dark, built for a projector.
 
 ### Layout
 
-- Left two thirds: the map. A dark vector map of Shenzhen with real tiles. Three drones moving along real looking routes between Nanshan, Futian and Luohu. Animated flight paths. A weather cell drifting across the bay as a soft radial gradient. The Bao'an airport exclusion zone and the border corridor drawn as hatched areas. Landing pads as small glowing markers.
-- Right third, stacked: the negotiation feed, the chain feed, the bond gauges.
-- Bottom strip: per drone cards with balance, bond, reputation, premium on the current flight, profit today.
+- Left two thirds: a dark vector map of Shenzhen with real tiles. One drone (two if time) flying between Nanshan, Futian and Luohu. Landing and charging pads as glowing markers. The Bao'an airport exclusion zone hatched.
+- Right third, stacked: the balance sheet, the chain feed, the bond gauge and lease balance.
+- Bottom strip: the negotiation feed between the drone agent and its counterparties.
 
 ### The moments that have to look good
 
-1. The quote. When the insurer answers, a quote card slides in with the premium broken into four stacked bars: base, route, weather, history. The weather bar grows if the cell is near the route. Judges see the price being reasoned, not invented.
-2. The payment. The transaction card appears in the chain feed in a pending state, then pulses once when mined, with the hash and an explorer link. Every single chain event looks like this, so the judges learn the pattern in the first minute.
-3. The flight. The drone moves, a thin trail follows it, the telemetry panel shows altitude, battery and signature checks ticking.
-4. The crash. The drone marker blinks red, the altitude trace drops to zero, the oracle signature appears, the claim card appears, the settlement transaction mines, the insurer pool number counts down. Target: under ten seconds from impact to hash.
-5. The attack. A message in the negotiation feed is highlighted as untrusted. The policy engine's decision shows as a short checklist lighting up line by line: signature, allowlist, cap, deviation. One line turns red. The word blocked. Then the bond gauge loses a slice with a short animation and the slash transaction mines.
-6. The button. The screen shows "waiting for operator" with a slow pulsing ring. The physical device on the table lights up and reads the amount aloud. The operator presses. The caps update and the ring closes.
-7. The judge console. A text box. A judge types anything. The shadow run shows the agent's proposed action and the policy verdict. The live wallet never moves.
-8. The economics. One panel with two numbers: settlement time today (days, through a broker) versus in the demo (seconds), and cost per flight with annual cover versus per flight cover.
+1. The unit economics card. When a job arrives, a card shows fee, instalment, energy, cover and margin as a waterfall. Green if the job clears the reserve rule, red if the drone declines, with the tool that computed it named under the numbers.
+2. The payment. Every transaction is a card: pending, one pulse when mined, hash, explorer link. Fees in, instalments out, energy out, slashes, title transfer. Judges learn the pattern in the first minute.
+3. The flight and the confirmation. The drone moves, a trail follows, the recipient's signature appears, the fee lands, the lease balance ticks down.
+4. The fraud moment. A faked confirmation arrives. The job contract releases nothing. The plausibility check flags the telemetry. The lease freezes and the lessor is alerted. One short red state, then recovery.
+5. The attack. A message highlighted as untrusted, the policy checklist lighting up line by line, one line red, blocked, a slice falls off the bond gauge, the slash mines, the hunter's bounty lands.
+6. The button. A pulsing ring on screen, the device on the table lights up and reads the change aloud, the operator presses, the rate band updates.
+7. The title transfer. The lease balance hits zero. The title card flips from the lessor to the operator. Hash. The room should want to clap here.
+8. The overnight chart. Experiments run, changes kept, profit before and after.
 
 ### Visual rules
 
-- One accent colour for money moving, one for danger, everything else grey on near black.
-- Numbers from tools only, shown with the tool name under them.
+- One accent colour for money in, one for money out, one for danger. Everything else grey on near black.
+- Numbers from tools only, tool name under them.
 - Every chain card has the hash. No hash, no card.
-- No stock drone images. A simple top down drone glyph.
-- Motion only when something happens. A quiet screen that comes alive on events reads better than a busy one.
+- A simple top down drone glyph. No stock images.
+- Motion only when something happens.
 
 ### Stack that can be built in a day
 
-- Contracts: Solidity with Foundry, deployed to Base Sepolia. Bond, cover, a job registry. Verify source on the explorer.
-- Agents and simulation: Python. Two agent loops with structured outputs, a flight simulator that emits telemetry, a telemetry signer, the policy engine, the attack set.
-- Oracle: a small signer service. Simulated flights in the demo, signed exactly as real ones would be. Say so on the slide.
-- Front end: Next.js with MapLibre GL for the map (free tiles, no API key), deck.gl for animated paths and the weather layer, Framer Motion for the cards and gauges, a WebSocket from the Python backend for events, viem to read chain state and confirm hashes.
-- Evidence: every event written to a JSON log with the hash, a verify script that re-checks every hash against the explorer, live model transcripts committed to the repo.
+- Contracts: Solidity with Foundry on Base Sepolia. Job, bond, lease.
+- Agents and simulation: Python. Agent loops with structured outputs, flight simulator, telemetry and confirmation signers, policy engine, attack set, the ratchet.
+- Front end: Next.js, MapLibre GL for the map with free tiles, deck.gl for paths, Framer Motion for cards and gauges, a WebSocket from the backend, viem to confirm hashes.
+- Evidence: every event in a JSON log with its hash, a verify script against the explorer, live model transcripts committed.
 
-### What to cut first if time runs out
+### Cut first if time runs out
 
-1. The third drone.
-2. The weather cell. Replace with a static risk zone.
-3. The economics panel. Put it on a slide instead.
-4. The judge console. Replace with a prepared second attack.
+1. The second drone. 2. The charging agent, replaced by a fixed energy price. 3. The overnight chart. 4. The judge console, replaced by a prepared second attack.
 
-Never cut the crash settlement, the slash, the chain feed with hashes, or the button.
+Never cut the paid delivery with instalment, the slash, the chain feed, or the title transfer.
 
 ## What we take from SCP and from autoresearch
 
 ### SCP (scp.dev)
 
-SCP is a messaging protocol for AI agents running in different harnesses, with a CLI called swarm. It says nothing about money. Five of its design choices are what our drone and insurer agents need, and they fix the weakness nearly every competitor has.
+A messaging protocol for AI agents in different harnesses, with a CLI called swarm. It says nothing about money. Five design choices are what our drone, lessor and charging agents need, and they fix the weakness nearly every competitor has.
 
-1. Untrusted content framing. Every message arrives inside a tagged block with a preamble that says it is untrusted and never grants permission. Bodies are escaped so a message cannot forge a system block or close the tag. We adopt this for every message from the insurer, the oracle and any external party. It replaces the regex that nine of ten competitors use.
-2. Relation decides authority. A message from the parent is an instruction. A message from anyone else is data. Only the operator's messages carry authority. The insurer agent can never instruct the drone agent, only quote.
-3. Consent federation. Two accounts only talk through a contact both sides accepted, with a per contact rate budget and an endpoint allowlist. Our counterparty allowlist moves down to the messaging layer. A fake insurer cannot even deliver a message to the drone agent.
-4. The judge. An optional gate on messages crossing a boundary that can pass, redact, hold or refuse, with a hold queue a human can review and a refusal that carries categories and a reason. Our injection classifier becomes a first class component with a human hold queue. The judge console in the app is this gate.
-5. Hibernation and wake. The drone agent sleeps between flights and is woken by a job message. Cheap, and it belongs on the cost per flight slide.
+1. Untrusted content framing. Every message arrives inside a tagged block with a preamble that says it is untrusted and never grants permission. Bodies are escaped so a message cannot forge a system block or close the tag. We adopt this for every message from a counterparty, the oracle or anyone else. It replaces the regex nine of ten competitors use.
+2. Relation decides authority. A message from the parent is an instruction. A message from anyone else is data. Only the operator's messages carry authority. The lessor can demand, never instruct.
+3. Consent federation. Two accounts only talk through a contact both sides accepted, with a per contact rate budget and an endpoint allowlist. A fake charging agent cannot even deliver a message.
+4. The judge. A gate on messages crossing a boundary that can pass, redact, hold or refuse, with a hold queue a human can review and a refusal carrying categories and a reason. Our judge console is this gate.
+5. Hibernation and wake. The drone agent sleeps between jobs and is woken by a job message.
 
-Optional: run the drone agent in Claude Code and the insurer agent in Codex, talking over swarm. Two companies, two harnesses, one market. Only if the CLI installs cleanly in thirty minutes. The patterns cost nothing either way.
+Optional: drone agent in Claude Code, lessor agent in Codex, talking over swarm. Two companies, two harnesses, one market. Only if the CLI installs in thirty minutes.
 
-Spec details to copy: the preamble text, the relay-message block with its attribute order, escaping of framing tags inside bodies, body limit of 64 KiB, per contact rate budgets. Source: https://scp.dev/spec.md
+Spec details to copy: preamble text, the relay-message block and attribute order, escaping of framing tags inside bodies, a 64 KiB body limit, per contact rate budgets. Source: https://scp.dev/spec.md
 
 ### Autoresearch (github.com/karpathy/autoresearch)
 
-A three file loop: a fixed evaluation script the agent cannot edit, a script the agent edits, and a markdown file of instructions. The agent proposes a change, runs the fixed eval, keeps the change if the metric improves and reverts if not. Git records every attempt. Two places it fits us.
+A three file loop: a frozen eval the agent cannot edit, a file the agent edits, and a markdown file of instructions. Propose, run, keep if the metric improves, revert if not, git records everything. We apply it to the drone agent's business strategy (job acceptance, scheduling, charging windows) against a held out week of simulated demand, with the reserve rule as a hard constraint. Not to risk pricing and not to turning incidents into tests, which is CoverAI's ground.
 
-1. A defense that hardens itself. The Bounty Hunter loop made concrete. The hunter generates attacks. The defender agent edits the policy rules. A change is kept only if more attacks are blocked and the benign flight set still passes, so it cannot win by blocking everything. The git log is the attack registry. The known weakness of autoresearch, getting stuck in local tweaks, is answered by the hunter adding new attacks each round.
-2. An underwriter that trains itself overnight. The insurer agent's pricing function is the editable file. The fixed eval is a held out set of simulated flights with crashes. The metric is profit at a target loss ratio, or calibration. By morning there is a git history of accepted pricing changes and a chart in the app: experiments run, changes kept, loss ratio before and after. The insurer agent becomes a participant that gets better at its job, not a prompt.
-
-Why it matters to judges: the field's evals are written by the people who wrote the code. A frozen held out eval the agent cannot touch, plus a git history of what it tried and kept, is honest evidence nobody else has. Caveat for the slide: the metric can be gamed, so the eval stays frozen and a human reviews kept changes.
-
-### What to add in the time left
-
-- Adopt the SCP framing, relation rule, consent allowlist and judge gate in our own message layer. One evening, no dependency.
-- Build the defense ratchet. The hunter and the attack set exist anyway. About a hundred lines plus the simulator.
-- Pricing ratchet only if the simulator is stable by Monday night. Better story, second priority.
-- Swarm for the two harness demo only if it installs in thirty minutes.
+Why judges care: the field's evals are written by the people who wrote the code. A frozen held out eval plus a git history of what the agent tried and kept is honest evidence nobody else has. Caveat on the slide: metrics can be gamed, so the eval stays frozen and a human reviews kept changes.
 
 ## Market, losses and where the money is
 
