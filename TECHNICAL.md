@@ -2,7 +2,7 @@
 
 Zishi (自食其力) is a wallet for a machine. An agricultural spraying drone on hire purchase earns per mu sprayed, pays its lender from every fee, keeps a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. The model explains; code decides. Everything below is grounded in `web/src/engine` and `contracts/`.
 
-Companion documents: `docs/JUDGES_GUIDE.md` (ten minutes in order), `SELF_ASSESSMENT.md` (security risks and what is built), `docs/EXECUTION_EVIDENCE.md` (a real run checked against the chain), `docs/RED_TEAM.md` (the attack set, run at generation time), `docs/EVALUATION.md` (held out results, raw values in `docs/results/`), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
+Companion documents: `docs/Zishi_Technical_Document.docx` (this material on the official submission template, with appendices), `docs/JUDGES_GUIDE.md` (ten minutes in order), `SELF_ASSESSMENT.md` (security risks and what is built), `docs/EXECUTION_EVIDENCE.md` (a real run checked against the chain), `docs/RED_TEAM.md` (the attack set, run at generation time), `docs/EVALUATION.md` (held out results, raw values in `docs/results/`), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
 
 ## 1. Problem
 
@@ -556,7 +556,7 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 | Layer | Status |
 |---|---|
 | Contracts | Tested with Foundry, deployed and source verified on Base Sepolia. In real mode the engine calls IntentLog; Bond, JobBoard and Lease run in the mirrors |
-| Chain | Simulated by default. Real mode anchors event records on Base Sepolia; it does not call the contracts |
+| Chain | Simulated by default. Real mode commits every intent hash to the deployed IntentLog and anchors money events as calldata on Base Sepolia |
 | Keys | Generated per boot for seven actors. Production: secure element, hardware button, HSMs |
 | Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |
 | Training data | Handwritten corpus and synthetic flights, labelled as such everywhere they appear |

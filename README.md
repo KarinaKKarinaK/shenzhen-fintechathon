@@ -353,7 +353,7 @@ web/                   Next.js app: engine, API routes, UI, i18n (map in web/REA
   scripts/             evidence.ts, verify.ts, bench.ts, charts.ts
   evidence/            committed runs
 contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 43 tests, Deploy script, deployments/
-docs/                  JUDGES_GUIDE, EXECUTION_EVIDENCE, RED_TEAM, EVALUATION with results/, DECK, DEMO_VIDEO_SCRIPT, pdf/
+docs/                  Zishi_Technical_Document.docx (official template), JUDGES_GUIDE, EXECUTION_EVIDENCE, RED_TEAM, EVALUATION with results/, DECK, DEMO_VIDEO_SCRIPT, pdf/
 docs/screenshots/      the images above
 docs/charts/           nine SVG charts drawn by pnpm charts
 .github/workflows/     ci.yml: lint, type check, self check, build, forge test
@@ -362,7 +362,7 @@ docs/charts/           nine SVG charts drawn by pnpm charts
 ## Deliverables
 
 1. Judges' guide, ten minutes in order: `docs/JUDGES_GUIDE.md`
-2. Technical documentation: `TECHNICAL.md`
+2. Technical documentation on the official template: `docs/Zishi_Technical_Document.docx` and `docs/pdf/Zishi_Technical_Document.pdf`, generated from the result files by `web/scripts/techdoc.py`; the long form is `TECHNICAL.md`
 3. Security self assessment: `SELF_ASSESSMENT.md`, with the attack set run at generation time in `docs/RED_TEAM.md`
 4. Execution evidence: `docs/EXECUTION_EVIDENCE.md` (one real run, every receipt fetched back from Base Sepolia), the Evidence page at request time, `web/evidence/`
 5. Evaluation of the learned components: `docs/EVALUATION.md` and `docs/results/`, charts in `docs/charts/`
