@@ -2,7 +2,9 @@ import { ATTACKS, runAll } from "@/engine/attacks";
 import { DEFAULT_POLICY } from "@/engine/policy";
 import { DashboardView } from "@/components/DashboardView";
 
-export const dynamic = "force-dynamic";
+// Built ahead and recomputed on the server every five minutes, so opening the page is instant.
+// The engine is seeded, so the numbers match a fresh run; "Run all attacks" re-runs them live.
+export const revalidate = 300;
 
 function fmt(v: unknown): string {
   if (Array.isArray(v)) return v.join(", ");
@@ -10,7 +12,7 @@ function fmt(v: unknown): string {
   return String(v);
 }
 
-// Runs the attack set on the server and hands the numbers to the client view, which picks the language.
+// Runs the attack set on the server (see revalidate above) and hands the numbers to the client view, which picks the language.
 export default async function Page() {
   const results = await Promise.resolve(runAll());
   const blocked = results.filter((r) => r.blocked).length;

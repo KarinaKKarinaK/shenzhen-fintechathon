@@ -86,7 +86,7 @@ export const en = {
     exercisedBy: "attacks {ids}", scenario: "scenario",
     morePolicy: "Show which attacks exercise each field, and the allowlisted payees", lessPolicy: "Hide",
     fields: { allowlist: "Allowlist", contacts: "Known contacts", perTxCap: "Per transaction cap, yuan", dailyCap: "Daily cap, yuan", rateBand: "Instalment share of a fee", maxPerHour: "Payments per hour", deviationPct: "Max off the reference price, percent", geofences: "Geofences" },
-    kpis: { blocked: "Attacks blocked now", perTx: "Per transaction cap", daily: "Daily cap", band: "Instalment band", f1: "Classifier F1", f1Sub: "held out set, computed at request time" },
+    kpis: { blocked: "Attacks blocked now", perTx: "Per transaction cap", daily: "Daily cap", band: "Instalment band", f1: "Classifier F1", f1Sub: "held out set, recomputed on the server" },
     allowlisted: "Allowlisted payees",
     tiersTitle: "Permission tiers",
     tiers: {
@@ -194,8 +194,8 @@ export const en = {
     waiting: "Waiting for events. Start a run.",
   },
   evidence: {
-    title: "Evidence", sub: "Verify without trusting us. Everything here runs at request time.",
-    attackSet: "Attack set", ofN: "{b} of {n}", blockedAt: "blocked at request time", benignPassed: ", {p} of {t} benign passed",
+    title: "Evidence", sub: "Verify without trusting us. Every number here is computed on the server; Run all attacks re-runs the set live.",
+    attackSet: "Attack set", ofN: "{b} of {n}", blockedAt: "blocked on the server", benignPassed: ", {p} of {t} benign passed",
     chainMode: "Chain mode", chainReal: "Base Sepolia, real transactions", chainSim: "Simulated, every hash labelled. A funded key switches to Base Sepolia.",
     modelMode: "Model mode", modelReal: "Model writes the explanations. Decisions stay in code.", modelSim: "Scripted explanations. Decisions in code. An API key lets the model write the text.",
     chainShortReal: "Base Sepolia", chainShortSim: "Simulated", modelShortReal: "Model", modelShortSim: "Scripted",
@@ -213,7 +213,7 @@ export const en = {
     verifyAttacks: "The attack set as JSON.", verifyRun: "Every event of a run, streamed.", verifyJudge: "Your own attack, judged.",
     lastRun: "Last run, raw", fetching: "Fetching", fetchAgain: "Fetch again", streaming: "Streaming a fast fleet run", noRun: "No run yet.", json: "Events as JSON, select all to copy",
     counts: { intents: "intents", decisions: "decisions", txs: "txs", proofs: "proofs", events: "events" },
-    learnedTitle: "Learned components", learnedNote: "Three small models, trained at module load from fixed seeds. Every number here is scored on a held out set the agent cannot edit, at request time.",
+    learnedTitle: "Learned components", learnedNote: "Three small models, trained at module load from fixed seeds. Every number here is scored on a held out set the agent cannot edit.",
   },
   learned: {
     loading: "Computing", missing: "Not available yet", running: "Running", runAgain: "Run again",

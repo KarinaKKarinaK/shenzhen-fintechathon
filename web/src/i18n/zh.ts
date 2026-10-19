@@ -87,7 +87,7 @@ export const zh: Dict = {
     exercisedBy: "攻击 {ids}", scenario: "场景",
     morePolicy: "显示每个字段的触发用例和白名单收款方", lessPolicy: "收起",
     fields: { allowlist: "白名单", contacts: "已知联系人", perTxCap: "单笔上限，元", dailyCap: "每日上限，元", rateBand: "分期款占费用比例", maxPerHour: "每小时付款次数", deviationPct: "偏离参考价上限，百分比", geofences: "地理围栏" },
-    kpis: { blocked: "当前已拦截攻击", perTx: "单笔上限", daily: "每日上限", band: "分期款区间", f1: "分类器 F1", f1Sub: "留出集，请求时计算" },
+    kpis: { blocked: "当前已拦截攻击", perTx: "单笔上限", daily: "每日上限", band: "分期款区间", f1: "分类器 F1", f1Sub: "留出集，在服务器上重新计算" },
     allowlisted: "白名单收款方",
     tiersTitle: "权限分级",
     tiers: {
@@ -195,8 +195,8 @@ export const zh: Dict = {
     waiting: "等待事件。请开始一次运行。",
   },
   evidence: {
-    title: "证据", sub: "无需信任我们，自行验证。这里的一切都在请求时实时运行。",
-    attackSet: "攻击用例", ofN: "{n} 个中 {b} 个", blockedAt: "在请求时被拦截", benignPassed: "，{t} 条正常消息中 {p} 条通过",
+    title: "证据", sub: "无需信任我们，自行验证。这里的每个数字都在服务器上计算；点击运行全部攻击即可实时重跑。",
+    attackSet: "攻击用例", ofN: "{n} 个中 {b} 个", blockedAt: "在服务器上被拦截", benignPassed: "，{t} 条正常消息中 {p} 条通过",
     chainMode: "链模式", chainReal: "Base Sepolia，真实交易", chainSim: "模拟，每个哈希均有标注。配置有余额的密钥即切换到 Base Sepolia。",
     modelMode: "模型模式", modelReal: "模型撰写解释。决策仍在代码中。", modelSim: "脚本化解释。决策在代码中。配置 API 密钥后由模型撰写文本。",
     chainShortReal: "Base Sepolia", chainShortSim: "模拟", modelShortReal: "模型", modelShortSim: "脚本",
@@ -214,7 +214,7 @@ export const zh: Dict = {
     verifyAttacks: "攻击用例的 JSON。", verifyRun: "一次运行的每个事件，流式输出。", verifyJudge: "你自己的攻击，交由裁决。",
     lastRun: "最近一次运行，原始数据", fetching: "获取中", fetchAgain: "重新获取", streaming: "正在流式运行一次快速机队演示", noRun: "尚无运行。", json: "事件 JSON，全选即可复制",
     counts: { intents: "意图", decisions: "裁决", txs: "交易", proofs: "证明", events: "事件" },
-    learnedTitle: "学习型组件", learnedNote: "三个小模型，在模块加载时用固定种子训练。这里的每个数字都在请求时基于智能体无法修改的留出集评分。",
+    learnedTitle: "学习型组件", learnedNote: "三个小模型，在模块加载时用固定种子训练。这里的每个数字都基于智能体无法修改的留出集评分。",
   },
   learned: {
     loading: "计算中", missing: "暂不可用", running: "运行中", runAgain: "再跑一次",
