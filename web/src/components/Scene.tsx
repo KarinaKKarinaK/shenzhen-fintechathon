@@ -537,7 +537,8 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
   );
 }
 
-export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean } & Extra) {
+export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true, labels = true, slashed, frozen, worst, telemetry, geofence }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean; labels?: boolean } & Extra) {
+  SHOW_LABELS = labels;
   return (
     <Canvas shadows camera={{ position: side === "fleet" ? [13, 9, 15] : [9, 6.5, 10], fov: 34 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }} style={{ background: "transparent" }}>
       <World side={side} machine={machine} txs={txs} jobs={jobs} breached={breached} live={live} extra={{ slashed, frozen, worst, telemetry, geofence }} />
