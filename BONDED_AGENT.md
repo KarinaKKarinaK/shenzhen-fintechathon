@@ -189,6 +189,43 @@ A small on-chain interface that any agent wallet implements: bond balance, minim
 
 Drop the charging agent and the cover pool from the required build. Job, bond and lease are the whole story. Required demo: three paid spraying jobs with fees in and instalments out, the bond filling from fees, one declined unprofitable job, one faked flight log caught, one proof of violation slash, one title transfer. All with hashes.
 
+## Individuals and domestic robots
+
+The bond works in two directions. It proves a machine will perform when the individual is the owner, and it proves a machine will behave when the individual is the customer. One rail serves a fleet of a thousand drones and one person with one humanoid.
+
+### As an owner
+
+- Financing they cannot get today. A household or a sole trader leases a machine priced like a small car, with no collateral and no credit history. The machine repays per verified task from its own earnings. The bond builds from the first fees.
+- The machine earns while idle. A humanoid that does the household's chores for free also takes paid tasks for others through the same job board: deliveries inside the compound, cleaning common areas, elder check ins, help at the corner shop. Household tasks are logged but unpaid. Outside tasks pay the lease.
+- Title at the end. When the lease hits zero the title transfers on chain to the person, with a repayment record a bank can read. The start of a credit file for someone who had none.
+
+### As a customer
+
+- Every robot that enters your home has posted a bond. If it breaks a rule you can prove (charged above the cap, left the geofence you set, claimed a task you never confirmed, paid someone not on its allowlist), you submit the signed intent and the contract pays you from the bond. No lawsuit, no customer service line.
+- You only see bonded machines. The task board shows machines whose bond covers the worst case of the job. A fleet drone and a neighbour's humanoid sit on the same board under the same rules.
+- Your own agent, too. The personal agent that manages your money is a wallet on the same standard. The vendor who sells it stakes the bond. If their agent misbehaves, you are paid from the vendor's stake.
+
+### A domestic humanoid, concretely
+
+1. A household leases a humanoid through a licensed lessor. Rate per paid task, monthly minimum, total to title. The bond minimum starts at zero and is earned in.
+2. The robot's wallet is a ring fenced sub account of the household. The household holds the Hard Button.
+3. Household tasks: free, logged for the plausibility model only.
+4. Paid tasks come from the local board. The agent checks the economics with a tool and declines tasks that do not clear the reserve rule.
+5. A task is verified by the requester's confirmation plus the robot's own log, with the drone's plausibility checks: location, duration, battery against distance.
+6. Fee in, instalment out, bond fills, balance down. Slashable rules are the ones a contract can check: payee allowlist, cap, geofence attested by the robot's secure element, unconfirmed task claims, skipped instalments.
+7. Safety certification and physical damage stay outside. That is an insurer's and a regulator's job, and it is CoverAI's ground. We do money and rules only.
+
+### Companies and individuals on one rail
+
+| | A fleet operator | An individual |
+|---|---|---|
+| Bond | Posted up front, at scale | Earned from the first tasks |
+| Why they use it | Automatic repayment and a compliance proof for a thousand machines | Financing without collateral, and protection when they hire |
+| Who verifies work | Their own systems plus the job contract | The requester plus the robot's log |
+| Same for both | The wallet standard, the bond interface, the lease contract, the task board, the slashing rules |
+
+Why Shenzhen: UBTech, EngineAI and Leju are Shenzhen humanoid makers. Unitree's G1 has been reported at about 99,000 yuan, the first humanoid an individual could plausibly finance. Verify the price before it goes on a slide.
+
 ## The app: mission control
 
 One screen, 16 by 9, dark, built for a projector.
