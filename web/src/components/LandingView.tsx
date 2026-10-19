@@ -156,7 +156,6 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
           </ul>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/app" className="btn btn-red">{L.openMC}</Link>
-            <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/blob/main/DESIGN.md" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "#fff" }}>{L.design}</a>
           </div>
         </section>
 

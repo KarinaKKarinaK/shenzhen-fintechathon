@@ -36,13 +36,11 @@ export function LastRun() {
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="text-sm">
-      <div className="mb-2 flex justify-end"><button type="button" onClick={load} disabled={busy} className="btn btn-ghost !px-3 !py-1.5 !text-[11px]">{busy ? E.fetching : E.fetchAgain}</button></div>
       {err ? <div className="text-red">{err}</div> : null}
-      {counts ? (
-        <div className="grid grid-cols-5 gap-2 text-xs">
-          {Object.entries(counts).map(([k, v]) => <div key={k} className="tile !p-2"><div className="text-muted">{(E.counts as Record<string, string>)[k] ?? k}</div><div className="kpi !text-xl">{v}</div></div>)}
-        </div>
-      ) : <div className="text-muted">{busy ? E.streaming : E.noRun}</div>}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        {counts ? <span className="text-ink-2">{Object.entries(counts).map(([k, v]) => <span key={k} className="mr-3 whitespace-nowrap"><b className="tech text-ink">{v}</b> {(E.counts as Record<string, string>)[k] ?? k}</span>)}</span> : <span className="text-muted">{busy ? E.streaming : E.noRun}</span>}
+        <button type="button" onClick={load} disabled={busy} className="link ml-auto text-xs">{busy ? E.fetching : E.fetchAgain}</button>
+      </div>
       {raw ? <details className="mt-2"><summary className="cursor-pointer text-xs text-muted">{E.json}</summary><textarea readOnly value={raw} onFocus={(e) => e.currentTarget.select()} rows={10} className="mono mt-1 w-full rounded-sm bg-paper-2 p-2 text-[10px]" /></details> : null}
     </div>
   );

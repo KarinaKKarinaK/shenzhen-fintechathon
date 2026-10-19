@@ -6,7 +6,7 @@ import { AttackGrid, naiveFell, type AttackResult } from "./AttackGrid";
 import { useLang } from "@/i18n/LangProvider";
 import { LearnedComponents } from "./Learned";
 
-const CONTRACT_NAMES = ["Bond", "JobBoard", "Lease"];
+const CONTRACT_NAMES = ["Bond", "IntentLog", "JobBoard", "Lease"];
 const API_LINES: [string, string][] = [["GET", "/api/attacks"], ["GET", "/api/run?scenario=fleet&fast=1&lang=zh"], ["POST", "/api/judge"]];
 
 function Row({ title, children, open }: { title: string; children: ReactNode; open?: boolean }) {
@@ -55,31 +55,16 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
       <section className="card mt-4">
         <Row title={E.learnedTitle} open><p className="mb-3 text-xs text-muted">{E.learnedNote}</p><LearnedComponents /></Row>
         <Row title={E.contractsTitle}>
-          <div className="overflow-x-auto">
-            <table className="passbook w-full text-xs">
-              <thead><tr><th className="text-left">{E.thContract}</th><th className="text-left">{E.thHolds}</th><th className="text-left">{E.thStatus}</th></tr></thead>
-              <tbody>
-                {E.contracts.map(([p, gap], i) => (
-                  <tr key={CONTRACT_NAMES[i]} className="align-top">
-                    <td className="whitespace-nowrap">{CONTRACT_NAMES[i]}</td>
-                    <td className="min-w-[16rem]"><div className="text-ink">{p}</div><div className="mt-0.5 text-muted">{E.knownGap}{gap}</div></td>
-                    <td><span className="flex flex-wrap gap-1 text-[10px]"><span className="pill bg-gold text-ink">{E.written}</span><span className="pill bg-paper-2 text-muted">{E.notCompiled}</span><span className="pill bg-paper-2 text-muted">{E.notDeployed}</span></span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-2 text-xs text-muted">{E.contractsNote}</p>
+          <p className="mb-3 text-xs text-muted">{E.contractsStatus}</p>
+          <ul className="flex flex-col divide-y divide-line">
+            {E.contracts.map((what, i) => <li key={CONTRACT_NAMES[i]} className="flex gap-3 py-2"><span className="mono w-20 shrink-0 text-red">{CONTRACT_NAMES[i]}</span><span className="text-ink-2">{what}</span></li>)}
+          </ul>
+          <p className="mt-2 text-xs text-muted">{E.contractsGap}</p>
         </Row>
         <Row title={E.lastRun}><LastRun /></Row>
-        <Row title={E.cannotTitle}><p className="text-ink-2">{E.cannotBody}<span className="mono text-red">npx tsx src/engine/selfcheck.ts</span>{E.cannotAfter}</p></Row>
-        <Row title={E.verifyTitle}>
-          <div className="overflow-x-auto">
-            <table className="passbook w-full text-xs">
-              <thead><tr><th className="text-left">{E.thCall}</th><th className="text-left">{E.thWhat}</th></tr></thead>
-              <tbody>{API_LINES.map(([m, p], i) => <tr key={p}><td className="whitespace-nowrap">{m} {p}</td><td className="text-ink-2">{[E.verifyAttacks, E.verifyRun, E.verifyJudge][i]}</td></tr>)}</tbody>
-            </table>
-          </div>
+        <Row title={E.checkTitle}>
+          <p className="text-ink-2">{E.cannotBody}<span className="mono text-red">npx tsx src/engine/selfcheck.ts</span>{E.cannotAfter}</p>
+          <ul className="mt-3 flex flex-col gap-1 text-xs">{API_LINES.map(([m, p], i) => <li key={p} className="flex flex-wrap gap-x-3"><span className="mono text-red">{m} {p}</span><span className="text-muted">{[E.verifyAttacks, E.verifyRun, E.verifyJudge][i]}</span></li>)}</ul>
         </Row>
       </section>
     </div>
