@@ -5,6 +5,7 @@ import { LastRun, useAttackSet } from "./EvidenceLab";
 import { AttackGrid, naiveFell, type AttackResult } from "./AttackGrid";
 import { useLang } from "@/i18n/LangProvider";
 import { LearnedComponents } from "./Learned";
+import { Monitors } from "./Monitors";
 
 const CONTRACT_NAMES = ["Bond", "JobBoard", "Lease"];
 const API_LINES: [string, string][] = [["GET", "/api/attacks"], ["GET", "/api/run?scenario=fleet&fast=1&lang=zh"], ["POST", "/api/judge"]];
@@ -54,6 +55,7 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
 
       <section className="card mt-4">
         <Row title={E.learnedTitle} open><p className="mb-3 text-xs text-muted">{E.learnedNote}</p><LearnedComponents /></Row>
+        <Row title={E.monitorsTitle}><p className="mb-3 text-xs text-muted">{E.monitorsNote}</p><Monitors /></Row>
         <Row title={E.contractsTitle}>
           <div className="overflow-x-auto">
             <table className="passbook w-full text-xs">

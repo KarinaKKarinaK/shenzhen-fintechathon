@@ -15,9 +15,11 @@ function samplesOf(body: unknown): Sample[] {
   const list = Array.isArray(body) ? body : body && typeof body === "object" && Array.isArray((body as { samples?: unknown }).samples) ? (body as { samples: unknown[] }).samples : [];
   return list.flatMap((x) => {
     const o = (x ?? {}) as Record<string, unknown>;
-    if (typeof o.name !== "string" || typeof o.path !== "string") return [];
-    const d = (o.description ?? {}) as Record<string, unknown>;
-    return [{ name: o.name, path: o.path, description: { en: typeof d.en === "string" ? d.en : undefined, zh: typeof d.zh === "string" ? d.zh : undefined } }];
+    const name = typeof o.name === "string" ? o.name : typeof o.file === "string" ? o.file : null;
+    const path = typeof o.path === "string" ? o.path : typeof o.url === "string" ? o.url : null;
+    if (!name || !path) return [];
+    const d = (o.description ?? o) as Record<string, unknown>;
+    return [{ name, path, description: { en: typeof d.en === "string" ? d.en : undefined, zh: typeof d.zh === "string" ? d.zh : undefined } }];
   });
 }
 

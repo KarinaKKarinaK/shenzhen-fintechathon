@@ -69,7 +69,7 @@ export function chainHead(runId: string): { head: string; length: number } {
 
 // Pure: recompute every hash from genesis and compare with what is stored.
 export function verifyEntries(entries: Entry[]): { ok: boolean; length: number; brokenAt?: number } {
-  let prev = GENESIS;
+  let prev: string = GENESIS;
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     if (e.prev !== prev || e.hash !== hashEntry(prev, e.ev)) return { ok: false, length: entries.length, brokenAt: i };

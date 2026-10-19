@@ -162,6 +162,9 @@ export type EngineEvent =
   | { t: "job"; job: Job; at: number }
   | { t: "attack"; name: string; nameZh?: string; blocked: boolean; where: string; detail: string; detailZh?: string; at: number; id?: number; standard?: Standard; naive?: "fell" | "held"; isolated?: boolean }
   | { t: "button"; waiting: boolean; what: string; at: number }
+  // The pilot's credit score after a job outcome: a Buhlmann credibility estimate from
+  // credit/score.ts, with the instalment share it recommends inside the policy's rate band.
+  | { t: "credit"; pilot: string; p: number; credibility: number; n: number; tier: "A" | "B" | "C" | "D"; rateBps: number; outcome: "confirmed" | "held" | "slashed" | "missed"; at: number }
   | { t: "done"; summary: string; at: number };
 
 export interface Job {

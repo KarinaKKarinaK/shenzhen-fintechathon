@@ -107,20 +107,44 @@ sequenceDiagram
 
 ![Evidence](docs/screenshots/evidence.png)
 
-## Learned and optimising components
+## Smart where it counts, and measured
 
-Four components do real work, each with a fixed seed and a held out set the agent cannot edit. The numbers below are what the self check prints on every build and what the Evidence page computes at request time.
+Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. `pnpm bench` recomputes this table; `pnpm test` asserts every number; the Evidence page shows them live.
 
-| Component | What it is | Held out result |
-|---|---|---|
-| Message classifier | Logistic regression on hashed character n-grams, trained on 52 attack texts, 108 attack paraphrases and 193 benign messages in English and Chinese. Adds a risk score to the rule gate; rules still decide, the classifier can only hold | 100 of 401 messages held out: accuracy 0.95, precision 0.93, recall 0.96, F1 0.94, false alarm rate 0.05 |
-| Telemetry anomaly model | Robust z-scores over area ratio, speed, battery per mu and altitude variance, fitted on 1,500 synthetic flights with physical noise and 15 percent tampering | 500 flights held out, 72 tampered: detection 1.00, false alarms 0.00, threshold z 4. The demo's faked log scores z 214 |
-| Day planner | Bounded knapsack by dynamic programming over the day's candidate jobs, maximising margin subject to mu per charge, charges and minutes | Replaces the greedy ranking; the plan event carries budget, used mu, charges and total margin |
-| Strategy ratchet | Hill climbing over the drone's acceptance strategy against a frozen simulated week, keeping a change only if profit after instalments improves and the reserve rule holds, every step logged | 60 steps, 5 kept, profit 246 to 926 yuan on the frozen week. The eval cannot be edited by the strategy |
+| Component | Before | After | Before result | After result |
+|---|---|---|---|---|
+| Message gate | rules only (regex) | rules plus learned classifier | 52 of 52 scripted attacks, no score on paraphrases | held out 100 messages: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
+| Telemetry check | raw GPS length | Kalman smoothed | false alarm 13.8% at full detection | false alarm 0.0% at full detection, cut 100% |
+| Anomaly threshold | fixed |z| 4 | conformal |z| 2.60 (2% target) | false alarm 0.0%, detection 100.0% | false alarm 3.0%, detection 100.0% |
+| Lease strategy | greedy rule | MDP policy (26 weeks, value iteration) | 7,471 yuan mean, title 84.0% | 7,540 yuan mean, title 84.0% |
+| Acceptance knobs | baseline | ratchet, 5 of 60 steps kept | 246 yuan | 926 yuan |
+| Lender loss given default, p95 | no bonds | pilot and vendor bonds | 25,593 yuan | 19,739 yuan, bonds absorb 23.0% (default 9.0%) |
+| Pilot credit | flat rate band | Buhlmann credibility | no change with history | p 0.936 after 3 confirmed, 0.882 after a held log |
+| Drift detection | none | CUSUM on classifier risk | never | alarm 6 observations after the shift, 0 false alarms in 600 |
+| Run integrity | no log | hash chained event log | not verifiable | two seeded runs, head 0x68c3abcf, equal true |
 
-With an AI gateway key the model also reads the farmer's message into a typed schema with a confidence, and writes the explanations. Without a key, rules do the reading and templates do the writing. In both cases the decisions are the engine's.
+| Component | Borrowed from |
+|---|---|
+| Kalman smoother over GPS samples, with replay and teleport detection | Aerospace |
+| Conformal anomaly threshold with a stated false alarm target | Statistics |
+| Buhlmann credibility score that moves the instalment rate inside the band | Actuarial science |
+| Finite horizon MDP over lease, bond and season | Operations research |
+| Second price tie break in the day planner | Mechanism design |
+| Monte Carlo bond stress test with lender loss given default | Bank risk |
+| CUSUM drift monitor on classifier risk and deny rate | Manufacturing process control |
+| Hash chained replay log, verifiable through the API | Financial ledgers |
+| Logistic message classifier that can only hold, never allow | Text classification |
+| Hill climbing ratchet on a frozen week | The autoresearch loop |
 
-![Learned components](docs/screenshots/learned.png)
+![Learned components](docs/screenshots/learned-2.png)
+
+## Try it on your data, or watch it live
+
+The Live page runs the same engine on a seeded feed of new jobs every few seconds, or on jobs, flight logs and messages you bring as JSON or CSV. Samples are one click away, and schema errors come back in plain words.
+
+| | |
+|---|---|
+| ![Live feed](docs/screenshots/live.png) | ![Your data](docs/screenshots/your-data.png) |
 
 ## Dashboard, phone, dark
 

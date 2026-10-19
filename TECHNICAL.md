@@ -248,18 +248,61 @@ Every inbound message is escaped and wrapped in a `relay-message` block with `re
 
 The classifier can only turn a pass into a hold. The rules keep the last word on refuse.
 
-### 6.2 Learned components
+### 6.2 Learned and optimising components
 
-Each one has a fixed seed and a held out set the agent cannot edit. `pnpm test` prints the numbers; `/api/metrics` serves them; the Evidence page shows them.
+Each one has a fixed seed and a held out set the agent cannot edit. `pnpm test` prints the numbers, `pnpm bench` prints the before and after table below, `/api/metrics` serves them, and the Evidence page shows them under Learned components and Monitors.
 
-| Component | File | Method | Data | Held out result |
+| Component | File | Borrowed from | Method | Data and seed | Held out result |
+|---|---|---|---|---|---|
+| Message classifier | `ml/gate.ts`, `ml/corpus.ts` | Text classification | Logistic regression on hashed character 1, 2 and 3-grams, 2^14 buckets, trained at module load, adds a risk score the rule gate can only turn into a hold | 401 messages in English and Chinese, 100 held out, seed 20251020 | accuracy 0.95, precision 0.93, recall 0.96, F1 0.94, false alarm 0.054 |
+| GPS fusion | `fusion/kalman.ts` | Aerospace, the Kalman filter | Constant velocity Kalman filter with a Rauch Tung Striebel smoother over 1 Hz GPS samples; measurement noise estimated per flight; innovation gating rejects outliers; an FNV hash of the innovation sequence detects a replayed track | the same 2,000 synthetic flights, each with a noisy track | at matched full detection the raw track length false alarms on 13.8 percent of honest flights, the smoothed length on 0.0 percent |
+| Anomaly threshold | `fusion/conformal.ts` | Statistics, split conformal prediction | The flag threshold is the calibration set quantile for a 2 percent target false alarm rate, so the guarantee is stated and checked rather than hand set | 634 honest calibration flights, 500 held out, seed 7331 | threshold z 2.60, held out false alarm 3.0 percent, coverage 97 percent, detection 100 percent on all five tamper classes |
+| Telemetry anomaly model | `ml/plausibility.ts` | Robust statistics | Robust z (median and MAD) over area ratio, speed, battery per mu, altitude variance and GPS innovation, fitted on 750 flights | 2,000 flights, 15 percent tampered across inflated area, replayed track, impossible speed, low battery and teleport jump | 72 of 72 tampered flights caught |
+| Pilot credit score | `credit/score.ts` | Actuarial science, Buhlmann credibility | A Beta posterior per component (confirmations, instalments on time, clean record) weighted n to n plus k against the fleet prior; the score moves the instalment share inside the policy band and is emitted as a `credit` event | fleet prior strength 8 | 0.912 to 0.936 after three confirmed jobs, 0.882 after a held log; tier B at 2,815 bps |
+| Day planner | `planner.ts`, `economics/pricing.ts` | Operations research and mechanism design | Bounded knapsack over mu per charge, charges and minutes; overlapping jobs settle by a second price comparison so an inflated stated fee cannot buy priority | the day's candidate jobs | exact; a maize job that inflates its bid to 5 wins at 4.2 and loses 0.7 in utility |
+| Lease MDP | `economics/mdp.ts` | Operations research, dynamic programming | Finite horizon Markov decision process over lease balance, bond, weather and offer class, 46,800 states, value iteration over 26 weeks, compared against the greedy rule with common random numbers | 200 seeded seasons, seed 2026 | 7,540 versus 7,471 yuan mean profit, same weeks to title |
+| Strategy ratchet | `ratchet.ts` | The autoresearch loop | Hill climbing over four acceptance knobs against a frozen simulated week, keeping a change only if profit after instalments rises and the reserve rule holds | seed 4242, walk seed 99 | 60 steps, 5 kept, 246 to 926 yuan |
+| Bond stress test | `economics/stress.ts` | Bank risk, Monte Carlo | 2,000 seeded seasons with tamper attempts, slashes and skipped instalments; reports default probability, bond drawdowns and lender loss given default | seed in `STRESS_DEFAULTS` | default 9 percent; p95 loss 25,593 yuan without bonds, 19,739 with, bonds absorb 23 percent |
+| Drift monitor | `drift/cusum.ts`, `drift/monitor.ts` | Manufacturing, statistical process control | One sided CUSUM on the classifier's risk scores and on the policy deny rate, alarm resets, 120 point history for the sparklines | synthetic shift at observation 500, seed 20251020 | alarm 6 observations after the shift, 0 false alarms in 600 benign scores |
+| Replay log | `replay/log.ts` | Financial ledgers, event sourcing | Every event of a run appended to a hash chain with volatile fields dropped from the canonical form; `GET /api/replay` lists and verifies | two seeded fast runs | identical chain head over 293 events, a tampered entry caught at its position |
+
+What they are not: not trained on live traffic or real drone logs. The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet and the MDP only move acceptance knobs inside the policy band. The credit score only recommends a rate inside the band. Nothing here signs, pays or changes a cap.
+
+### 6.4 Measured improvement
+
+`pnpm bench` recomputes every row from the frozen seeds. Nothing in this table is pasted.
+
+| Component | Before | After | Before result | After result |
 |---|---|---|---|---|
-| Message classifier | `ml/gate.ts`, `ml/corpus.ts` | Logistic regression on hashed character 3-grams, 2^14 buckets, trained at module load | 401 messages: 52 attack texts, attack paraphrases and benign messages in English and Chinese | 100 held out: accuracy 0.95, F1 0.944, false alarm rate 0.054 |
-| Telemetry anomaly model | `ml/plausibility.ts` | Robust z (median and MAD) over area ratio, speed, battery per mu, altitude variance; flag at z 4 | 2,000 synthetic flights from physical rules with noise, 15 percent tampered | 500 held out: detection 1.00, false alarm rate 0.00 |
-| Strategy ratchet | `ratchet.ts` | Hill climbing over `{ reserveRule, minMarginPerMu, maxJobsPerCharge, acceptLowFeeIfIdle }` against a frozen week; the reserve rule is a hard constraint | One week of offers from seed 4242, walk seed 99 | 60 steps, 5 kept, profit 246 to 926 yuan |
-| Day planner | `planner.ts` | Bounded knapsack by dynamic programming over fee, mu, distance and window, subject to mu per charge, charges and minutes | The day's candidate jobs | Exact, not learned. The reserve rule is still checked per job after the plan |
+| Message gate | rules only (regex) | rules plus learned classifier | 52 of 52 scripted attacks, no score on paraphrases | held out 100 messages: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
+| Telemetry check | raw GPS length | Kalman smoothed | false alarm 13.8% at full detection | false alarm 0.0% at full detection, cut 100% |
+| Anomaly threshold | fixed |z| 4 | conformal |z| 2.60 (2% target) | false alarm 0.0%, detection 100.0% | false alarm 3.0%, detection 100.0% |
+| Lease strategy | greedy rule | MDP policy (26 weeks, value iteration) | 7,471 yuan mean, title 84.0% | 7,540 yuan mean, title 84.0% |
+| Acceptance knobs | baseline | ratchet, 5 of 60 steps kept | 246 yuan | 926 yuan |
+| Lender loss given default, p95 | no bonds | pilot and vendor bonds | 25,593 yuan | 19,739 yuan, bonds absorb 23.0% (default 9.0%) |
+| Pilot credit | flat rate band | Buhlmann credibility | no change with history | p 0.936 after 3 confirmed, 0.882 after a held log |
+| Drift detection | none | CUSUM on classifier risk | never | alarm 6 observations after the shift, 0 false alarms in 600 |
+| Run integrity | no log | hash chained event log | not verifiable | two seeded runs, head 0x68c3abcf, equal true |
 
-What they are not: not trained on live traffic or real drone logs. The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet only moves four numbers inside the reserve rule. None of them moves money.
+How to read it. The Kalman row holds detection at 100 percent on the track features and compares false alarms, which is the cost a pilot feels. The conformal row trades a hand set threshold that happened to be safe on this data for one with a stated target and a measured held out rate. The MDP and ratchet rows are profit on a frozen simulated season and week, not on real farms. The stress row is the lender's view: the bonds take about a quarter of the tail loss, and the title takes the rest.
+
+```mermaid
+flowchart LR
+  G[GPS samples 1 Hz] --> K[Kalman smoother]
+  K --> F[Features: area ratio, speed, battery per mu, altitude, innovation]
+  F --> Z[Robust z]
+  Z --> C{over conformal threshold or replay or teleport}
+  C -->|no| OK[Flight plausible, fee releases]
+  C -->|yes| H[Fee held, lender alerted]
+  M[Inbound message] --> R[Rule gate]
+  M --> L[Learned classifier risk]
+  R --> D{pass, redact, hold, refuse}
+  L --> D
+  L --> S[CUSUM drift monitor]
+  D --> E[Engine events] --> X[Hash chained replay log]
+  E --> B[Credit score] --> RB[Rate inside the band]
+  J[Candidate jobs] --> P[Knapsack planner with second price tie break] --> E
+```
 
 ### 6.3 Model (`model.ts`)
 
@@ -472,7 +515,8 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 |---|---|---|
 | `pnpm lint` | `web` | ESLint, Next.js config |
 | `npx tsc --noEmit` | `web` | Types, including both dictionaries |
-| `pnpm test` | `web` | The engine self check (section 11) |
+| `pnpm test` | `web` | The engine self check (section 11), including every learned metric assertion |
+| `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
 | `forge test` | `contracts` | 40 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (24), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "tsx src/engine/selfcheck.ts",
     "evidence": "tsx scripts/evidence.ts",
-    "verify": "tsx scripts/verify.ts"
+    "verify": "tsx scripts/verify.ts",
+    "bench": "tsx scripts/bench.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
