@@ -67,7 +67,7 @@ export const en = {
     onlyTitle: "Only here",
     onlyLabel: "Six things nobody else built",
     firsts: ["An agent that loses its own money on proof", "Two agents with opposite incentives", "A machine as the borrower", "A bond that is earned, not posted", "Solvency proven before every task", "A physical button on top"],
-    design: "Design and research",
+    design: "Read the design doc on GitHub ↗",
     paddyAlt: "An agricultural drone spraying a paddy field",
     paddyTitle: "A drone that pays for itself one mu at a time.",
     paddyBody: "Each verified mu sprayed pays an instalment to the lender. When the lease reaches zero, the title moves to the operator.",
