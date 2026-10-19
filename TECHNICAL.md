@@ -2,7 +2,7 @@
 
 Zishi (自食其力) is a wallet for a machine. An agricultural spraying drone on hire purchase earns per mu sprayed, pays its lender from every fee, keeps a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. The model explains; code decides. Everything below is grounded in `web/src/engine` and `contracts/`.
 
-Companion documents: `SELF_ASSESSMENT.md` (security risks and what is built), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
+Companion documents: `docs/JUDGES_GUIDE.md` (ten minutes in order), `SELF_ASSESSMENT.md` (security risks and what is built), `docs/EXECUTION_EVIDENCE.md` (a real run checked against the chain), `docs/RED_TEAM.md` (the attack set, run at generation time), `docs/EVALUATION.md` (held out results, raw values in `docs/results/`), `DESIGN.md` (product design and economics), `contracts/README.md` (contract detail), `web/README.md` (how to run the app).
 
 ## 1. Problem
 
@@ -532,6 +532,7 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 | `pnpm test` | `web` | The engine self check (section 11), including every learned metric assertion |
 | `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
 | `pnpm charts` | `web` | The nine charts in `docs/charts`, redrawn from the seeds |
+| `pnpm report` | `web` | `docs/EXECUTION_EVIDENCE.md` from the latest captured real run and the chain, `docs/RED_TEAM.md` from the attack set, `docs/EVALUATION.md` and `docs/results/` from the learned components |
 | `forge test` | `contracts` | 43 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (27, three fuzzed), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 

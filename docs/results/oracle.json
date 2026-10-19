@@ -1,0 +1,43 @@
+{
+  "n": 500,
+  "tampered": 72,
+  "detectionRate": 1,
+  "falseAlarmRate": 0.03,
+  "threshold": 2.597,
+  "seed": 7331,
+  "trainN": 1500,
+  "heldOut": "500 of 2000 synthetic flights held out by seed 7331, 72 tampered; fit on 750, conformal calibration on the honest rows of the next 750",
+  "conformalThreshold": 2.597,
+  "targetFalseAlarm": 0.02,
+  "achievedFalseAlarm": 0.03,
+  "coverage": 0.97,
+  "calibrationN": 634,
+  "trackSmoothingGainPct": 100,
+  "rawFalseAlarmRate": 0.138,
+  "smoothedFalseAlarmRate": 0,
+  "fixedThreshold": 4,
+  "rawThreshold": 2.59,
+  "matchedDetection": 1,
+  "byTamper": {
+    "inflated_mu": {
+      "n": 15,
+      "caught": 15
+    },
+    "replayed_track": {
+      "n": 16,
+      "caught": 16
+    },
+    "impossible_speed": {
+      "n": 16,
+      "caught": 16
+    },
+    "battery_too_low": {
+      "n": 15,
+      "caught": 15
+    },
+    "teleport_jump": {
+      "n": 10,
+      "caught": 10
+    }
+  }
+}

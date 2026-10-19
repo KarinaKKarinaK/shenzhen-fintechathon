@@ -11,7 +11,8 @@
     "evidence": "tsx scripts/evidence.ts",
     "verify": "tsx scripts/verify.ts",
     "bench": "tsx scripts/bench.ts",
-    "charts": "tsx scripts/charts.ts"
+    "charts": "tsx scripts/charts.ts",
+    "report": "tsx scripts/report.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

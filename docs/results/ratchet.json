@@ -1,0 +1,20 @@
+{
+  "baselineProfit": 246.2,
+  "bestProfit": 925.97,
+  "steps": 60,
+  "kept": 5,
+  "best": {
+    "reserveRule": 30,
+    "minMarginPerMu": 1,
+    "maxJobsPerCharge": 1,
+    "acceptLowFeeIfIdle": true
+  },
+  "baseline": {
+    "reserveRule": 30,
+    "minMarginPerMu": 3,
+    "maxJobsPerCharge": 1,
+    "acceptLowFeeIfIdle": false
+  },
+  "evalSeed": 4242,
+  "walkSeed": 99
+}

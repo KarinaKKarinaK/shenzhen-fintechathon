@@ -1,0 +1,103 @@
+{
+  "mdp": {
+    "expectedProfit": 7305.56,
+    "weeksToTitle": 22.15,
+    "titleShare": 0.84,
+    "states": 46800,
+    "horizon": 26,
+    "leaseBalance": 12000,
+    "seed": 2026,
+    "seasons": 200,
+    "policy": {
+      "accept": 34396,
+      "decline": 6732,
+      "idle": 5672
+    },
+    "comparison": {
+      "mdp": {
+        "meanProfit": 7540.19,
+        "variance": 23398408.64,
+        "sd": 4837.19,
+        "titleShare": 0.84,
+        "weeksToTitle": 22.15,
+        "seasons": 200
+      },
+      "greedy": {
+        "meanProfit": 7471.06,
+        "variance": 23833846.71,
+        "sd": 4881.99,
+        "titleShare": 0.84,
+        "weeksToTitle": 22.15,
+        "seasons": 200
+      },
+      "seed": 2026,
+      "seasons": 200,
+      "advantage": 69.13
+    },
+    "note": "value iteration on a bucketed lease, bond, weather and offer state; both rules simulated on the same seeded seasons with common random numbers"
+  },
+  "auction": {
+    "honest": {
+      "winner": "rice",
+      "runnerUp": "maize",
+      "price": 3.5,
+      "bids": [
+        {
+          "id": "rice",
+          "bid": 4.2,
+          "mu": 60
+        },
+        {
+          "id": "maize",
+          "bid": 3.5,
+          "mu": 20
+        }
+      ]
+    },
+    "inflated": {
+      "winner": "maize",
+      "runnerUp": "rice",
+      "price": 4.2,
+      "bids": [
+        {
+          "id": "maize",
+          "bid": 5,
+          "mu": 20
+        },
+        {
+          "id": "rice",
+          "bid": 4.2,
+          "mu": 60
+        }
+      ]
+    },
+    "honestUtility": 0,
+    "inflatedUtility": -0.7,
+    "truthful": true,
+    "note": "second price: the higher margin per mu flies first and pays the runner up's bid in priority, so an inflated fee cannot buy a slot at a profit"
+  },
+  "stress": {
+    "seed": 9001,
+    "seasons": 2000,
+    "horizon": 26,
+    "detectionRate": 1,
+    "defaultProbability": 0.09,
+    "pilotBondBelowMinAfterReaching": 0.42,
+    "pilotBondBelowMinAtEnd": 0.23,
+    "pilotBondReachedMin": 0.94,
+    "expectedVendorDrawdown": 358.2,
+    "maxVendorDrawdown": 1800,
+    "expectedPilotSlashes": 345.91,
+    "lgdWithoutBonds": {
+      "mean": 21081.41,
+      "p95": 25592.75
+    },
+    "lgdWithBonds": {
+      "mean": 14581.78,
+      "p95": 19738.75
+    },
+    "bondCover": 0.23,
+    "currency": "CNY",
+    "note": "seeded seasons under the greedy rule with tamper, mistake and skip shocks; loss given default is owed less resale, before and after the bonds absorb the first loss"
+  }
+}
