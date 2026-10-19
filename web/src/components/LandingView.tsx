@@ -30,7 +30,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
   ];
   const stats = [String(attackN), "3", "0", "2"];
   return (
-    <div className="-mt-16">
+    <div className="landing-root">
       <section className="duotone flex min-h-[100svh] items-end text-white">
         <Image src="/photos/shenzhen-tower.jpg" alt={L.heroAlt} fill priority sizes="100vw" className="object-cover object-[50%_35%]" />
         <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>

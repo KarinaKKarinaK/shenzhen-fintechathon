@@ -327,3 +327,32 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 :root[data-theme="dark"] .navbar:not(.over-photo) { background: var(--color-surface); border-color: var(--color-line); }
 
 @media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding-left: 0.5rem; padding-right: 0.5rem; font-size: 14px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 34px; height: 34px; } }
+
+/* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
+body:has(.landing-root) .page-main { padding: 0 !important; }
+.landing-root > .duotone:first-child { min-height: 100svh; }
+
+/* Navbar: glass when solid, hairline gold rule, pill indicator that fills on the selected link. */
+.navbar:not(.over-photo) { background: rgba(255,255,255,0.78); backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgba(201,162,39,0.35); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset; }
+.navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.9rem; transition: color 160ms, background 200ms; }
+.navbar nav a > span { display: none; }
+.navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
+.navbar nav a[aria-current="page"] { color: #fff; }
+.navbar nav a[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8), inset 0 0 0 1px rgba(201,162,39,0.5); }
+.navbar nav a:not([aria-current="page"]):hover::before { opacity: 0.12; transform: scale(1); background: var(--color-gold); }
+.navbar.over-photo nav a[aria-current="page"]::before { background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); backdrop-filter: blur(6px); }
+.navbar.over-photo nav a[aria-current="page"] { color: #fff; }
+.navbar .cjk-serif { letter-spacing: 0.04em; }
+:root[data-theme="dark"] .navbar:not(.over-photo) { background: rgba(15,14,12,0.78); border-bottom-color: rgba(201,162,39,0.3); box-shadow: none; }
+
+/* Softer, modern edges on the heavier surfaces while the seals and chamfers keep the tradition. */
+.band { border-radius: 14px; }
+.band::after { border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(201,162,39,0.5), 0 24px 60px -40px rgba(122,35,28,0.7); }
+.tile { border-radius: 10px; }
+.card { border-radius: 10px; }
+.duotone + .ticker, .ticker { border-top: 0; }
+.btn-red { box-shadow: 0 12px 28px -14px rgba(184,50,42,0.9); }
+.btn-red:hover { transform: translateY(-1px); }
+
+.navbar.over-photo { background: linear-gradient(180deg, rgba(0,0,0,0.45), transparent); }
+.navbar.over-photo .text-ink, .navbar.over-photo .font-bold { color: #fff; }
