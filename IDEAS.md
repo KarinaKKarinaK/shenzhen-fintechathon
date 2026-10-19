@@ -276,9 +276,93 @@ Inclusion angle. Strong and moving.
 
 Build risk. Medium. Sensitive, and verification of death is hard to make real in 36 hours.
 
+## 20. Minimal Disclosure: the agent that negotiates what data you reveal (Topic E or C)
+
+The pitch. A loan application today means handing over everything. Here the user's agent and the bank's agent negotiate the minimum data needed for the decision. The bank agent states what it needs and why. The user's agent offers signed attestations instead of raw data (income above X, rent paid on time for 12 months). The credit decision runs on the attestations.
+
+Why Shenzhen. Qiang Yang on the advisory board founded WeBank's federated learning work and FATE. This is that idea turned into a customer facing agent.
+
+Demo moment. A migrant worker gets a loan decision while the bank never sees a bank statement. The negotiation transcript shows every data request, every refusal and every attestation.
+
+Security story. Data minimisation under PIPL by design. Attestations are signed by the source. The bank agent is untrusted input to the user's agent and the other way round.
+
+Inclusion angle. Thin file borrowers get a decision without surrendering their privacy.
+
+Build risk. Low to medium. Two agents, a small attestation format, a scoring function. Academic judges will like it most.
+
+## 21. Hard Button: a physical co-signer as the top permission tier (any topic, best with F)
+
+The pitch. Every entry does L3 approval as a screen tap, which an injected message can fake. Here L3 is a physical button on a small device (an ESP32 class board) that holds the only signing key. The model cannot press it. The device reads the transaction aloud and the user presses once.
+
+Why Shenzhen. The board costs a few yuan in Huaqiangbei. A hardware demo on stage in Shenzhen lands.
+
+Demo moment. The agent proposes a transfer above the cap. The screen says waiting for the button. The device speaks the amount and recipient. The user presses. Hash on screen. Then an injected message tries to approve on the user's behalf and nothing happens because there is no button press.
+
+Security story. The key never leaves the device. The device shows what it signs. This is the hardware wallet idea applied to the human in the loop.
+
+Inclusion angle. Works for people without a smartphone.
+
+Build risk. Low for a team with hardware experience, one evening. Fits Guardian, Prepaid Guard or Bonded Agent as their L3 layer.
+
+## 22. Pin Cover: agents group buy insurance (Topic D)
+
+The pitch. Group buying is the most Chinese commerce pattern there is. Here five hundred rider agents pool into one negotiation with an insurer agent. The premium drops as the pool grows. Each rider approves their own slice. Many to one agent negotiation, which nobody in the field does.
+
+Why Shenzhen. Delivery riders are everywhere and uninsured. Group policies are legal and common, so the compliance story is clean.
+
+Demo moment. The pool fills on screen, the price falls, one rider with a bad record is priced separately rather than excluded.
+
+Security story. Each rider's agent only commits that rider's money. The insurer agent cannot see individual data, only the pool statistics. Attack tests: a rider agent that lies about its record, an insurer message that tries to change the terms after approval.
+
+Inclusion angle. Strong. Collective bargaining for people who have none.
+
+Build risk. Medium. The negotiation protocol is new work. Simulated riders are easy.
+
+## 23. Earned Wage: factory workers paid for the days they already worked (Topic A or E)
+
+The pitch. Shenzhen factory workers are paid monthly and borrow at bad rates in between. The agent reads attendance logs, computes wages already earned, and advances them from a bank pool at zero or near zero cost, repaid on payday. Earned wage access is large abroad and barely exists in China.
+
+Why Shenzhen. The factory belt. WeBank is the natural lender, which makes this a product pitch to the judges.
+
+Demo moment. A worker at day 18 gets 60 percent of the earned amount in one minute with the full fee shown. A second request the same day is refused by the cap.
+
+Security story. The lending licence sits with the bank. The agent only computes and requests. Attendance logs are untrusted input and are verified against the employer's signed export. Caps per worker per period.
+
+Inclusion angle. Very strong. Replaces loan sharks for the lowest paid.
+
+Build risk. Low to medium. A computation, a cap, a request. The innovation is the scenario.
+
+## 24. Renqing Ledger: the agent for gift obligations (Topic A)
+
+The pitch. Weddings, funerals, births and Chinese New Year create a web of reciprocal cash gifts that every family tracks by memory. The agent keeps the ledger, suggests the right amount by relationship and region, sends the red envelope, and reminds the user when the obligation comes back around.
+
+Why Shenzhen. Migrants keep ties to a hometown through exactly these gifts.
+
+Demo moment. A wedding invitation arrives. The agent shows what that family gave at the user's wedding, suggests the amount, and sends it after approval.
+
+Security story. Low stakes. Caps and approval for every send.
+
+Inclusion angle. Charm, not inclusion.
+
+Build risk. Low. Weak as a whole entry, good as a feature inside a personal finance agent.
+
+## 25. Agent Auditor: an agent that audits other agents (Topic F)
+
+The pitch. Every entry ships an audit log. Nobody reads it. This agent reads the logs of other agents, replays each transaction against the stated policy, and issues a signed compliance attestation on chain. It is what a bank or regulator would run over every agent wallet it allows.
+
+Why Shenzhen. WeBank will be the one allowing agent wallets.
+
+Demo moment. Point it at the logs of two public competitor entries and show which one broke its own rules.
+
+Security story. The auditor only reads. Attestations are signed and anchored.
+
+Inclusion angle. None directly.
+
+Build risk. Medium. Risky as a main entry because it is meta. Sharpest statement of where the field is going.
+
 ## If we swing for Best Innovation
 
-Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage.
+Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage. Minimal Disclosure is the alternative innovation pick if we want the academic board on our side. Hard Button can be added to any pick in one evening.
 
 ## What every idea shares
 
