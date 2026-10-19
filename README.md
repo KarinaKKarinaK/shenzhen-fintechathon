@@ -4,6 +4,33 @@ Working repo for our entry to the 8th Shenzhen International FinTech Competition
 
 Deadline: 20 October 2026, 23:59 Beijing time. Registration and submission close at the same time.
 
+## The app
+
+Live: https://surety-fintechathon.vercel.app
+
+- Landing page: who it is for (agricultural pilots, fleets, households with a humanoid, small factories, software agents), how one task flows, the competition's requirements mapped to where they live, the scoring criteria, and what no other entry has.
+- Mission control (`/app`): a left rail with Overview, Neighbourhood, Fleet, Attack lab and Evidence.
+- Neighbourhood and Fleet: press Start to watch the agents act. A 3D scene shows the machine, the geofence, the lender and the bond contract, with money dots flying on every transaction. Panels show the agents talking, each signed intent through the policy engine line by line, the chain feed with hashes, the bond gauge, the lease bar and the balance sheet.
+- Attack lab: the hunter runs twenty attacks against a shadow agent, then a judge types their own and sees the gate verdict, the framed message and the shadow policy decision.
+- Evidence: the attack set runs at request time, with chain mode and model mode shown honestly.
+
+### Run it locally
+
+```
+cd web
+pnpm install
+pnpm dev
+```
+
+Optional environment (see `web/.env.example`): an AI gateway or Anthropic key lets the model write the agents' explanations (decisions stay in code), and a funded Base Sepolia key makes every transaction real with explorer links. Without them the engine runs scripted explanations on a simulated chain and labels every hash as simulated.
+
+### Layout
+
+- `web/src/engine`: the backend. Policy engine, SCP style message framing and judge gate, in-memory mirrors of the three contracts, the three agents, the twenty attack cases, the scenario runners, and the chain adapter. `selfcheck.ts` runs the attack set and a normal flow: `npx tsx src/engine/selfcheck.ts`.
+- `web/src/app/api`: `run` streams a scenario as server sent events, `judge` is the judge console, `attacks` returns the attack results.
+- `web/src/components`: the 3D scene, the panels, the run hook, the rail.
+- `contracts`: `IBonded`, `Bond`, `JobBoard`, `Lease` in Solidity with Foundry tests for the bond. Written, not yet compiled on this machine (no Foundry installed). See `contracts/README.md`.
+
 ## Files
 
 - `HACKATHON.md`: everything we know about the competition. Rules, topics, scoring, deliverables, timeline, prizes, contacts, judge profile, and open questions to confirm with the organizers.
