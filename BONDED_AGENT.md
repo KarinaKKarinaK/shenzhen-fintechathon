@@ -82,3 +82,44 @@ One screen, 16 by 9, dark, built for a projector. The judges should be able to r
 4. The judge console. Replace with a prepared second attack.
 
 Never cut the crash settlement, the slash, the chain feed with hashes, or the button.
+
+## Market, losses and where the money is
+
+Checked 19 October 2026. Estimates are marked.
+
+### Market
+
+- The drone slice alone is small today. Meituan has completed about one million drone deliveries in total by mid 2026 across roughly 60 routes in Shenzhen. At one or two yuan of premium per flight that is one or two million yuan a year.
+- The low altitude economy around it is large and policy driven. The CAAC says the sector reached its 1.5 trillion yuan target for 2025 and projects 3.5 trillion by 2035. Other analysts put 2025 at 0.9 to 1 trillion. Drone logistics was 58 billion yuan in 2023.
+- Per flight insurance exists for human pilots. SkyWatch and Thimble sell hourly cover at about 5 to 25 US dollars per flight hour for one million dollars of liability through an app. The product is proven. The machine buying it, the insurer pricing it per flight from telemetry, and the claim settling itself do not exist.
+- The real market is liability for autonomous agents. Armilla launched an AI liability policy at Lloyd's in 2025. Munich Re's HSB added small business AI cover in 2026. Standard AI exclusions took effect in January 2026 and large carriers are adding them to general liability. An industry report co-authored by researchers from Anthropic and OpenAI estimates over 90 percent of insurers' agent exposure sits in policies never designed for it.
+
+### Losses
+
+No delivery operator publishes a crash rate. A 2018 reliability review puts drone failures at about one per 1,000 flight hours against one per 100,000 for commercial aviation. Estimate: for a fifteen minute delivery that is one failure per 4,000 flights, so a million deliveries implies a few hundred incidents. Old source, order of magnitude only.
+
+### Where the money is
+
+1. The bond rail. Every agent that moves money needs a bond before a counterparty trusts it. Fee per bond plus yield on the float.
+2. Settlement. Parametric claims from signed telemetry remove the claims handler. Insurers pay for the cost cut.
+3. Risk data. The attack registry and each agent's loss history are a credit bureau for machines. Insurers, platforms and banks pay for the score, and it compounds.
+4. Take rate on every cover bound through the market.
+
+### Beyond drones
+
+The drone is the demo: visual, local, clean telemetry. The product is an accountability and insurance rail for any autonomous actor that moves money, can cause a loss, and produces signed data. In Shenzhen: electric taxis and robotaxis per trip, industrial robots on hire purchase with breakdown cover (idea 27), port AGVs and delivery robots, and pure software agents where the audit log is the telemetry.
+
+Deck line: drone today, every autonomous agent tomorrow. The bond is how a machine proves it can be trusted with money.
+
+### Sources
+
+- https://research.nus.edu.sg/eai/wp-content/uploads/2026/02/EAI-Background-Brief-No.-1874-The-Rapid-Rise-of-Chinas-Low-Altittude-Economy.pdf
+- https://www.chinadaily.com.cn/a/202509/16/WS68c89f79a3108622abca0e79.html
+- https://baike.baidu.com/en/item/Meituan%20Drone%20Delivery/5199940
+- https://lowaltitudeeconomy.aero/en/evtol-news-and-electric-aircraft-news/cargo-drones/meituan-fourth-generation-drone-caac-national-full-territory-logistics-license
+- https://www.skywatch.ai/blog/on-demand-drone-insurance-pay-per-flight-or-monthly
+- https://dronegearhq.com/guides/drone-insurance/
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC6165073/
+- https://www.pearlhealth.com/blog/the-missing-market-why-agentic-ai-needs-its-own-insurance-ecosystem
+- https://www.insurancebusinessmag.com/us/news/technology/insurers-face-hidden-ai-liability-as-agent-risks-multiply-582433.aspx
+- https://zylos.ai/research/2026-07-10-ai-agent-liability-insurance-underwriting/
