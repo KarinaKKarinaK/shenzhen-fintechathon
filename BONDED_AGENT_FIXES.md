@@ -17,7 +17,7 @@ A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what w
 | 7 | Spraying is seasonal; a fixed monthly minimum causes default in the off-season | Open | Not addressed |
 | 8 | Scope is far bigger than the time left | Open | Worse. Both sides are in the required demo |
 | 9 | Claims that can backfire: WeBank named as lessor, farm drone subsidies may exist, unverified market sources | Open | Partly. Financing caveat kept; WeBank still named as lender; "credit bureau for machines" still there |
-| 10 | Slashing evidence is not bound to the signed intent | New | Bug in `Bond.sol` |
+| 10 | The contract believes the reporter: slashing evidence is typed in, not read from the signed intent and the job records | Reporter submits only the full signed intent and a rule; the contract reads every fact from the intent, `Bond` and `JobBoard` | No. Bug in `Bond.sol` |
 | 11 | A new machine can never start a job | New | Bug in `Bond.sol` with `JobBoard.sol` |
 
 ## 1. Who pays when the AI agent makes a mistake
@@ -136,19 +136,76 @@ Already good:
 
 `slashByProof` checks the signature but not that the intent was ever published, so the evidence still only exists inside the owner's system. To do: an intent log contract and a check in `slashByProof` that the hash was committed.
 
-### 10. New, critical: evidence is not bound to the intent
+### 10. Critical: the contract believes the reporter
 
-`slashByProof` takes the signed `intentHash` and, separately, an `evidence` blob chosen by the submitter. It checks that the agent signed the hash, then checks the rule against the evidence, but never checks that the evidence is what the agent signed. So anyone holding any genuine signed intent, even a perfectly legal payment, can submit it with made-up evidence (a payee off the allowlist, `confirmed = false`, `cover = false`) and slash the bond. Each intent can be used once, so every signed intent the agent ever makes is one free slash for an attacker. This is exactly "anyone can just say this never happened". Fix: the evidence must be the intent itself. The submitter passes the full typed intent, the contract hashes it, checks the hash matches the signature and the log, and reads payee, amount and fence from that intent. Claims about confirmation or cover must be read from `JobBoard` state, never taken from the submitter.
+#### The problem
 
-Two sources of truth, both already on chain, and the submitter supplies neither:
+`Bond.slashByProof` takes two separate things from whoever reports a violation:
 
-| What is checked | Read from |
+1. the agent's signed action (as a hash plus signature), and
+2. an `evidence` blob describing what went wrong, typed in by the reporter.
+
+It checks that the signature is genuinely the agent's, then checks the rule against the reporter's evidence. It never checks that the evidence matches what the agent actually signed, and it never looks at `JobBoard` to see what really happened. The truth is already on chain (the farmer's confirmation is recorded in `JobBoard`), but `Bond` ignores it and takes the reporter's word.
+
+Who can exploit it: anyone holding a genuine signed action from the agent. With the per-job log (fix 2) that is every party to a job: the client, the owner, the lender. If a signed action ever appears on chain, anyone at all.
+
+Example. A farmer hires the drone for job 12. Everything goes right and the farmer confirms. The agent signs "pay 160 to 0xBANK for job 12", a legal payment. The farmer takes that signed action and calls `slashByProof` with the rule "unconfirmed claim" and the evidence "job 12, confirmed = false". The signature checks out, "confirmed = false" breaks the rule, the bond is slashed and the farmer gets half as a bounty. The same works with a made-up payee ("payee was 0xSCAMMER") or "no cover". Each signed action can be used once, but the agent signs many per job, so every one is a free bounty. The bond can be drained by lying.
+
+This is not the oracle problem (getting the truth about the real world onto the chain; see the farmer's confirmation, signed flight logs, plausibility checks and the dispute window). It is a wiring bug: the contract does not use the truth that is already on chain.
+
+#### The solution
+
+The reporter only points. The contract works out every fact itself.
+
+1. The signed action carries all the details. When the agent decides to do something it signs a complete typed intent:
+
+   | Field | Example |
+   |---|---|
+   | Agent | drone 7's agent |
+   | Job | 12 |
+   | Action | pay |
+   | Payee | 0xBANK |
+   | Amount | 160 |
+   | Nonce | 57 (unique, so it cannot be reused) |
+
+   The signature covers every field. Change one digit and the signature no longer matches.
+
+2. The reporter submits only the full signed intent and the rule they say it broke. No evidence field, no facts.
+
+3. The contract checks, in order:
+   1. The signature: it hashes the intent and checks the agent signed that hash. An edited intent fails here.
+   2. The log: the hash was committed to job 12's log (fix 2). Otherwise rejected.
+   3. The rule: it compares what the agent signed with what was allowed or what happened, read from its own records:
+
+   | Rule claimed | What the agent signed | Compared with | Read from |
+   |---|---|---|---|
+   | Payee not approved | The payee in the intent | The agent's approved payees | `Bond` |
+   | Over the cap | The amount in the intent | The agent's spending cap | `Bond` |
+   | Claimed a job not done | "Job 12 complete, pay me" | Was job 12 confirmed by its verifier | `JobBoard` |
+   | Outside the area | The location in the intent | Job 12's geofence | `JobBoard` |
+
+   4. Only on a real mismatch is the bond slashed and the bounty paid.
+
+The farmer's attack after the fix. The contract reads the payee from the signed intent: 0xBANK. It is approved, so the report is rejected. The farmer cannot change the intent to say 0xSCAMMER, because then the signature fails. The claim "job 12 was not confirmed" is checked against `JobBoard`, which shows the farmer confirmed it, so that is rejected too.
+
+Why it works. Every fact comes from a source the reporter cannot control:
+
+| Fact | Source |
 |---|---|
-| What the agent tried to do: payee, amount, job id, location | The signed intent itself |
-| What was allowed: allowlist, caps, geofence, fee, verifier, window | The agreement on chain: the job registered in `JobBoard` between the requester, the operator and the agent, plus the agent's rules in `Bond` |
-| What actually happened: confirmed, released, instalment paid | `JobBoard` and `Lease` state |
+| What the agent did | Sealed by the agent's signature |
+| What was allowed | Fixed when the bond and the job were registered |
+| What happened | Recorded by `JobBoard` when the verifier confirmed |
 
-The submitter only points: "intent 57 against job 12". The contract compares the two records itself. A violation is a mismatch between what the agent signed and what the agreement allowed.
+A report that points at a real violation pays. A report that points at something fine does nothing except cost the reporter gas.
+
+#### What it takes in code
+
+- Define the typed intent (fields above, EIP-712 style) and have the agent sign in that format.
+- Change `slashByProof` to take the full intent and a rule instead of `intentHash` plus `evidence`.
+- Give `Bond` the address of `JobBoard` so it can read a job's verifier, confirmation and geofence.
+- Check the intent's hash against the job's log, which needs fix 2.
+
+Mainly `Bond.sol`, plus the signing format in the agent code. The same rule applies everywhere else: never take a fact from the caller when the contract can read it. `JobBoard.confirm` breaks this rule too (see "Other contract notes").
 
 ### 11. New: a new machine can never start
 
@@ -161,6 +218,9 @@ The submitter only points: "intent 57 against job 12". The contract compares the
 - `JobBoard.bindCover` lets the agent mark cover as bound without paying anything, so "the flight starts only because cover is bound" is self-declared. Either drop cover (decision 4) or make it a real payment.
 - `Lease.setRate` is operator only. The rate should be set by the lender inside the band, or the owner sets their own price.
 - `Lease` has a fixed monthly minimum (7, seasonality).
+- `JobBoard.confirm` takes the instalment and the bond top up as inputs from the verifier, so the farmer decides how much the lender gets and could pass zero. Same kind of bug as 10. The instalment should be computed from the lease (`Lease.instalmentFor`).
+- `JobBoard.confirm` sends the instalment to the `Lease` contract as a plain transfer instead of calling `Lease.pay`, and `Lease` has no receive function, so the payment reverts and the loan balance never goes down. A job also does not record which lease it belongs to.
+- `Bond.register` makes whoever calls it the operator of any agent address, so someone can register another person's agent first.
 
 ### 3 to 9 in the document
 
