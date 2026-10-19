@@ -66,21 +66,25 @@ Scope for the time left. One smart account with a guardian threshold. One blockl
 
 Risk. Lowest build risk of the four. Rename it, since the name is taken three times.
 
-### 4. Prepaid Guard
+### 4. Bounty Hunter: an immune system for agent wallets
 
-What it is. Gyms, tutoring centres and salons take prepaid money and disappear. The agent negotiates the membership, locks the money in escrow, releases one session's worth per verified visit, watches the business registry, and refunds the rest the minute the merchant deregisters. Shenzhen already pilots e-CNY smart contracts that do exactly this for prepaid funds.
+What it is. Agents post bonds. A second kind of agent, the hunter, has its own wallet and earns money by breaking other agents in a sandboxed shadow run: injection, fake invoices, lookalike addresses, replay, chained actions. A successful break pays the bounty from the target's bond, tightens the target's policy, and writes the attack to a shared registry on chain. AI against AI with money at stake.
 
-Why Shenzhen. It mirrors a live Shenzhen government pilot. Judges will know the problem from their own lives.
+Why Shenzhen. WeBank will decide which agent wallets may touch its rails. A market that prices how breakable an agent is answers the question they will actually ask.
 
-What nobody else has. Consumer prepaid escrow with per visit release and a registry trigger. Milestone escrow exists in four Topic F entries, all business to business.
+What nobody else has. Two agents with opposite incentives (hole 2), an agent with consequences (hole 1), and an active rather than passive security model (hole 4). Every injection defense in the field is a regex. leash dared people to drain its vault by hand; nobody automated the attacker or paid it.
 
-Rubric. Task 30, security 24, innovation 17, bonus 3. Expected 74. The safest of the four and the one most likely to finish, and the one most likely to be told "escrow again".
+Rubric. Task 24, security 27, innovation 28, bonus 3. Expected 82 if the shadow runner is solid, lower if it is not. Highest innovation and security scores of anything we have.
 
-Demo in five minutes. Sign up, lock 3,000 CNY, three check ins release three payments, hashes. The merchant sends "release everything early", blocked. The merchant deregisters, the balance comes back, hash.
+Demo in five minutes. The hunter attacks a clone of a typical field wallet and gets paid, hash. It attacks our wallet and fails. The judges type their own attack for sixty seconds. Then the bond of the broken wallet is shown slashed and the attack registry shows the new entry.
 
-Scope for the time left. One escrow contract with per visit release and a refund path. A check in signer. A mock registry feed. Agent for negotiation and messages. Policy engine, attack tests, deck, video.
+Scope for the time left. Bond and bounty contracts. The hunter loop with the twenty attacks as its starting library. The shadow runner from Sparring. The attack registry contract. A concrete target wallet underneath, which is why this stacks on idea 2 or idea 1.
 
-Risk. Innovation score. Add Hard Button or Sparring to lift it.
+Risk. It is meta. Without a concrete scenario under it, judges will ask what the user gets. Hunters must never touch a live wallet, and bounties must be capped.
+
+### The safe fallback: Prepaid Guard
+
+Consumer prepaid money in escrow, released per verified visit, refunded when the merchant deregisters, mirroring a live Shenzhen e-CNY pilot. Task 30, security 24, innovation 17, bonus 3, expected 74. Milestone escrow exists in four Topic F entries, so the innovation score is low. Build it only if the machine simulation is not stable by Monday evening.
 
 ## Layers that go on whichever we pick
 
@@ -90,7 +94,7 @@ Risk. Innovation score. Add Hard Button or Sparring to lift it.
 
 ## Recommendation
 
-Build idea 2 with the bond from idea 1: the robot that pays for itself, posting a bond that is slashed when its agent breaks policy, with the lessor as a second agent. It has the strongest inclusion story for a WeBank panel, the strongest jury pull, a physical object on stage, and it takes three of the five field holes. Idea 1 is the alternative if the team prefers drones and an insurer agent. Idea 3 is the fallback if the machine simulation is not stable by Monday evening.
+Build idea 2 with the bond from idea 1 and the hunter from idea 4: the robot that pays for itself, posting a bond, with a hunter agent trying to rob it live and failing, and a physical button as the only way to raise its caps. Four things nobody in about 150 entries has, on one concrete Shenzhen scenario with real hashes. Idea 1 is the alternative if the team prefers drones and an insurer agent. Idea 3 is the fallback if the machine simulation is not stable by Monday evening, and Prepaid Guard is the fallback after that.
 
 ## The three competitors to beat in Topic F
 

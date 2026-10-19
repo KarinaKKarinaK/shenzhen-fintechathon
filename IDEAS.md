@@ -554,6 +554,20 @@ The pitch. Three models from different vendors must agree on any L2 action. One 
 Build risk. Very low. A layer, not an entry.
 
 ||||||| 2d8f04c
+## 35. Bounty Hunter: an immune system for agent wallets (Topic F)
+
+The pitch. Every entry in the field defends with a regex and a human. One entry published its agent key and dared people to drain it. Nobody built the other side. Here agents post bonds. A second kind of agent, the hunter, has its own wallet and earns money by breaking other agents: injection, fake invoices, lookalike addresses, replay, chained benign then malicious actions. When a hunter gets a target to violate its policy in a sandboxed shadow run, the target's bond pays the bounty, the target's policy tightens, and the attack joins a shared attack registry on chain.
+
+Why Shenzhen. WeBank will decide which agent wallets may touch its rails. A market that prices how breakable an agent is answers the question they will ask.
+
+Demo moment. Our hunter attacks a clone of a typical field wallet live and gets paid, hash. It attacks our wallet and fails. The judges type their own attack for sixty seconds.
+
+Security story. AI against AI with money at stake. Security is the product and the 30 percent is earned on camera. Hunters can only attack in the shadow run, never the live wallet. Bounties are capped per attack and per day so a hunter cannot drain a bond.
+
+Inclusion angle. Indirect. It makes cheap agents safe enough to give to people who cannot supervise them.
+
+Build risk. Medium. It is meta and needs a concrete target wallet underneath, so it stacks on idea 27 (the robot) or idea 16 (the drone) rather than replacing them. Bond and bounty contracts, the hunter loop, the attack registry, the shadow runner from idea 30.
+
 ## If we swing for Best Innovation
 
 Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage. Minimal Disclosure is the alternative innovation pick if we want the academic board on our side. Hard Button, Sparring and Ensemble Veto are layers that can be added to any pick. The strongest package we have found: Sky Cover as the task, Bonded Agent, Sparring and Hard Button on top. See FIELD_REVIEW.md for the check against every competitor repo.
