@@ -317,3 +317,13 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 :root[data-theme="dark"] .topbar { background: rgba(22,20,17,0.9); border-color: var(--color-line); }
 :root[data-theme="dark"] .topbar .links a:hover { background: var(--color-gold-soft); color: var(--color-ink); }
 @media (max-width: 480px) { .topbar .links a span { display: none; } .topbar .links a { padding: 0 0.7rem; } }
+
+/* Standard top navigation. The landing pulls up under it; every other page starts below it. */
+.page-main { padding: 4rem 1rem 1.5rem; }
+@media (min-width: 768px) { .page-main { padding: 4.75rem 1.5rem 1.5rem; } }
+.navbar.over-photo .lang-toggle, .navbar.over-photo .theme-toggle { color: rgba(255,255,255,0.85); }
+.navbar.over-photo .lang-toggle .text-ink, .navbar.over-photo .theme-toggle:hover { color: #fff; }
+.navbar.over-photo .lang-toggle:hover, .navbar.over-photo .theme-toggle:hover { background: rgba(255,255,255,0.12); }
+:root[data-theme="dark"] .navbar:not(.over-photo) { background: var(--color-surface); border-color: var(--color-line); }
+
+@media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding-left: 0.5rem; padding-right: 0.5rem; font-size: 14px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 34px; height: 34px; } }

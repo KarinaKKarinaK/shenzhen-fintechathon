@@ -22,8 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <LangProvider>
-          <header className="topbar-wrap"><Rail /></header>
-          <main className="min-w-0 px-4 pb-6 pt-4 md:px-6">{children}</main>
+          <Rail />
+          <main className="page-main">{children}</main>
         </LangProvider>
       </body>
     </html>
