@@ -37,7 +37,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
   }, []);
   return (
     <div className="landing-root">
-      <section className="duotone flex min-h-[100svh] items-end text-white">
+      <section data-no-reveal className="duotone flex min-h-[100svh] items-end text-white">
         <Image src="/photos/shenzhen-tower.jpg" alt={L.heroAlt} fill priority sizes="100vw" className="object-cover object-[50%_35%]" />
         <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>
         <div className="hero-fade" aria-hidden />
@@ -74,7 +74,7 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
 
         <dl className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {L.stats.map((l, i) => (
-            <div key={l} className={`tile ${i === 0 ? "tile-seal" : ""}`}><dt className="sr-only">{l}</dt><dd className="kpi kpi-lg">{stats[i]}</dd><dd className="mt-1 text-[15px] text-ink-2">{l}</dd></div>
+            <div key={l} className={`tile ${i === 0 ? "tile-seal" : ""}`}><dt className="sr-only">{l}</dt><dd className="kpi kpi-lg" data-count={stats[i]}>{stats[i]}</dd><dd className="mt-1 text-[15px] text-ink-2">{l}</dd></div>
           ))}
         </dl>
 

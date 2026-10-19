@@ -319,14 +319,9 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 @media (max-width: 480px) { .topbar .links a span { display: none; } .topbar .links a { padding: 0 0.7rem; } }
 
 /* Standard top navigation. The landing pulls up under it; every other page starts below it. */
-.page-main { padding: 4rem 1rem 1.5rem; }
-@media (min-width: 768px) { .page-main { padding: 4.75rem 1.5rem 1.5rem; } }
-.navbar.over-photo .lang-toggle, .navbar.over-photo .theme-toggle { color: rgba(255,255,255,0.85); }
-.navbar.over-photo .lang-toggle .text-ink, .navbar.over-photo .theme-toggle:hover { color: #fff; }
-.navbar.over-photo .lang-toggle:hover, .navbar.over-photo .theme-toggle:hover { background: rgba(255,255,255,0.12); }
-:root[data-theme="dark"] .navbar:not(.over-photo) { background: var(--color-surface); border-color: var(--color-line); }
+.page-main { padding: 5.5rem 1rem 1.5rem; }
+@media (min-width: 768px) { .page-main { padding: 6rem 1.5rem 1.5rem; } }
 
-@media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding-left: 0.5rem; padding-right: 0.5rem; font-size: 14px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 34px; height: 34px; } }
 
 /* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
 body:has(.landing-root) .page-main { padding: 0 !important; }
@@ -338,26 +333,14 @@ html.on-landing body { background-color: var(--color-paper); overscroll-behavior
 html.on-landing .page-main { padding: 0; }
 html.on-landing .landing-root { margin: 0; }
 /* Fallback where :has is missing: pull the landing out over main's padding, edge to edge. */
-.landing-root { margin: -4rem -1rem -1.5rem; }
-@media (min-width: 768px) { .landing-root { margin: -4.75rem -1.5rem -1.5rem; } }
+.landing-root { margin: -5.5rem -1rem -1.5rem; }
+@media (min-width: 768px) { .landing-root { margin: -6rem -1.5rem -1.5rem; } }
 body:has(.landing-root) .landing-root { margin: 0; }
 .landing-root > .duotone:first-child { min-height: 100svh; width: 100%; }
 /* The photo fades into the page instead of ending on a hard edge. Same token in light and dark. */
 .hero-fade { position: absolute; inset: auto 0 0 0; height: 110px; z-index: 2; pointer-events: none; background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-paper) 35%, transparent) 55%, var(--color-paper) 100%); }
 .duotone > .over.hero-content { z-index: 3; }
 
-/* Navbar: glass when solid, hairline gold rule, pill indicator that fills on the selected link. */
-.navbar:not(.over-photo) { background: rgba(251,250,247,0.97); backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid rgba(201,162,39,0.35); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset; }
-.navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.9rem; transition: color 160ms, background 200ms; }
-.navbar nav a > span { display: none; }
-.navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
-.navbar nav a[aria-current="page"] { color: #fff; }
-.navbar nav a[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8), inset 0 0 0 1px rgba(201,162,39,0.5); }
-.navbar nav a:not([aria-current="page"]):hover::before { opacity: 0.12; transform: scale(1); background: var(--color-gold); }
-.navbar.over-photo nav a[aria-current="page"]::before { background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); backdrop-filter: blur(6px); }
-.navbar.over-photo nav a[aria-current="page"] { color: #fff; }
-.navbar .cjk-serif { letter-spacing: 0.04em; }
-:root[data-theme="dark"] .navbar:not(.over-photo) { background: rgba(15,14,12,0.97); border-bottom-color: rgba(201,162,39,0.3); box-shadow: none; }
 
 /* Softer, modern edges on the heavier surfaces while the seals and chamfers keep the tradition. */
 .band { border-radius: 14px; }
@@ -368,5 +351,25 @@ body:has(.landing-root) .landing-root { margin: 0; }
 .btn-red { box-shadow: 0 12px 28px -14px rgba(184,50,42,0.9); }
 .btn-red:hover { transform: translateY(-1px); }
 
-.navbar.over-photo { background: linear-gradient(180deg, rgba(0,0,0,0.45), transparent); }
-.navbar.over-photo .text-ink, .navbar.over-photo .font-bold { color: #fff; }
+
+/* Floating top bar: glass in the theme's own colour, the same over the photo and on every page. */
+.navbar-glass { background: rgba(251,250,247,0.94); backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); box-shadow: 0 10px 30px -18px rgba(31,26,23,0.55), inset 0 0 0 1px rgba(201,162,39,0.35); }
+:root[data-theme="dark"] .navbar-glass { background: rgba(20,18,16,0.9); box-shadow: 0 10px 30px -14px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(201,162,39,0.28); }
+.navbar-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, var(--color-seal), var(--color-gold)); transition: transform 80ms linear; }
+.navbar nav a { position: relative; isolation: isolate; border-radius: 999px; padding: 0.4rem 0.85rem; }
+.navbar nav a::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); z-index: -1; }
+.navbar nav a[aria-current="page"] { color: #fff; }
+.navbar nav a[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8); }
+.navbar nav a:not([aria-current="page"]):hover::before { opacity: 0.14; transform: scale(1); background: var(--color-gold); }
+.navbar .cjk-serif { letter-spacing: 0.04em; }
+@media (max-width: 640px) { .navbar nav { gap: 0; } .navbar nav a { padding: 0.35rem 0.5rem; font-size: 13px; } .navbar nav .lang-toggle, .navbar nav .theme-toggle { width: 32px; height: 32px; } }
+
+/* Scroll reveal (components/ScrollReveal.tsx): rise and fade in once, siblings in turn. */
+.rv { opacity: 0; transform: translateY(22px); transition: opacity 650ms cubic-bezier(.2,.7,.2,1), transform 750ms cubic-bezier(.2,.7,.2,1); }
+.rv.rv-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+
+/* Landing sections carry a number, 01, 02, 03, above their heading. */
+.landing-root { counter-reset: sec; }
+.landing-root .h-section::before { counter-increment: sec; content: counter(sec, decimal-leading-zero); display: block; margin-bottom: 0.6rem; font-family: var(--font-tech); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.25em; color: var(--color-seal); }
+.landing-root .band .h-section::before, .landing-root .duotone .h-section::before { color: var(--color-gold); }
