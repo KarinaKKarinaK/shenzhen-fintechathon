@@ -1,26 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRun } from "./useRun";
-import { AttackGrid, type AttackResult } from "./AttackGrid";
+import type { AttackResult } from "./AttackGrid";
 import { useLang } from "@/i18n/LangProvider";
 
-// Streams the attack scenario into the grid, tile by tile. Falls back to the request-time results.
-export function EvidenceLab({ initial, benign }: { initial: AttackResult[]; benign?: { passed: number; total: number } }) {
-  const { d, t, lang } = useLang();
+// Streams the attack scenario over the request-time results. The view reads one list for every counter.
+export function useAttackSet(initial: AttackResult[], benign?: { passed: number; total: number }) {
+  const { t, lang } = useLang();
   const { state, start, stop } = useRun("attack", lang);
   const live: AttackResult[] = state.attacks.map((a, i) => ({ id: a.id ?? i + 1, name: a.name, nameZh: a.nameZh, layer: a.where, blocked: a.blocked, detail: a.detail, detailZh: a.detailZh, naive: a.naive, standard: a.standard, isolated: a.isolated }));
-  const results = live.length ? live : initial;
-  return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div><h2 className="text-sm font-semibold">{d.lab.title}</h2><span className="text-xs text-muted">{live.length ? t("lab.streamed", { n: live.length, total: initial.length, done: state.done ? `, ${state.done}` : "" }) : d.lab.request}</span></div>
-        <div className="flex gap-2">
-          {!state.running ? <button className="btn btn-red !px-3 !py-2 !text-[11px]" onClick={() => start(false)}>{d.lab.run}</button> : <button className="btn btn-ghost !px-3 !py-2 !text-[11px]" onClick={stop}>{d.lab.stop}</button>}
-        </div>
-      </div>
-      <AttackGrid results={results} benign={state.benign ?? benign} />
-    </div>
-  );
+  const status = live.length ? t("lab.streamed", { n: live.length, total: initial.length, done: state.done ? `, ${state.done}` : "" }) : undefined;
+  return { results: live.length ? live : initial, benign: state.benign ?? benign, running: state.running, start: () => start(false), stop, status };
 }
 
 // Fetches one fast fleet run and counts what came back, so a judge can read the raw events.
@@ -46,7 +36,7 @@ export function LastRun() {
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="text-sm">
-      <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">{E.lastRun}</h2><button type="button" onClick={load} disabled={busy} className="btn btn-ghost !px-3 !py-1.5 !text-[11px]">{busy ? E.fetching : E.fetchAgain}</button></div>
+      <div className="mb-2 flex justify-end"><button type="button" onClick={load} disabled={busy} className="btn btn-ghost !px-3 !py-1.5 !text-[11px]">{busy ? E.fetching : E.fetchAgain}</button></div>
       {err ? <div className="text-red">{err}</div> : null}
       {counts ? (
         <div className="grid grid-cols-5 gap-2 text-xs">

@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Intent, MachineState, PolicyDecision, PolicyLine, Job, Side } from "@/engine/types";
-import { short } from "@/engine/policy";
+import { DEFAULT_POLICY, short } from "@/engine/policy";
+import { ADDR } from "@/engine/keys";
 import { ruleLabel } from "@/engine/i18n";
 import type { Gate, Understood, MessageEv, PlanItem, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
 import { timeOf, yuan } from "./money";
@@ -82,14 +83,25 @@ function UnderstoodLine({ u }: { u: Understood }) {
   );
 }
 
+// The four facts a judge reads first. The rest sit behind a link; every label is a human word.
+const FACT_FIRST = ["fee", "instalment", "margin", "reserveRule"];
 function Facts({ m }: { m: MessageEv }) {
   const { d, t } = useLang();
+  const [more, setMore] = useState(false);
   const P = d.panels;
-  const entries = Object.entries(m.facts ?? {});
-  if (!entries.length && m.grounded === undefined) return null;
+  const labels = P.factLabels as Record<string, string>;
+  const all = Object.entries(m.facts ?? {});
+  if (!all.length && m.grounded === undefined) return null;
+  const first = all.filter(([k]) => FACT_FIRST.includes(k)).slice(0, 4);
+  const shown = more ? all : first.length ? first : all.slice(0, 4);
+  const rest = all.length - shown.length;
+  const val = (v: string | number | boolean) => (typeof v === "boolean" ? (v ? d.judge.yes : d.judge.no) : String(v));
   return (
     <div className="mt-1.5 border-t border-white/15 pt-1.5 text-[11px]">
-      <div className="flex flex-wrap gap-1">{entries.map(([k, v]) => <span key={k} className="rounded-sm bg-white/12 px-1.5 py-0.5 text-white/90"><span className="text-white/60">{k}</span> {String(v)}</span>)}</div>
+      <div className="flex flex-wrap items-center gap-1">
+        {shown.map(([k, v]) => <span key={k} className="rounded-sm bg-white/12 px-1.5 py-0.5 text-white/90"><span className="text-white/60">{labels[k] ?? k}</span> {val(v)}</span>)}
+        {rest > 0 || more ? <button type="button" onClick={() => setMore(!more)} className="text-white/60 underline decoration-gold">{more ? P.factsLess : t("panels.factsMore", { n: rest })}</button> : null}
+      </div>
       <div className="mt-1 flex items-center gap-2 text-white/60">
         <span>{t("panels.factsFrom", { src: m.source === "model" ? P.model : P.template })}</span>
         {m.grounded === false ? <span className="rounded-sm bg-red px-1.5 py-0.5 text-[10px] uppercase text-white">{P.rejected}</span> : <span className="text-gold" aria-label={P.grounded}>&#10003; {P.grounded}</span>}
@@ -187,11 +199,20 @@ export function PolicyCard({ decisions, intents }: { decisions: PolicyDecision[]
   );
 }
 
-// The mechanism behind a slash, one line at a time. Every fact is read from the signed intent and the contracts' records.
+// Known addresses to a role word: the demo keys first, then the allowlist. Anything else stays a short hash.
+const ROLE_OF: Record<string, string> = Object.fromEntries([
+  ...Object.entries(ADDR).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k === "operator" ? "pilot" : k]),
+  ...Object.entries(DEFAULT_POLICY.allowlist).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k]),
+]);
+
+// A receipt for a slash. Every fact is read from the signed intent and the contracts' records.
 export function ProofCard({ proof, log }: { proof?: Proof; log?: LogEv }) {
   const { d, t, lang } = useLang();
+  const [addrs, setAddrs] = useState(false);
   const P = d.panels;
   if (!proof) return <div className="text-sm text-muted">{P.proofNone}</div>;
+  const roles = P.roles as Record<string, string>;
+  const role = (a?: string) => (a && roles[ROLE_OF[a.toLowerCase()] ?? ""]) || short(a);
   const bondKind = (proof.bond ?? proof.bondKind) === "pilot" ? "pilot" : "vendor";
   const bond = bondKind === "pilot" ? d.moments.pilot : d.moments.vendor;
   const shadow = proof.shadow === true;
@@ -199,22 +220,31 @@ export function ProofCard({ proof, log }: { proof?: Proof; log?: LogEv }) {
   const paid = proof.paidTo?.length ? proof.paidTo.join(P.and)
     : shadow ? t("panels.paidShadow", { who: short(proof.submitterAddr ?? proof.submitter), tr: treasury !== undefined ? t("panels.paidShadowTr", { bounty: yuan(proof.bounty), treasury: yuan(treasury) }) : "" })
     : treasury !== undefined ? t("panels.paidTreasury", { harmed: yuan((proof.slash ?? 0) - treasury), treasury: yuan(treasury) }) : P.paidNone;
-  const lines = [
-    t("panels.proof1", { hash: short(proof.intentHash ?? proof.intentId), log: log ? `${P.inLog}${log.parties?.length ? t("panels.delivered", { parties: log.parties.join(", ") }) : ""}` : "" }),
-    t("panels.proof2", { rule: proof.rule ? ruleLabel(lang, proof.rule) : P.unknown, bond }),
-    t("panels.proof3", { signer: short(proof.signer) }),
-    t("panels.proof4", { amount: yuan(proof.slash), bond, paid }),
+  const hash = proof.intentHash ?? proof.intentId;
+  const parties = log?.parties ?? [];
+  const ledger: [string, string][] = [
+    [P.receiptIntent, `${short(hash)}${log ? P.inLog : ""}`],
+    [P.receiptDelivered, parties.length ? parties.map(role).join(", ") : P.unknown],
+    [P.receiptSigner, `${short(proof.signer)}, ${role(proof.signer)}`],
+    [P.receiptOutcome, paid],
   ];
+  const full: [string, string | undefined][] = [[P.receiptIntent, hash], ...parties.map((a): [string, string] => [role(a), a]), [P.receiptSigner, proof.signer]];
   return (
-    <div>
-      <ol className="flex flex-col gap-1.5">
-        {lines.map((l, i) => (
-          <motion.li key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.35 }} className="flex items-start gap-2 text-sm">
-            <span className={`tech mt-0.5 grid h-5 w-5 shrink-0 place-items-center text-[10px] font-bold ${i === 3 ? "bg-red text-white" : "bg-gold text-ink"}`}>{i + 1}</span>
-            <span className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{l}</span>
-          </motion.li>
+    <div className="text-sm">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2">
+        <span className="font-semibold">{proof.rule ? ruleLabel(lang, proof.rule) : P.unknown}</span>
+        <span className={`pill !px-1.5 !py-0.5 !text-[9px] ${bondKind === "pilot" ? "bg-gold-soft text-ink" : "bg-gold text-ink"}`}>{t("panels.bondChip", { bond })}</span>
+        <span className="kpi ml-auto !text-xl tabular-nums text-red">-{yuan(proof.slash)}</span>
+      </div>
+      <dl className="mt-2 flex flex-col gap-1">
+        {ledger.map(([k, v], i) => (
+          <motion.div key={k} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.3 }} className="grid grid-cols-[6rem_1fr] gap-2">
+            <dt className="text-muted">{k}</dt><dd className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{v}</dd>
+          </motion.div>
         ))}
-      </ol>
+      </dl>
+      <button type="button" onClick={() => setAddrs(!addrs)} className="mt-2 text-xs text-ink-2 underline decoration-gold">{addrs ? P.hideAddr : P.showAddr}</button>
+      {addrs ? <ul className="mono mt-1 flex flex-col gap-0.5 break-all text-[10px] text-muted">{full.filter(([, a]) => a).map(([k, a]) => <li key={k + a}><span className="text-ink-2">{k}</span> {a}</li>)}</ul> : null}
       <p className="mt-3 border-t border-line pt-2 text-xs text-muted">{bondKind === "vendor" ? P.noteVendor : P.notePilot}{P.noteLive}</p>
     </div>
   );

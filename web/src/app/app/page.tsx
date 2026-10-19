@@ -17,5 +17,6 @@ export default async function Page() {
   const byLayer = (["message", "policy", "contract"] as const).map((l) => ({ l, n: results.filter((r) => r.layer === l).length, b: results.filter((r) => r.layer === l && r.blocked).length }));
   const policy = Object.entries(DEFAULT_POLICY).map(([k, v]) => [k, fmt(v)] as [string, string]);
   const allowlist = Object.entries(DEFAULT_POLICY.allowlist);
-  return <DashboardView attackN={ATTACKS.length} blocked={blocked} total={results.length} byLayer={byLayer} policy={policy} allowlist={allowlist} />;
+  const caps = { perTx: DEFAULT_POLICY.perTxCap, daily: DEFAULT_POLICY.dailyCap, band: DEFAULT_POLICY.rateBand };
+  return <DashboardView attackN={ATTACKS.length} blocked={blocked} total={results.length} byLayer={byLayer} policy={policy} allowlist={allowlist} caps={caps} />;
 }

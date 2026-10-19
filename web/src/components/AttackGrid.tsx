@@ -1,53 +1,64 @@
 "use client";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/i18n/LangProvider";
 import { layerLabel, standardLabel } from "@/engine/i18n";
 
 export type AttackResult = { id: number; name: string; nameZh?: string; layer: string; blocked: boolean; detail: string; detailZh?: string; naive?: boolean | "fell" | "held"; standard?: string; isolated?: boolean };
 
-// One tile per case. Two diamonds: JiXin on the left, a naive wallet on the right. Click for the reason.
-export function AttackGrid({ results: raw, benign }: { results: AttackResult[]; benign?: { passed: number; total: number } }) {
-  const [open, setOpen] = useState<number | null>(null);
+// The five scored standards, in the order the evidence dictionary lists them. Cases without one land in "other".
+export const STANDARD_KEYS = ["permission hierarchy", "hallucination prevention", "injection defense", "intent understanding", "task planning"] as const;
+
+export function naiveFell(r: AttackResult): boolean | undefined {
+  return r.naive === undefined ? undefined : r.naive === true || r.naive === "fell";
+}
+
+// One accordion, one row per standard. A closed row carries the counts; an open row lists its cases.
+export function AttackGrid({ results }: { results: AttackResult[] }) {
   const { d, t, lang } = useLang();
-  const G = d.grid;
-  const results = raw.map((r) => ({ ...r, naive: r.naive === undefined ? undefined : r.naive === true || r.naive === "fell" }));
-  const sel = results.find((r) => r.id === open);
-  const m = results.length;
-  const fell = results.filter((r) => r.naive === true).length;
-  const naiveKnown = results.some((r) => r.naive !== undefined);
-  const passed = results.filter((r) => !r.blocked).length;
+  const G = d.grid, E = d.evidence;
   const name = (r: AttackResult) => (lang === "zh" ? r.nameZh ?? r.name : r.name);
   const detail = (r: AttackResult) => (lang === "zh" ? r.detailZh ?? r.detail : r.detail);
+  const groups = [
+    ...STANDARD_KEYS.map((key, i) => ({ key, title: standardLabel(lang, key), where: E.standards[i]?.[1] ?? "", cases: results.filter((r) => r.standard === key) })),
+    { key: "other", title: G.other, where: "", cases: results.filter((r) => !r.standard || !(STANDARD_KEYS as readonly string[]).includes(r.standard)) },
+  ].filter((g) => g.cases.length);
+  if (!results.length) return <div className="text-sm text-muted">{G.none}</div>;
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
-        <span className="tile !py-2"><span className="text-muted">{G.naive}</span> <b className="text-red">{t("grid.ofN", { a: naiveKnown ? fell : "?", b: m })}</b> {G.fall}</span>
-        <span className="tile !py-2"><span className="text-muted">{G.jixin}</span> <b className={passed ? "text-red" : "text-gold-deep"}>{t("grid.ofN", { a: passed, b: m })}</b> {G.passThrough}</span>
-        <span className="tile !py-2"><span className="text-muted">{G.benign}</span> <b>{benign ? t("grid.ofN", { a: benign.passed, b: benign.total }) : G.runSet}</b></span>
-        <span className="ml-auto flex items-center gap-3 text-muted"><span className="flex items-center gap-1"><i className="h-2 w-2 rotate-45 bg-gold" />JiXin</span><span className="flex items-center gap-1"><i className="h-2 w-2 rotate-45 border border-red bg-transparent" />{G.legendNaive}</span></span>
-      </div>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-        {results.map((r) => (
-          <button key={r.id} type="button" onClick={() => setOpen(open === r.id ? null : r.id)} aria-pressed={open === r.id} className={`cut-sm hover-lift flex items-start gap-2 px-3 py-2 text-left text-sm transition ${open === r.id ? "bg-ink text-white" : "bg-white"}`} style={{ border: `1px solid ${r.isolated ? "#d4a017" : "var(--color-line)"}` }}>
-            <span className="mt-1 flex shrink-0 gap-1">
-              <span className={`h-2.5 w-2.5 rotate-45 ${r.blocked ? "bg-gold" : "bg-red"}`} aria-label={r.blocked ? G.blocked : G.passed} />
-              <span className={`h-2.5 w-2.5 rotate-45 ${r.naive === undefined ? "border border-line" : r.naive ? "bg-red" : "border border-gold"}`} aria-label={r.naive ? G.naiveFalls : G.naiveHolds} />
-            </span>
-            <span className="min-w-0"><span className="mono block text-[10px] opacity-60">{String(r.id).padStart(2, "0")} {layerLabel(lang, r.layer)}{r.standard ? ` · ${standardLabel(lang, r.standard)}` : ""}{r.isolated ? ` · ${G.isolated}` : ""}</span><span className="block truncate">{name(r)}</span></span>
-          </button>
-        ))}
-      </div>
-      <AnimatePresence>
-        {sel ? (
-          <motion.div key={sel.id} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="cut-sm mt-3 bg-paper-2 p-4 text-sm">
-            <div className="flex flex-wrap items-center gap-3"><span className={`pill ${sel.blocked ? "bg-gold-soft text-red-deep" : "bg-red-soft text-red"}`}>{sel.blocked ? G.blockedPill : G.notBlocked}</span>{sel.naive !== undefined ? <span className={`pill ${sel.naive ? "bg-red text-white" : "bg-paper-2 text-ink-2"}`}>{t("grid.naiveWallet", { s: sel.naive ? G.falls : G.holds })}</span> : null}<span className="font-semibold">{name(sel)}</span><span className="text-muted">{t("grid.atLayer", { layer: layerLabel(lang, sel.layer) })}{sel.standard ? t("grid.standard", { s: standardLabel(lang, sel.standard) }) : ""}</span></div>
-            <p className="mt-2 text-ink-2">{detail(sel)}</p>
-            {sel.isolated ? <p className="mt-1 text-xs text-muted">{G.isolatedNote}</p> : null}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      {!results.length ? <div className="text-sm text-muted">{G.none}</div> : null}
+    <div className="flex flex-col gap-1.5">
+      {groups.map((g) => {
+        const blocked = g.cases.filter((r) => r.blocked).length;
+        const fell = g.cases.filter((r) => naiveFell(r) === true).length;
+        return (
+          <details key={g.key} className="group cut-sm border border-line bg-white open:bg-paper-2/40">
+            <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2.5 text-sm [&::-webkit-details-marker]:hidden">
+              <span className="tech text-[10px] text-red transition group-open:rotate-90">&#9656;</span>
+              <span className="font-semibold">{g.title}</span>
+              <span className="mono text-muted">{t("grid.cases", { n: g.cases.length })}</span>
+              <span className={`mono ${blocked === g.cases.length ? "text-gold-deep" : "text-red"}`}>{t("grid.blockedN", { n: blocked })}</span>
+              <span className="mono text-red">{t("grid.fellN", { n: fell })}</span>
+              {g.where ? <span className="basis-full text-xs text-muted md:ml-auto md:basis-auto">{g.where}</span> : null}
+            </summary>
+            <div className="overflow-x-auto px-3 pb-3">
+              <table className="passbook w-full text-xs">
+                <thead><tr><th className="text-left">#</th><th className="text-left">{G.thCase}</th><th className="text-left">{G.thLayer}</th><th className="text-left">JiXin</th><th className="text-left">{G.thNaive}</th></tr></thead>
+                <tbody>
+                  {g.cases.map((r) => {
+                    const nf = naiveFell(r);
+                    return (
+                      <tr key={r.id} className="align-top">
+                        <td className="whitespace-nowrap">{String(r.id).padStart(2, "0")}</td>
+                        <td className="min-w-[14rem]"><div className="text-ink">{name(r)}{r.isolated ? <span className="ml-1.5 rounded-sm bg-gold-soft px-1 py-0.5 text-[9px] uppercase tracking-wide text-ink-2" title={G.isolatedNote}>{G.isolated}</span> : null}</div><div className="mt-0.5 text-muted">{detail(r)}</div></td>
+                        <td className="whitespace-nowrap text-ink-2">{layerLabel(lang, r.layer)}</td>
+                        <td className="whitespace-nowrap"><span className={`mr-1.5 inline-block h-2 w-2 rotate-45 ${r.blocked ? "bg-gold" : "bg-red"}`} aria-hidden />{r.blocked ? G.blockedPill : G.notBlocked}</td>
+                        <td className={`whitespace-nowrap ${nf ? "text-red" : "text-ink-2"}`}>{nf === undefined ? "?" : nf ? G.falls : G.holds}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }
