@@ -9,7 +9,7 @@ import type { ChainTx, Job, MachineState, Side } from "@/engine/types";
 // Every object here maps to engine state: the machine moves on machine events, money dots fly
 // on chain events, the fence turns coral on a slash, labels show live numbers.
 
-const INK = "#1b2a2a", TURQ = "#3db1b8", TURQ_SOFT = "#a9dcd7", SAND = "#ead9a9", CORAL = "#e0714f", PLUM = "#6b5fb5", BONE = "#f1ead8";
+const INK = "#121212", TURQ = "#d4a017", TURQ_SOFT = "#f3e7c3", SAND = "#ead9a9", CORAL = "#c8102e", PLUM = "#4b5563", BONE = "#f6f3ea";
 
 // Deterministic value noise so the world is the same on every load.
 function hash(x: number, y: number) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -30,11 +30,11 @@ function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2
 function useTextures() {
   return useMemo(() => {
     const grain = canvasTexture(256, 256, (ctx) => { const img = ctx.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 200 + Math.random() * 55; img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255; } ctx.putImageData(img, 0, 0); }, [12, 12]);
-    const rows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#5e7f3f"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#7ea05a" : "#4e6d36"; ctx.fillRect(0, i * 16, 256, 9); for (let j = 0; j < 40; j++) { ctx.fillStyle = `rgba(${150 + Math.random() * 60},${180 + Math.random() * 50},90,0.5)`; ctx.fillRect(Math.random() * 256, i * 16 + Math.random() * 9, 2, 2); } } }, [3, 3]);
-    const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#6fa38a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#8fc3a3" : "#5c8f78"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 3); } }, [3, 3]);
+    const rows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#8a7a3a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#b59a48" : "#6f6230"; ctx.fillRect(0, i * 16, 256, 9); for (let j = 0; j < 40; j++) { ctx.fillStyle = `rgba(${150 + Math.random() * 60},${180 + Math.random() * 50},90,0.5)`; ctx.fillRect(Math.random() * 256, i * 16 + Math.random() * 9, 2, 2); } } }, [3, 3]);
+    const rice = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#c9a94a"; ctx.fillRect(0, 0, 256, 256); for (let i = 0; i < 24; i++) { ctx.fillStyle = i % 2 ? "#e2c66a" : "#a98b36"; ctx.fillRect(i * 11, 0, 6, 256); } for (let k = 0; k < 400; k++) { ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 3); } }, [3, 3]);
     const tiles = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#e7e0cf"; ctx.fillRect(0, 0, 256, 256); ctx.strokeStyle = "#cfc6b0"; ctx.lineWidth = 2; for (let i = 0; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(i * 32, 0); ctx.lineTo(i * 32, 256); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * 32); ctx.lineTo(256, i * 32); ctx.stroke(); } for (let k = 0; k < 300; k++) { ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 3); } }, [6, 6]);
-    const windows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#d8d2c2"; ctx.fillRect(0, 0, 256, 256); for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const lit = hash(x, y) > 0.55; ctx.fillStyle = lit ? "#ffe9b0" : "#4a6468"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 18); ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 4); } }, [1, 1]);
-    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#8a4e3b"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#9c5a45" : "#7a4433"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
+    const windows = canvasTexture(256, 256, (ctx) => { ctx.fillStyle = "#d8d2c2"; ctx.fillRect(0, 0, 256, 256); for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const lit = hash(x, y) > 0.55; ctx.fillStyle = lit ? "#ffd977" : "#3a3a3a"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 18); ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(10 + x * 40, 10 + y * 30, 24, 4); } }, [1, 1]);
+    const roof = canvasTexture(128, 128, (ctx) => { ctx.fillStyle = "#8e0e22"; ctx.fillRect(0, 0, 128, 128); for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? "#a3142b" : "#6e0a1a"; ctx.fillRect(0, i * 8, 128, 4); } }, [2, 2]);
     return { grain, rows, rice, tiles, windows, roof };
   }, []);
 }
@@ -45,7 +45,7 @@ function Terrain({ tex }: { tex: THREE.Texture }) {
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position as THREE.BufferAttribute;
     const colors: number[] = [];
-    const low = new THREE.Color("#c9b98a"), mid = new THREE.Color("#8fae6a"), high = new THREE.Color("#5f8f7a"), peak = new THREE.Color("#e8e0cc");
+    const low = new THREE.Color("#e3d6b3"), mid = new THREE.Color("#c9b57a"), high = new THREE.Color("#9c8a56"), peak = new THREE.Color("#f4efe3");
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i);
       const r = Math.sqrt(x * x + z * z);
@@ -73,7 +73,7 @@ function River() {
   }, []);
   const m = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => { if (m.current) m.current.emissiveIntensity = 0.25 + Math.sin(clock.elapsedTime * 1.3) * 0.08; });
-  return <mesh geometry={geo} receiveShadow><meshStandardMaterial ref={m} color={TURQ} emissive={TURQ} emissiveIntensity={0.3} roughness={0.15} metalness={0.35} transparent opacity={0.92} /></mesh>;
+  return <mesh geometry={geo} receiveShadow><meshStandardMaterial ref={m} color="#b0b8c2" emissive="#d4a017" emissiveIntensity={0.15} roughness={0.1} metalness={0.6} transparent opacity={0.9} /></mesh>;
 }
 
 function Fields({ rows, rice }: { rows: THREE.Texture; rice: THREE.Texture }) {
@@ -97,7 +97,7 @@ function Trees({ count = 180 }: { count?: number }) {
       if (r < 13) continue;
       if (Math.abs(z - (8 + Math.sin(x * 0.3) * 2)) < 2.2) continue;
       const h = (fbm(x * 0.12 + 7, z * 0.12 + 3) - 0.35) * 7 * THREE.MathUtils.smoothstep(r, 9, 16) + Math.max(0, r - 20) * 0.25 * fbm(x * 0.05, z * 0.05);
-      arr.push({ p: [x, h, z], s: 0.7 + hash(i, 3) * 0.9, c: new THREE.Color().setHSL(0.33 + hash(i, 4) * 0.08, 0.35 + hash(i, 5) * 0.2, 0.3 + hash(i, 6) * 0.15) });
+      arr.push({ p: [x, h, z], s: 0.7 + hash(i, 3) * 0.9, c: new THREE.Color().setHSL(0.09 + hash(i, 4) * 0.06, 0.45 + hash(i, 5) * 0.25, 0.32 + hash(i, 6) * 0.18) });
     }
     return arr;
   }, [count]);
@@ -143,7 +143,7 @@ function Tower({ pos, label, color = INK, value }: { pos: [number, number, numbe
       <mesh position={[0, 2.4, 0]}><sphereGeometry args={[0.14, 14, 14]} /><meshStandardMaterial color={TURQ_SOFT} emissive={TURQ} emissiveIntensity={2.5} /></mesh>
       <pointLight ref={l} position={[0, 2.4, 0]} color={TURQ} distance={7} intensity={2.5} />
       <Html position={[0, 3.1, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ background: "rgba(255,255,255,0.92)", color: INK, padding: "6px 10px", borderRadius: 12, fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", border: "1px solid rgba(27,42,42,0.08)" }}>
+        <div style={{ background: "rgba(255,255,255,0.94)", color: INK, padding: "6px 10px", borderRadius: 2, borderLeft: "3px solid #c8102e", fontSize: 11, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)", border: "1px solid rgba(27,42,42,0.08)" }}>
           <div style={{ fontWeight: 700 }}>{label}</div>{value ? <div style={{ color: "#45585a" }}>{value}</div> : null}
         </div>
       </Html>
@@ -266,7 +266,7 @@ function Flat({ pos, label, active, windows }: { pos: [number, number, number]; 
       <mesh position={[0.9, 0.3, -0.6]} castShadow><boxGeometry args={[1.1, 0.6, 0.7]} /><meshStandardMaterial color={active ? TURQ_SOFT : "#cbbfa3"} roughness={0.7} /></mesh>
       <mesh position={[-0.9, 0.45, 0.4]} castShadow><cylinderGeometry args={[0.28, 0.28, 0.9, 16]} /><meshStandardMaterial color="#d8cfb8" roughness={0.8} /></mesh>
       <Html position={[0, 2.6, 0]} center distanceFactor={11} zIndexRange={[4, 0]} style={{ pointerEvents: "none" }}>
-        <div style={{ background: active ? TURQ : "rgba(255,255,255,0.92)", color: active ? "white" : INK, padding: "5px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)" }}>{label}</div>
+        <div style={{ background: active ? CORAL : "rgba(255,255,255,0.94)", color: active ? "white" : INK, padding: "5px 10px", borderRadius: 2, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 8px 24px -10px rgba(27,42,42,0.4)" }}>{label}</div>
       </Html>
     </group>
   );
@@ -348,10 +348,10 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
   const m = machine;
   return (
     <>
-      <hemisphereLight args={["#bfe8e6", "#e2cf98", 0.9]} />
+      <hemisphereLight args={["#fff5e6", "#e8c46a", 0.9]} />
       <directionalLight position={[14, 18, 8]} intensity={1.6} color="#fff4df" castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={18} shadow-camera-bottom={-18} shadow-bias={-0.0004} />
       <ambientLight intensity={0.25} />
-      <fog attach="fog" args={["#bfe0da", 26, 60]} />
+      <fog attach="fog" args={["#f3e7c3", 26, 60]} />
       {side === "fleet" ? (<>
         <Terrain tex={tex.grain} />
         <River />
@@ -384,7 +384,7 @@ function World({ side, machine, txs, jobs, breached, live }: { side: Side; machi
     </>
   );
 }
-const TURQ_DEEP = "#1f8b93";
+const TURQ_DEEP = "#8e0e22";
 
 export function Scene({ side, machine, txs, jobs, breached, autoRotate = false, live = true }: { side: Side; machine?: MachineState; txs: ChainTx[]; jobs: Record<string, Job>; breached?: boolean; autoRotate?: boolean; live?: boolean }) {
   return (

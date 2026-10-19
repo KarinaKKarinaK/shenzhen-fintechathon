@@ -3,7 +3,7 @@ import type { ChainTx, PolicyDecision, EngineEvent } from "@/engine/types";
 
 // Small SVG charts. Thin marks, one hue per job, labels in ink, legend when two series.
 
-const IN = "#3db1b8", OUT = "#6b5fb5", BAD = "#e0714f", GRID = "#e9e3d2", INK = "#1b2a2a", MUTED = "#7f8d8e";
+const IN = "#b8860b", OUT = "#3366cc", BAD = "#c8102e", GRID = "#efe9d8", INK = "#121212", MUTED = "#7a7a76";
 const inbound = new Set(["fee_in", "top_up", "bounty", "release"]);
 
 export function CashFlow({ txs }: { txs: ChainTx[] }) {
@@ -66,7 +66,7 @@ export function RuleHits({ decisions }: { decisions: PolicyDecision[] }) {
         {rows.map(([rule, r]) => (
           <li key={rule} className="grid grid-cols-[120px_1fr_36px] items-center gap-2 text-xs">
             <span className="truncate text-ink-2">{rule}</span>
-            <span className="flex h-2.5 overflow-hidden rounded-full bg-[#eee8d8]"><i style={{ width: `${(r.ok / max) * 100}%`, background: IN }} /><i style={{ width: `${(r.bad / max) * 100}%`, background: BAD, marginLeft: 2 }} /></span>
+            <span className="flex h-2.5 overflow-hidden rounded-full bg-paper-2"><i style={{ width: `${(r.ok / max) * 100}%`, background: IN }} /><i style={{ width: `${(r.bad / max) * 100}%`, background: BAD, marginLeft: 2 }} /></span>
             <span className="tabular-nums text-right text-muted">{r.ok + r.bad}</span>
           </li>
         ))}
@@ -93,18 +93,18 @@ export function EventRate({ events }: { events: EngineEvent[] }) {
   );
 }
 
-const typeTone: Record<string, string> = { chain: "bg-turq/15 text-turq-deep", policy: "bg-plum/15 text-plum", intent: "bg-sand-2 text-ink", "agent.message": "bg-cream text-ink-2", machine: "bg-[#eef3f3] text-ink-2", job: "bg-sand-2 text-ink", attack: "bg-coral/15 text-coral", narration: "bg-cream text-muted", button: "bg-turq text-white", done: "bg-ink text-white" };
+const typeTone: Record<string, string> = { chain: "bg-gold-soft text-red-deep", policy: "bg-paper-2 text-slate", intent: "bg-gold-soft text-ink", "agent.message": "bg-paper-2 text-ink-2", machine: "bg-paper-2 text-ink-2", job: "bg-gold-soft text-ink", attack: "bg-red-soft text-red", narration: "bg-paper-2 text-muted", button: "bg-red text-white", done: "bg-ink text-white" };
 
-export function EventStream({ events }: { events: EngineEvent[] }) {
+export function EventStream({ events, dark = false }: { events: EngineEvent[]; dark?: boolean }) {
   const last = events.slice(-60).reverse();
   return (
     <ul className="mono flex flex-col gap-1">
       {last.map((e, i) => {
         const line = e.t === "chain" ? `${e.tx.kind} ${e.tx.amount} ${e.tx.hash.slice(0, 10)} blk ${e.tx.block}` : e.t === "policy" ? `${e.decision.intentId} ${e.decision.verdict} ${e.decision.lines.filter(l => !l.ok).map(l => l.rule).join(",") || "all rules pass"}` : e.t === "intent" ? `${e.intent.id} ${e.intent.kind} ${e.intent.actor} ${e.intent.amount ?? ""} ${e.intent.signature.slice(0, 12)}` : e.t === "agent.message" ? `${e.from}>${e.to} ${e.untrusted ? "[untrusted] " : ""}${e.text.slice(0, 70)}` : e.t === "machine" ? `${e.state.id} ${e.state.status} bal ${e.state.balance.toFixed(1)} bond ${e.state.bond.toFixed(0)} lease ${e.state.leaseBalance.toFixed(1)} pos ${e.state.position.x.toFixed(1)},${e.state.position.z.toFixed(1)}` : e.t === "job" ? `${e.job.id} ${e.job.status} fee ${e.job.fee}` : e.t === "attack" ? `${e.blocked ? "BLOCKED" : "PASSED"} ${e.where} ${e.name.slice(0, 50)}` : e.t === "button" ? `${e.waiting ? "WAIT" : "PRESSED"} ${e.what}` : e.t === "done" ? e.summary.slice(0, 90) : e.text.slice(0, 90);
         const ts = new Date(e.at).toISOString().slice(11, 23);
-        return (<li key={`${e.at}-${i}`} className="flex items-start gap-2 leading-snug"><span className="shrink-0 text-muted">{ts}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeTone[e.t] ?? "bg-cream"}`}>{e.t}</span><span className="break-all text-ink-2">{line}</span></li>);
+        return (<li key={`${e.at}-${i}`} className="flex items-start gap-2 leading-snug"><span className={`shrink-0 ${dark ? "text-white/40" : "text-muted"}`}>{ts}</span><span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeTone[e.t] ?? "bg-paper-2"}`}>{e.t}</span><span className={`break-all ${dark ? "text-white/85" : "text-ink-2"}`}>{line}</span></li>);
       })}
-      {!last.length ? <li className="text-muted">Waiting for events. Start a run.</li> : null}
+      {!last.length ? <li className={dark ? "text-white/50" : "text-muted"}>Waiting for events. Start a run.</li> : null}
     </ul>
   );
 }

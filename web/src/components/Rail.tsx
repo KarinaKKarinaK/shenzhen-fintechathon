@@ -21,7 +21,7 @@ export function Rail() {
           <span className="tip">{it.label}</span>
         </Link>
       ))}
-      <div className="mt-auto text-center text-[10px] font-semibold leading-tight text-muted">机信</div>
+      <div className="mt-auto flex flex-col items-center gap-2"><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>机信 JIXIN</span><span className="h-6 w-px bg-gold" /></div>
     </nav>
   );
 }

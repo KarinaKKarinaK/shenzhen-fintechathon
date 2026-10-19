@@ -34,7 +34,7 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
           <p className="mt-2 max-w-xl text-sm text-ink-2">{intro}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!state.running ? <button className="btn btn-turq" onClick={() => start(false)}>Start</button> : <button className="btn btn-ghost" onClick={stop}>Stop</button>}
+          {!state.running ? <button className="btn btn-red" onClick={() => start(false)}>Start</button> : <button className="btn btn-ghost" onClick={stop}>Stop</button>}
           <button className="btn btn-ghost" onClick={() => start(true)} disabled={state.running}>Fast</button>
           <button className="btn btn-ghost" onClick={reset} disabled={state.running}>Clear</button>
         </div>
@@ -45,24 +45,25 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
-        <section className="grad card relative" style={{ minHeight: 560 }}>
-          <div className="absolute inset-0 rounded-[24px] overflow-hidden"><Scene side={side} machine={m} txs={state.txs} jobs={state.jobs} breached={breached} /></div>
+        <section className="grain card cut relative" style={{ minHeight: 560 }}>
+          <span className="bracket left-3 top-3 z-10 border-t border-l" /><span className="bracket right-3 top-3 z-10 border-t border-r" /><span className="bracket bottom-3 left-3 z-10 border-b border-l" /><span className="bracket bottom-3 right-3 z-10 border-b border-r" />
+          <div className="absolute inset-0 overflow-hidden"><Scene side={side} machine={m} txs={state.txs} jobs={state.jobs} breached={breached} /></div>
           <div className="pointer-events-none absolute left-4 top-4 flex gap-2">
-            <span className="pill bg-white/85 text-ink backdrop-blur">{m ? `${m.name}: ${m.status}` : "scene"}</span>
+            <span className="pill bg-white/90 text-ink backdrop-blur">{m ? `${m.name}: ${m.status}` : "scene"}</span>
             <span className="pill bg-white/85 text-ink backdrop-blur">chain: {chainMode}</span>
-            {state.running ? <span className="pill bg-turq text-white">live</span> : null}
+            {state.running ? <span className="pill bg-red text-white">live</span> : null}
           </div>
           <div className="pointer-events-none absolute inset-x-4 bottom-4">
-            <div className="pointer-events-auto rounded-2xl bg-white/90 p-4 backdrop-blur">
+            <div className="pointer-events-auto bg-white/92 p-4 backdrop-blur" style={{ borderLeft: "4px solid #c8102e" }}>
               <Narration lines={state.narration} />
-              {state.done ? <div className="mt-2 text-sm font-semibold text-turq-deep">{state.done}</div> : null}
+              {state.done ? <div className="mt-2 flex items-center gap-3"><span className="seal stamp tech px-2 py-1 text-[11px] tracking-[0.15em]">已验证 VERIFIED</span><span className="text-sm font-semibold text-red-deep">{state.done}</span></div> : null}
             </div>
           </div>
         </section>
 
-        <aside className="card flex flex-col p-4" style={{ maxHeight: 560 }}>
-          <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Event stream</h2><span className="mono text-muted">{state.events.length} events, {elapsed.toFixed(1)} s</span></div>
-          <div className="scroll-thin min-h-0 flex-1 overflow-auto rounded-xl bg-cream p-3"><EventStream events={state.events} /></div>
+        <aside className="card-dark flex flex-col p-4" style={{ maxHeight: 560 }}>
+          <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">EVENT STREAM</h2><span className="mono text-white/60">{state.events.length} events, {elapsed.toFixed(1)} s</span></div>
+          <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/40 p-3"><EventStream events={state.events} dark /></div>
         </aside>
       </div>
 
@@ -78,7 +79,7 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
         <section className="card p-4">
           <h2 className="mb-3 text-sm font-semibold">Policy engine, last decision</h2>
           <PolicyCard decision={state.decisions[0]} intent={state.intents[0]} />
-          {state.attacks.length ? (<div className="mt-4 border-t border-line pt-3"><h3 className="mb-2 text-sm font-semibold">Attacks in this run</h3><ul className="flex flex-col gap-1 text-sm">{state.attacks.map((a, i) => <li key={i} className="flex gap-2"><span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${a.blocked ? "bg-turq" : "bg-coral"}`} /><span><span className="font-medium">{a.name}</span> <span className="text-muted">{a.where}: {a.detail}</span></span></li>)}</ul></div>) : null}
+          {state.attacks.length ? (<div className="mt-4 border-t border-line pt-3"><h3 className="mb-2 text-sm font-semibold">Attacks in this run</h3><ul className="flex flex-col gap-1 text-sm">{state.attacks.map((a, i) => <li key={i} className="flex gap-2"><span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${a.blocked ? "bg-gold" : "bg-red"}`} /><span><span className="font-medium">{a.name}</span> <span className="text-muted">{a.where}: {a.detail}</span></span></li>)}</ul></div>) : null}
         </section>
         <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">Chain feed</h2><div className="scroll-thin max-h-[420px] overflow-auto pr-1"><ChainFeed txs={state.txs} /></div></section>
       </div>
