@@ -152,6 +152,43 @@ Build in this order. Everything above the line is required.
 
 Below the line, in order: the charging agent, the hunter in a shadow run, the judge console, the Hard Button, the strategy ratchet, a second drone, FISCO deployment, swarm for the two harness demo.
 
+## Upgrades after review (19 October, late)
+
+Four changes that make the idea sharper, and one cut. The sections above still describe the delivery drone version; apply these on top.
+
+### 1. The bond is earned, not posted
+
+The inclusion story says the operator has nothing to pledge. Asking them to lock a bond contradicts it. Fix: the first fees the machine earns accrue into the bond until it reaches the minimum. Until then the machine runs on a tighter rate band and smaller jobs. The bond is returned at title transfer. The machine builds its own collateral from work. Nobody in the field has this.
+
+### 2. The persona is an agricultural drone pilot
+
+Delivery drones in Shenzhen are owned by Meituan, so a one drone delivery operator is fiction. Agricultural drone pilots are real, numerous and underbanked, and the maker is in Shenzhen.
+
+| Fact | Figure | Source |
+|---|---|---|
+| Agricultural drone pilots in China | over 200,000 in 2021, with over 120,000 drones | People's Daily, July 2022 |
+| Pay per mu sprayed | about 2.5 to 15 yuan; most field crops 3 to 5 | Sixth Tone, Foodthink, People's Daily |
+| Seasonal income | 5,000 to 8,000 yuan a month; top pilots over 300,000 a year | AgroPages, Sixth Tone |
+| Cost of a drone | about 55,000 yuan, roughly 13,750 mu of spraying to repay | Foodthink |
+
+Unit of work: a mu sprayed. Oracle: area covered computed from the GPS track in the flight log, which the drone already records, plus the farmer's confirmation. Repayment per mu, bond earned per mu, title transfer when the drone is paid off. A rural pilot who cannot get a bank loan finances the drone from the fields. The demo map becomes Guangdong farmland. Delivery drones, robot arms, robotaxis and software agents stay on the generalisation slide.
+
+Sources: https://www.sixthtone.com/news/1015406 , https://en.people.cn/n3/2022/0701/c90000-10117605.html , https://foodthink.cn/en/technology-pesticides-and-drone-pilots-the-other-side-of-the/ , https://news.agropages.com/News/NewsDetail---52787.htm
+
+Financing programmes for agricultural drones were not confirmed by a source. Check before claiming any exist.
+
+### 3. The bond protects the lender from a compromised agent
+
+A judge will ask why slashing matters if the policy engine already blocks bad actions. The policy engine belongs to the operator and the lender cannot see inside it. The bond is the lender's protection against an agent that is jailbroken, buggy or malicious, and it pays whoever proves the violation. One sentence on the security slide.
+
+### 4. The bond is a standard, not a feature
+
+A small on-chain interface that any agent wallet implements: bond balance, minimum, slash by proof, top up, worst case exposure. The lease contract only lends to wallets that implement it. This turns "our drone has a bond" into "this is how a bank lends to machines", which is the line WeBank will remember. One interface file.
+
+### The cut
+
+Drop the charging agent and the cover pool from the required build. Job, bond and lease are the whole story. Required demo: three paid spraying jobs with fees in and instalments out, the bond filling from fees, one declined unprofitable job, one faked flight log caught, one proof of violation slash, one title transfer. All with hashes.
+
 ## The app: mission control
 
 One screen, 16 by 9, dark, built for a projector.
