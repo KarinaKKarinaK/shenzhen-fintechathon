@@ -41,9 +41,9 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
         <div className="over pointer-events-none absolute -right-24 top-24 hidden opacity-20 lg:block" style={{ transform: "rotate(-8deg)" }}><Seal size={520} /></div>
         <div className="over mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 md:px-8 md:pb-20">
           <div className="flex items-center gap-5">
-            <Seal size={96} />
+            <Seal size={72} />
             <div>
-              <div lang="zh-Hans" className="cjk-serif text-[40px] leading-none">自食其力</div>
+              <div lang="zh-Hans" className="cjk-serif whitespace-nowrap text-[30px] leading-none md:text-[40px]">自食其力</div>
               <div className="mt-2 text-[15px] text-white/85">{L.tagline}</div>
             </div>
           </div>
