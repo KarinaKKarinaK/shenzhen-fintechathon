@@ -206,6 +206,80 @@ Inclusion angle. Gig workers with no sick pay and no savings. The strongest incl
 
 Build risk. Medium. Underwriting needs a licence, so frame the agent as the claims engine for a licensed insurer's product or a platform's hardship fund, and say so in the self-assessment. Reuses the delivery rider research from the Hong Kong hackathon (check IP with that team).
 
+## 15. Bonded Agent: the agent has skin in the game (Topic F)
+
+The pitch. Every entry in the field has an agent acting for a human. In none of them does the agent itself carry liability. Here the agent posts a bond on chain before it may act. Every policy breach, every disputed transaction and every failed attack test slashes the bond. The agent buys liability cover for the rest from an insurer agent, priced on its track record. An agent with no bond cannot transact with anyone. This is the literal reading of the theme: the AI is a participant with assets, obligations and a history, not a tool.
+
+Why Shenzhen. WeBank will need an accountability model for agent customers within two years. Building it in front of them is the point.
+
+Demo moment. The agent breaks a cap on purpose. The contract slashes it live. Its insurance premium ticks up. A counterparty agent refuses to trade with it until it tops up the bond.
+
+Security story. The bond is a second enforcement layer on top of caps and allowlists: breaking policy costs the agent money, so the incentives of the agent and the user line up. Disputes resolve by rule in the contract.
+
+Inclusion angle. Indirect. It makes it safe to let cheap agents act for people who cannot supervise them.
+
+Build risk. Medium. One staking and slashing contract, a reputation score, the policy engine from SECURITY.md. Reads as abstract unless the demo is sharp. Best paired with idea 16 as its first customer.
+
+## 16. Sky Cover: a drone buys its own insurance for each flight (Topic D, on-chain settlement)
+
+The pitch. Shenzhen's flagship industrial policy is the low altitude economy. Drone insurance exists today but is annual and manual. Here the drone's agent prices each flight live with the insurer's agent: route, weather, payload, pilot history. The premium is paid per flight. A crash is settled from flight telemetry, not a claim form. Two agents negotiate, one machine pays, one oracle settles.
+
+Why Shenzhen. Commercial drone delivery runs in the city. Ping An is headquartered in Shenzhen and, with PICC, already sells low altitude cover (verify the product names before they go on a slide).
+
+Demo moment. Three drones plan routes over a Shenzhen map. Premiums move as a weather cell crosses a route. One drone crashes. Telemetry triggers the payout in seconds, hash on screen.
+
+Security story. The telemetry oracle is signed and the insurer agent cannot pay without it. Per flight and per day caps on the drone wallet. Attack tests: fake telemetry, a spoofed weather feed, a drone that tries to insure a flight after it crashed.
+
+Inclusion angle. Weak on its own. Strong as a story about Shenzhen industry.
+
+Build risk. Medium. Nobody in the field has a machine as the customer. Reads as science fiction unless slide one shows that drone insurance already exists and is slow.
+
+## 17. Honeypot Guardian: the wallet that fights back (Topic A or F)
+
+The pitch. Guardian wallets block scams. This one wastes the scammer. When the agent detects a scam call or message it takes over the conversation as the victim, keeps the scammer talking, extracts the mule account number and the script, and reports both to a shared blocklist that other wallets check before every transfer. O2 in the UK launched an AI grandmother for this in 2024, but nobody has wired it to the payment rail.
+
+Why Shenzhen. Telecom fraud is a national priority and Shenzhen's anti fraud centre is one of the most active in China. Most residents send money home and are targeted for it.
+
+Demo moment. A scam call in Mandarin. The agent plays along. The mule account appears on screen and is blocked for every wallet in the room.
+
+Security story. The scammer's channel is untrusted by definition, so injection defense is the product. The blocklist is append only and signed. The user's funds never move during the honeypot session.
+
+Inclusion angle. Strong. Protects the people scammers target most.
+
+Build risk. Low to medium. Two LLMs in a role play are easy. Deception and recording need a consent story, and a bank panel may find it edgy. Highest innovation score of anything in the field.
+
+## 18. Prepaid Guard: programmable money for prepaid consumption (Topic F)
+
+The pitch. Gyms, tutoring centres and salons in China take prepaid cards and disappear. It is one of the most common consumer complaints nationally. Shenzhen already pilots e-CNY smart contracts that hold prepaid funds and release them per session. Here the agent negotiates the membership, locks the money, releases per verified visit, watches the business registry, and refunds the rest automatically when the merchant deregisters.
+
+Why Shenzhen. It mirrors a live Shenzhen government pilot. Judges will know it.
+
+Demo moment. Sign up, lock 3,000 CNY, three check ins release three payments, the merchant vanishes, the rest comes back the same minute.
+
+Security story. Escrow with release conditions in the contract. The merchant cannot pull funds early. Attack tests: fake check ins, a merchant message asking for early release, a forged deregistration.
+
+Inclusion angle. Every household.
+
+Build risk. Low. The mechanism is escrow, which the field already has, so the innovation score rests on the scenario.
+
+## 19. Last Wallet: inheritance for digital money (Topic F or A)
+
+The pitch. Migrant workers in Shenzhen die far from home with money in Alipay, WeChat and bank accounts their families cannot reach for months. The agent is a dead man's switch with social recovery: it watches activity, asks for proof of life, and on confirmed death executes a pre signed distribution to verified heirs, with the documents prepared for the parts the law requires.
+
+Why Shenzhen. A city of migrants. Nobody in the field touches death.
+
+Demo moment. Quiet. Activity stops, the proof of life requests go unanswered, two guardians confirm, the distribution executes, the heir in another province sees the funds and the document pack.
+
+Security story. Social recovery with a threshold of guardians. Time locks on every step. Attack tests: a guardian trying to trigger early, a fake death certificate, collusion below threshold.
+
+Inclusion angle. Strong and moving.
+
+Build risk. Medium. Sensitive, and verification of death is hard to make real in 36 hours.
+
+## If we swing for Best Innovation
+
+Build Bonded Agent with Sky Cover as its first customer: a drone agent that must post a bond and buy per flight cover before it may fly. Two agents, one chain, real hashes, an insurer, a machine, and a liability model nobody else has. If we want a top three finish, build Hidden Coverage.
+
 ## What every idea shares
 
 See SECURITY.md. Permission tiers in code. The model never holds a key. A live injection attack blocked on camera. Numbers from tools. Twenty attack tests in the repo.
