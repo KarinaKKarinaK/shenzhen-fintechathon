@@ -50,7 +50,7 @@ export default function Home() {
         <Link href="/app" className="btn btn-ink">Open mission control</Link>
       </header>
 
-      <section className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-6 pb-16 pt-6 lg:grid-cols-[1fr_1.15fr] lg:items-center">
+      <section className="grain grain-light"><div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-6 pb-16 pt-6 lg:grid-cols-[1fr_1.15fr] lg:items-center">
         <div>
           <p className="text-sm text-ink-2">Shenzhen FinTechathon 2026, International Track, Topic F</p>
           <h1 className="serif mt-3 text-5xl leading-[1.02] md:text-7xl">A wallet for machines that earn, pay and post a bond.</h1>
@@ -70,7 +70,7 @@ export default function Home() {
           <div className="absolute inset-0"><Hero3D /></div>
           <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-night/70 px-3 py-2 text-xs text-[#cfe3df] backdrop-blur">Drag to look around. Dots are money moving between the machine, the lender and the bond.</div>
         </div>
-      </section>
+      </div></section>
 
       <section id="uses" className="border-t border-line bg-paper-2/60 py-16">
         <div className="mx-auto max-w-[1400px] px-6">
@@ -131,7 +131,7 @@ export default function Home() {
           </ul>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/app" className="btn btn-teal">Open mission control</Link>
-            <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" className="btn btn-ghost border-white/20 text-paper hover:bg-white/5" target="_blank" rel="noreferrer">Read the design and the research</a>
+            <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" className="btn btn-ghost-light" target="_blank" rel="noreferrer">Read the design and the research</a>
           </div>
         </div>
       </section>

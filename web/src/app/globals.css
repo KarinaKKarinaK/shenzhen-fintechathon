@@ -62,6 +62,15 @@ body { color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoo
 .btn-teal:hover { background: var(--color-teal-deep); }
 .btn-ghost { border: 1px solid var(--color-line); color: var(--color-ink); background: transparent; }
 .btn-ghost:hover { background: rgba(20, 48, 45, 0.05); }
+.btn-ghost-light { border: 1px solid rgba(255,255,255,0.25); color: var(--color-paper); background: transparent; }
+.btn-ghost-light:hover { background: rgba(255,255,255,0.06); }
+.grain-light::before {
+  background:
+    radial-gradient(45% 50% at 85% 15%, rgba(99, 220, 210, 0.55), rgba(17, 158, 155, 0.18) 45%, transparent 70%),
+    radial-gradient(35% 35% at 10% 90%, rgba(17, 158, 155, 0.25), transparent 70%);
+  filter: blur(26px);
+}
+.grain-light::after { opacity: 0.22; }
 :focus-visible { outline: 2px solid var(--color-teal); outline-offset: 2px; }
 
 @keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
