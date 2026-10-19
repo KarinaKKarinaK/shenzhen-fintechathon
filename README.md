@@ -15,7 +15,7 @@ Entry to the 2026 Shenzhen International FinTech Competition, International Trac
 | | |
 |---|---|
 | Contracts on Base Sepolia | 4, source verified, exact match ([addresses](#contracts-on-base-sepolia)) |
-| Foundry tests | 40 passing |
+| Foundry tests | 43 passing, three of them fuzzed over amounts, nonces and payees |
 | Policy rules, checked on every signed intent | 21 lines, 4 trust tiers |
 | Attack set at request time | 52 of 52 blocked, 7 of 7 benign messages pass, naive wallet falls to 51 of 52 |
 | Learned and optimising components | 10, each with a fixed seed and a held out set |
@@ -177,7 +177,7 @@ Two bonds, two fault lines. The vendor bond pays for agent rules (allowlist, cap
 
 ## Contracts on Base Sepolia
 
-Deployed from the demo wallet, source verified on Sourcify with an exact match, 40 Foundry tests behind them. Addresses are also in `contracts/deployments/base-sepolia.json`; the deploy script is `contracts/script/Deploy.s.sol`.
+Deployed from the demo wallet, source verified on Sourcify with an exact match, 43 Foundry tests behind them. Addresses are also in `contracts/deployments/base-sepolia.json`; the deploy script is `contracts/script/Deploy.s.sol`.
 
 | Contract | Address | Gas | What it holds |
 |---|---|---|---|
@@ -186,7 +186,7 @@ Deployed from the demo wallet, source verified on Sourcify with an exact match, 
 | Lease | [0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2](https://sepolia.basescan.org/address/0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2) | 800,050 | Hire purchase balance, instalment per released fee, freeze, title at zero |
 | JobBoard | [0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A](https://sepolia.basescan.org/address/0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A) | 1,517,852 | Fee locks on post, start needs cover, release on the verifier's confirmation, split by rule, 24 hour hold |
 
-Deployed in block 48,335,911 for 4.49 M gas in total. In real mode every engine event is also anchored on the same chain as a transaction carrying the event as calldata, for example [0x0589e27f…](https://sepolia.basescan.org/tx/0x0589e27f025b6e1e484b8db0c181534609815f7467aaa3d1260148d59a4b6a1b) and [0x00b83ba2…](https://sepolia.basescan.org/tx/0x00b83ba2c4ed4b125876e9f78c8592b5c788343e32aa32281f0a5f47976b4acb) from a production run. The engine mirrors the four contracts in TypeScript with the same rules and numbers, so the demo also runs with no chain and labels every hash as simulated. ABI calls from the engine against these addresses are the next step.
+Deployed in block 48,335,911 for 4.49 M gas in total. In real mode the engine calls the deployed IntentLog for every intent it signs (`IntentLog.commit(jobId, intentHash)`, before the policy engine decides, blocked intents included), and anchors every money event on the same chain as a transaction carrying the event as calldata, for example [0x0589e27f…](https://sepolia.basescan.org/tx/0x0589e27f025b6e1e484b8db0c181534609815f7467aaa3d1260148d59a4b6a1b). The engine mirrors the four contracts in TypeScript with the same rules and numbers, so the demo also runs with no chain and labels every hash as simulated. Bond, JobBoard and Lease calls from the engine are the next step; today their rules run in the mirrors.
 
 ## The five moments of the live demo
 
@@ -258,7 +258,7 @@ flowchart LR
 
 ## Streams and endpoints
 
-Every route is dynamic and rate limited to 10 requests per minute and one open stream per IP. Streams are `text/event-stream`, one `EngineEvent` per line.
+Every route is dynamic. A best effort limiter of 10 requests per minute and one open stream per IP runs in each server instance; the funded key is guarded by the demo token, not by the limiter. Streams are `text/event-stream`, one `EngineEvent` per line.
 
 | Route | Input | Output |
 |---|---|---|
@@ -276,7 +276,7 @@ Every route is dynamic and rate limited to 10 requests per minute and one open s
 
 | Layer | Status |
 |---|---|
-| Contracts | Deployed and source verified on Base Sepolia, 40 Foundry tests. Engine calls the TypeScript mirrors; ABI calls are next |
+| Contracts | Deployed and source verified on Base Sepolia, 43 Foundry tests. In real mode the engine calls IntentLog; Bond, JobBoard and Lease rules run in the TypeScript mirrors, their calls are next |
 | Signatures | Real EIP-712 typed intents, domain `Zishi` v1 chain 84532, one secp256k1 key per actor, nonce and replay checks, same digest as `Bond.digestOf` |
 | Chain | Simulated and labelled by default. With the demo token, every event is anchored on Base Sepolia with an explorer link; a public link can never spend the key |
 | Model | Scripted explanations by default. An AI gateway key lets the model write the explanations and read the farmer's message into a schema; decisions stay in code |
@@ -313,7 +313,7 @@ pnpm charts       # redraws docs/charts from the engine
 pnpm evidence     # writes a full run and the attack results to evidence/
 pnpm verify       # checks every hash in evidence/ against the chain or the labelled set
 cd ../contracts
-forge test        # 40 tests, forge-std vendored in contracts/lib
+forge test        # 43 tests including three fuzz tests, forge-std vendored in contracts/lib
 forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --private-key $SURETY_PRIVATE_KEY --broadcast
 ```
 
@@ -342,7 +342,7 @@ web/                   Next.js app: engine, API routes, UI, i18n (map in web/REA
   src/i18n/            en.ts, zh.ts, LangProvider
   scripts/             evidence.ts, verify.ts, bench.ts
   evidence/            committed runs
-contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 40 tests, Deploy script, deployments/
+contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 43 tests, Deploy script, deployments/
 docs/screenshots/      the images above
 docs/research/         ideas, field review, competition scan, judge simulation, plan, design fixes, deck text
 .github/workflows/     ci.yml: lint, type check, self check, build, forge test

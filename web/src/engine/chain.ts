@@ -15,6 +15,9 @@ export type TxExtra = Partial<Pick<ChainTx, "rule" | "bond">>;
 export interface Chain {
   readonly simulated: boolean;
   send(kind: ChainTx["kind"], label: string, from: string, to: string, amount: number, extra?: TxExtra): Promise<ChainTx>;
+  // Commit an intent hash to the IntentLog contract. Only the real chain has one; the simulated
+  // chain's log lives in the engine mirror, so the method is absent there.
+  commit?(jobId: string, intentHash: string, label: string): Promise<ChainTx>;
   confirm(tx: ChainTx): Promise<ChainTx>;
   finalise(tx: ChainTx): Promise<ChainTx>;
 }
@@ -44,6 +47,10 @@ export class SimChain implements Chain {
 // hash as soon as the node accepts it. The label says "anchor" because the demo units are
 // not moved on chain, the record of the event is. Contract calls through the ABI are the
 // next step once the contracts in /contracts are deployed and their addresses are in the env.
+// The IntentLog deployed on Base Sepolia (contracts/deployments/base-sepolia.json).
+export const INTENT_LOG = (process.env.ZISHI_INTENT_LOG || "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51") as `0x${string}`;
+const INTENT_LOG_ABI = [{ type: "function", name: "commit", stateMutability: "nonpayable", inputs: [{ name: "jobId", type: "bytes32" }, { name: "intentHash", type: "bytes32" }], outputs: [] }] as const;
+
 export class RealChain implements Chain {
   readonly simulated = false;
   private ready = false;
@@ -79,6 +86,25 @@ export class RealChain implements Chain {
       explorer: `https://sepolia.basescan.org/tx/${hash}`,
       ...extra,
     };
+  }
+  // IntentLog.commit(jobId, intentHash) as a real contract call. The job id is hashed to
+  // bytes32 the same way the contracts tests do for string ids. A hash the log already holds
+  // (the same intent from an earlier run on this key) reverts on chain, so that case falls
+  // back to a calldata anchor and says so in the label.
+  async commit(jobId: string, intentHash: string, label: string): Promise<ChainTx> {
+    await this.init();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = this.client as any;
+    const base = { kind: "log" as const, amount: 0, currency: CURRENCY, from: c.account.address as string, to: INTENT_LOG as string, block: 0, simulated: false, status: "pending" as const };
+    try {
+      const hash: `0x${string}` = await c.writeContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args: [keccak256(toHex(jobId)), intentHash as `0x${string}`] });
+      return { ...base, hash, label: `IntentLog.commit: ${label}`, sentAt: Date.now(), explorer: `https://sepolia.basescan.org/tx/${hash}` };
+    } catch (e) {
+      const msg = (e as Error).message ?? "";
+      const why = msg.includes("already committed") ? "already in the log" : "commit refused";
+      const anchored = await this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0);
+      return anchored;
+    }
   }
   async confirm(tx: ChainTx): Promise<ChainTx> {
     if (tx.status !== "pending") return tx;

@@ -87,7 +87,7 @@ flowchart LR
 | Ratchet | `ratchet.ts` | Hill climbing over the acceptance strategy against a frozen week |
 | Keys | `keys.ts` | One secp256k1 key per actor, generated at boot. EIP-712 domain `Zishi` v1, chain 84532 |
 | Chain | `chain.ts` | `SimChain` or `RealChain` behind one `Chain` interface |
-| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 40 tests |
+| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 43 tests, deployed on Base Sepolia |
 
 ## 3. Data model
 
@@ -317,7 +317,7 @@ With `AI_GATEWAY_API_KEY` or `ANTHROPIC_API_KEY` the model writes explanations a
 
 ## 7. Contracts
 
-Solidity 0.8.26, Foundry, 40 tests in `contracts/test`. Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
+Solidity 0.8.26, Foundry, 43 tests in `contracts/test`, three of them fuzz tests over the slash path (amount inside the cap never slashes, any amount over the cap slashes exactly the penalty, any payee off the allowlist slashes). Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
 
 Deployed on Base Sepolia (chain 84532) in block 48,335,911 from the demo wallet, source verified on Sourcify with an exact match. Addresses and deploy transactions are in `contracts/deployments/base-sepolia.json`; the script is `contracts/script/Deploy.s.sol`.
 
@@ -406,7 +406,7 @@ Revert order: `unknown agent`, `proof already used`, `not the agent's signature`
 | Simulated | Default | `SimChain`: keccak hash of the event, `simulated: true` on every tx, labelled in the UI |
 | Real | `SURETY_PRIVATE_KEY` set, wallet funded, and the request carries `x-zishi-demo: <DEMO_TOKEN>` | `RealChain`: a self transfer on Base Sepolia with the event JSON as calldata, label `anchor: ...`, explorer link, confirmed at one receipt, finalised at two more blocks |
 
-The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). The four contracts are deployed on Base Sepolia (section 7). Today the engine anchors events as transactions and runs the rules in its mirrors; ABI calls against the deployed addresses are the next step.
+The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the browser, and is sent as a header on every run (`components/demoToken.ts`). Without it the funded key is never used, so a public link cannot drain it. `/api/metrics` reports `chain: "real"` only when the wallet holds testnet ETH (`realChainFunded`, checked at most once a minute). The four contracts are deployed on Base Sepolia (section 7). In real mode every signed intent is committed to the deployed IntentLog by a contract call (`RealChain.commit`, emitted as a `chain` event of kind `log` with the explorer link); a hash the log already holds falls back to a calldata anchor and says so. Money events are anchored as calldata, and the Bond, JobBoard and Lease rules run in the mirrors; their calls are the next step.
 
 ## 9. Bring your own data
 
@@ -462,13 +462,13 @@ Samples are listed by `GET /api/samples` and appear in the page's dropdown.
 |---|---|
 | Jobs, flights, messages | 50 each per run |
 | Message text | 64 KiB, the gate's limit |
-| Rate | 10 requests per minute per IP, one open stream per IP |
+| Rate | Best effort, per server instance: 10 requests per minute per IP, one open stream per IP |
 | Chain | Simulated unless the request carries the demo token |
 | Storage | None. Rows live for the request. Message text reaches a model only when a model key is set |
 
 ## 10. API reference
 
-All routes are dynamic. Limits: 10 requests per minute per IP, one concurrent run per IP (`ratelimit.ts`), `429 { error: "too many requests" }` when exceeded.
+All routes are dynamic. Limits: 10 requests per minute per IP and one concurrent run per IP (`ratelimit.ts`), `429 { error: "too many requests" }` when exceeded. The counters live in the memory of one server instance, so on a serverless host they are best effort; the funded key is guarded by the demo token, not by this limiter. `/api/metrics` is served from the CDN for a minute.
 
 | Method, path | Params | Response |
 |---|---|---|
@@ -528,7 +528,7 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 | `npx tsc --noEmit` | `web` | Types, including both dictionaries |
 | `pnpm test` | `web` | The engine self check (section 11), including every learned metric assertion |
 | `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
-| `forge test` | `contracts` | 40 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (24), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
+| `forge test` | `contracts` | 43 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (27, three fuzzed), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 
 CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the Foundry tests on every push and pull request.
@@ -543,14 +543,14 @@ CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the
 | Policy engine | Code, not prompts. Rules are data. The model never sees it |
 | Operator key | Only `set_cap` and `top_up`, only from the button, tier L3 |
 | Real chain | Only with the demo token and a funded key |
-| Public routes | Rate limited per IP, body limits, no storage |
+| Public routes | Best effort rate limit per instance, body limits, no storage; the demo token guards the funded key |
 | Secrets | `.env*` ignored by git; `.env.example` has no values |
 
 ### What is simulated
 
 | Layer | Status |
 |---|---|
-| Contracts | Tested with Foundry, deployed and source verified on Base Sepolia. The engine runs its mirrors; ABI calls are next |
+| Contracts | Tested with Foundry, deployed and source verified on Base Sepolia. In real mode the engine calls IntentLog; Bond, JobBoard and Lease run in the mirrors |
 | Chain | Simulated by default. Real mode anchors event records on Base Sepolia; it does not call the contracts |
 | Keys | Generated per boot for seven actors. Production: secure element, hardware button, HSMs |
 | Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |

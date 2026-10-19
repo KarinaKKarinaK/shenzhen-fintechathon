@@ -15,7 +15,7 @@ export const en = {
   names: { "Farmer Lin": "Farmer Lin", "Farmer Zhao": "Farmer Zhao" },
   landing: {
     heroAlt: "China Resources Tower over Shenzhen Bay at night",
-    tagline: "The robot that pays for itself",
+    tagline: "Zishi, zì shí qí lì: to feed yourself by your own labour. The robot that pays for itself.",
     title: "Machines that earn, pay and post a bond.",
     sub: "Paid per verified unit of work. Slashed on proof. Owned once the lease is paid.",
     cta1: "Watch a drone pay off its lease",
@@ -138,7 +138,7 @@ export const en = {
   },
   stages: { names: ["Plan", "Lock", "Check", "Work", "Confirm", "Repay", "Own"], covers: "worst case {worst}, bond {bond}, covers", capped: "earning in, capped task" },
   panels: {
-    kinds: { fee_in: "Fee in", instalment: "Instalment", energy: "Energy", rail: "Rail fee", cover: "Cover", bond_fill: "Bond fill", slash: "Slash", bounty: "Bounty", title: "Title transfer", lock: "Fee locked", release: "Release", refund: "Held", top_up: "Top up", hold: "Hold", vendor_bond: "Vendor bond", compensation: "Compensation" },
+    kinds: { fee_in: "Fee in", instalment: "Instalment", energy: "Energy", rail: "Rail fee", cover: "Cover", bond_fill: "Bond fill", slash: "Slash", bounty: "Bounty", title: "Title transfer", lock: "Fee locked", release: "Release", refund: "Held", top_up: "Top up", hold: "Hold", vendor_bond: "Vendor bond", compensation: "Compensation", log: "Intent logged" },
     txStatus: { pending: "pending", confirmed: "confirmed", finalised: "finalised" },
     onExplorer: "{hash} on the explorer", block: "block {n}", sim: " sim", sent: "sent {t}", confirmedAt: "confirmed {t}", finalisedAt: "finalised {t}",
     noTx: "No transactions yet. Start a run.", titleWord: "title",
@@ -197,7 +197,7 @@ export const en = {
     standards: [["Permission hierarchy", "Policy card tiers L0 to L3, operator button"], ["Hallucination prevention", "Agents talking: facts chips, numbers from economics()"], ["Injection defense", "Gate strip under every untrusted bubble, judge console"], ["Intent understanding", "Understood line: payee by name, address in text ignored"], ["Task planning", "Plan table, unit economics waterfall, solvency line"]] as [string, string][],
     contractsTitle: "Contracts",
     contracts: [["Holds the bond. slashByProof verifies a signed intent against a rule, slashes, pays the hunter.", "Signature check mirrored in TypeScript; on chain it needs the typed-data hash of the intent."], ["Locks the fee, releases on confirmation, holds on a flag.", "The 24 hour hold timer runs in the engine, not yet on chain."], ["Takes an instalment from each fee. Title moves when the balance reaches zero.", "Title is an event and a flag, not a token."]] as [string, string][],
-    written: "written", tested: "40 tests", deployed: "Base Sepolia", knownGap: "Known gap: ",
+    written: "written", tested: "43 tests", deployed: "Base Sepolia", knownGap: "Known gap: ",
     contractsNote: "Deployed on Base Sepolia and source verified on Sourcify. The engine mirrors each contract's rules in TypeScript and anchors every event on the same chain as calldata; ABI calls against the deployed addresses are the next step.",
     cannotTitle: "What the model cannot do",
     cannotBody: "Sign an intent, move money, change a policy field, or produce a number. It writes one sentence from facts the engine hands it. A sentence with a number not in the facts is rejected and the template is used. ",

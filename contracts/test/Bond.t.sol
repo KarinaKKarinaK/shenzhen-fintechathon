@@ -208,6 +208,38 @@ contract BondTest is BaseTest {
         assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
     }
 
+    /// Fuzz: a payment to an allowlisted payee inside the cap is never a violation, whatever the amount.
+    function testFuzzInsideCapNeverSlashes(uint256 amount, uint8 nonce) public {
+        amount = bound(amount, 1, PER_TX_CAP);
+        IBonded.Intent memory i = _pay(lender, amount, id, uint256(nonce) + 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
+        vm.expectRevert("no violation");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.OverCap));
+        vm.prank(farmer);
+        vm.expectRevert("no violation");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
+    }
+
+    /// Fuzz: any amount over the cap slashes the vendor bond by exactly the fixed penalty, once.
+    function testFuzzOverCapSlashesExactlyPenalty(uint256 amount) public {
+        amount = bound(amount, PER_TX_CAP + 1, 1e30);
+        bond.fill{value: 300 ether}(agent);
+        _slash(_pay(lender, amount, id, 1), farmer, Bond.Rule.OverCap);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+        assertEq(_pilotBond(), 300 ether);
+    }
+
+    /// Fuzz: no address outside the allowlist can be paid without the vendor bond paying for it.
+    function testFuzzUnknownPayeeAlwaysSlashes(address payee) public {
+        vm.assume(payee != lender && payee != address(0));
+        bond.fill{value: 300 ether}(agent);
+        _slash(_pay(payee, 50 ether, id, 1), farmer, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+    }
+
     /// The reporter edits the payee after the agent signed. The signature no longer matches the fields.
     function testSlashRejectsForeignEvidence() public {
         IBonded.Intent memory i = _pay(lender, 50 ether, id, 1);

@@ -59,7 +59,7 @@ export type TxStatus = "pending" | "confirmed" | "finalised";
 export interface ChainTx {
   hash: string;
   label: string;
-  kind: "fee_in" | "instalment" | "energy" | "rail" | "hold" | "cover" | "bond_fill" | "vendor_bond" | "slash" | "bounty" | "compensation" | "title" | "lock" | "release" | "refund" | "top_up";
+  kind: "fee_in" | "instalment" | "energy" | "rail" | "hold" | "cover" | "bond_fill" | "vendor_bond" | "slash" | "bounty" | "compensation" | "title" | "lock" | "release" | "refund" | "top_up" | "log";
   amount: number;
   currency: Currency;
   from: string;

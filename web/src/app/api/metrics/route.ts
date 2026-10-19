@@ -28,6 +28,8 @@ function creditMetrics() {
 
 export async function GET() {
   const r = cached(60);
+  // Every value is fixed by seed except chain, model and the live drift state, which move slowly,
+  // so the CDN may hold a copy for a minute and serve it while a fresh one is computed.
   return Response.json({
     gate,
     plausibility,
@@ -41,5 +43,5 @@ export async function GET() {
     model: hasKey() ? "real" : "scripted",
     computedAt: new Date().toISOString(),
     note: "held out: every metric is measured on data split off by a fixed seed before training, never on the training rows; drift state is live, its evalDelay is from seeded synthetic scores",
-  });
+  }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
 }

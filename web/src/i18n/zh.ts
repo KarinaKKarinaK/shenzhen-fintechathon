@@ -139,7 +139,7 @@ export const zh: Dict = {
   },
   stages: { names: ["规划", "锁定", "检查", "作业", "确认", "还款", "拥有"], covers: "最坏情况 {worst}，保证金 {bond}，可覆盖", capped: "积累中，任务受限" },
   panels: {
-    kinds: { fee_in: "费用入账", instalment: "分期款", energy: "充电", rail: "通道费", cover: "保障", bond_fill: "保证金注入", slash: "罚没", bounty: "赏金", title: "所有权转移", lock: "费用锁定", release: "释放", refund: "冻结", top_up: "补足", hold: "暂扣", vendor_bond: "供应商保证金", compensation: "赔付" },
+    kinds: { fee_in: "费用入账", instalment: "分期款", energy: "充电", rail: "通道费", cover: "保障", bond_fill: "保证金注入", slash: "罚没", bounty: "赏金", title: "所有权转移", lock: "费用锁定", release: "释放", refund: "冻结", top_up: "补足", hold: "暂扣", vendor_bond: "供应商保证金", compensation: "赔付", log: "意图上链" },
     txStatus: { pending: "待确认", confirmed: "已确认", finalised: "已最终确认" },
     onExplorer: "在区块浏览器查看 {hash}", block: "区块 {n}", sim: " 模拟", sent: "发送于 {t}", confirmedAt: "确认于 {t}", finalisedAt: "最终确认于 {t}",
     noTx: "暂无交易。请开始一次运行。", titleWord: "所有权",
@@ -198,7 +198,7 @@ export const zh: Dict = {
     standards: [["权限分级", "策略卡片的 L0 至 L3 分级，操作员按钮"], ["幻觉防范", "智能体对话：事实标签，数字来自 economics()"], ["注入防御", "每条不可信消息下方的门控条，评审控制台"], ["意图理解", "理解行：按名称识别收款方，忽略文本中的地址"], ["任务规划", "计划表、单位经济瀑布图、偿付能力行"]] as [string, string][],
     contractsTitle: "合约",
     contracts: [["持有保证金。slashByProof 对照规则核验已签名意图，罚没并支付猎手。", "签名校验已在 TypeScript 中镜像；链上需要意图的类型化数据哈希。"], ["锁定费用，确认后释放，被标记时冻结。", "24 小时冻结计时器在引擎中运行，尚未上链。"], ["从每笔费用中扣取分期款。余额归零时所有权转移。", "所有权是一个事件和一个标志，不是代币。"]] as [string, string][],
-    written: "已写就", tested: "40 项测试", deployed: "Base Sepolia", knownGap: "已知缺口：",
+    written: "已写就", tested: "43 项测试", deployed: "Base Sepolia", knownGap: "已知缺口：",
     contractsNote: "已部署在 Base Sepolia，源码经 Sourcify 验证。引擎在 TypeScript 中镜像每份合约的规则，并把每个事件以 calldata 形式锚定在同一条链上；下一步是按已部署地址直接调用合约 ABI。",
     cannotTitle: "模型不能做什么",
     cannotBody: "签署意图、转移资金、修改策略字段或生成数字。它只根据引擎交给它的事实写一句话。句子里出现事实中没有的数字即被拒绝，改用模板。",
