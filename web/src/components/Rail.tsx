@@ -15,17 +15,23 @@ const items: { href: string; label: TKey }[] = [
   { href: "/app/evidence", label: "rail.evidence" },
 ];
 
-// Top bar with written links. Over the landing photo it starts transparent and turns solid on scroll.
+// Top bar with written links. Over the landing photo it is transparent and turns solid once the photo has scrolled past.
 export function Rail() {
   const path = usePathname();
   const { t } = useLang();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 40);
+    // Stay transparent while the landing photo is still under the bar; go solid once it has scrolled past.
+    const on = () => {
+      const hero = document.querySelector<HTMLElement>(".landing-root > .duotone");
+      // 64 is the bar's height, 110 the fade at the bottom of the photo (globals.css .hero-fade).
+      setScrolled(window.scrollY > (hero ? hero.offsetHeight - 64 - 110 : 40));
+    };
     const raf = requestAnimationFrame(on);
     window.addEventListener("scroll", on, { passive: true });
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", on); };
-  }, []);
+    window.addEventListener("resize", on);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", on); window.removeEventListener("resize", on); };
+  }, [path]);
   const overPhoto = path === "/" && !scrolled;
   return (
     <header className={`navbar fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${overPhoto ? "over-photo bg-transparent text-white" : "border-b border-rule bg-surface text-ink"}`}>
