@@ -186,7 +186,7 @@ export function useRun(scenario: Side, lang: Lang = "en") {
 
   // Opens any SSE endpoint that speaks engine events and feeds it into the reducer. A response
   // that is not a stream (a 400 with schema errors, say) ends the run with its errors listed.
-  const startStream = useCallback(async (url: string, init?: RequestInit & { fast?: boolean }) => {
+  const startStream = useCallback(async (url: string, init?: RequestInit & { fast?: boolean }, onEnd?: () => void) => {
     stop();
     dispatch({ t: "start", lang, fast: init?.fast ?? false });
     const ac = new AbortController();
@@ -213,7 +213,10 @@ export function useRun(scenario: Side, lang: Lang = "en") {
     } catch (e) {
       if ((e as Error).name !== "AbortError") dispatch({ t: "narration", text: translate(lang, "run.connectionLost", { msg: (e as Error).message }), at: Date.now() });
     } finally {
+      // Ended on its own (not stopped by the user): the caller may chain the next segment.
+      const natural = abort.current === ac && !ac.signal.aborted;
       if (abort.current === ac) dispatch({ t: "stop" });
+      if (natural && onEnd) onEnd();
     }
   }, [lang, stop]);
 

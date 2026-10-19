@@ -30,6 +30,12 @@ export function LiveView() {
   const L = d.live;
   const { state, startStream, stop, reset } = useRun("fleet", lang);
   const [tab, setTab] = useState<Tab>("feed");
+  // One hosting function lasts up to 290 seconds; chain segments with a rolling seed so the feed never stops.
+  const segRef = useRef(0);
+  const startFeed = (seg: number) => {
+    segRef.current = seg;
+    startStream(`/api/live?scenario=fleet&lang=${lang}&seed=${42 + seg}`, undefined, () => { if (segRef.current === seg) startFeed(seg + 1); });
+  };
   const switchTab = (next: Tab) => { if (next !== tab) { stop(); reset(); setTab(next); } };
 
   return (
@@ -50,7 +56,7 @@ export function LiveView() {
         </div>
       </header>
 
-      {tab === "feed" ? <Feed state={state} lang={lang} onStart={() => startStream(`/api/live?scenario=fleet&lang=${lang}`)} onStop={stop} /> : <YourData state={state} lang={lang} onRun={(url, init) => startStream(url, init)} onStop={stop} />}
+      {tab === "feed" ? <Feed state={state} lang={lang} onStart={() => startFeed(0)} onStop={stop} /> : <YourData state={state} lang={lang} onRun={(url, init) => startStream(url, init)} onStop={stop} />}
     </div>
   );
 }
