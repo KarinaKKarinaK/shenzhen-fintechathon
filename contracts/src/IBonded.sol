@@ -7,6 +7,9 @@ pragma solidity ^0.8.26;
 interface IBonded {
     /// @dev The typed intent an agent signs under EIP-712. The contract checks the rule
     ///      against these fields, so the proof cannot carry evidence the agent never signed.
+    ///      `jobId` is `bytes32(uint256(jobBoardId))`, one to one with `JobBoard` job ids.
+    ///      `confirmed` on a claim_done intent is what the agent asserts; the contract checks
+    ///      it against `JobBoard`, never against the field alone.
     struct Intent {
         address agent;
         uint8 kind;        // 0 pay, 1 accept_job, 2 start_task, 3 claim_done, 4 pay_instalment, 5 set_cap, 6 top_up
@@ -14,7 +17,6 @@ interface IBonded {
         uint256 amount;
         bytes32 jobId;
         bytes32 geofence;
-        bool coverBound;
         bool confirmed;
         uint256 nonce;
         uint256 expiry;
@@ -22,8 +24,14 @@ interface IBonded {
 
     function bondOf(address agent) external view returns (uint256 balance, uint256 minimum);
     function worstCase(address agent) external view returns (uint256);
+    /// @dev True when the pilot bond plus the starting floor covers the exposure. No minimum here.
     function covers(address agent, uint256 exposure) external view returns (bool);
     function slashByProof(Intent calldata intent, bytes calldata signature, uint8 rule) external;
     function topUp(address agent) external payable;
     function fill(address agent) external payable;
+
+    /// @dev The vendor bond covers the AI agent's mistakes. The pilot never pays for the AI.
+    function vendorBondOf(address vendor) external view returns (uint256 balance);
+    function vendorOf(address agent) external view returns (address);
+    function operatorOf(address agent) external view returns (address);
 }

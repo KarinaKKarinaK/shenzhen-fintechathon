@@ -12,5 +12,5 @@ export function CountUp({ value, decimals = 1 }: { value: number; decimals?: num
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <>{shown.toFixed(decimals)}</>;
+  return <>{shown.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}</>;
 }

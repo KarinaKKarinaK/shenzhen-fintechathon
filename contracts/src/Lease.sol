@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-/// @dev What the job board needs from the lease: the instalment for a fee, whether it is frozen, and a way to pay.
+/// @dev What the job board needs from the lease: the instalment for a fee, whether it is frozen,
+///      who the lender is, and a way to pay.
 interface ILease {
     function instalmentFor(uint256 id, uint256 fee) external view returns (uint256);
     function isFrozen(uint256 id) external view returns (bool);
+    function lenderOf(uint256 id) external view returns (address);
     function pay(uint256 id) external payable;
 }
 
@@ -51,6 +53,8 @@ contract Lease is ILease {
     }
 
     function isFrozen(uint256 id) external view override returns (bool) { return leases[id].frozen; }
+
+    function lenderOf(uint256 id) external view override returns (address) { return leases[id].lender; }
 
     /// @notice Called with value from the job board on every released fee.
     function pay(uint256 id) external payable override {

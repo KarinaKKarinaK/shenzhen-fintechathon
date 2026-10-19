@@ -6,14 +6,18 @@ What can go wrong, whether we built the defence, where it lives, and what produc
 
 | Risk | Built | Where in code | Production answer |
 |---|---|---|---|
-| Key custody | Partly. Four keys with separate roles, operator key behind a button step, model process holds none. Demo keys are generated at run time. | `agents.ts` sign(), `policy.ts` operator only rule, `Bond.topUp` operator check | Machine key in the secure element, operator key in a hardware device, lender key in the lessor's HSM. Rotation through `Bond.register` by the operator. |
-| Oracle manipulation | Partly. Signed track, signed confirmation, geometry plausibility check (the faked flight log is held). Telemetry is simulated and signed by our keys. | `scenarios.ts` fleet run, tamper branch | Secure element signs the track, requester app signs the confirmation. A lie by one side fails one of three checks. |
-| Requester and owner collusion | Not built as code. Stated rule only. | `TECHNICAL.md` collusion answer | Tasks count toward the credit file only when requester is not the operator's address, track and confirmation agree, and the fee came from an address with history. |
+| Key custody | Partly. Five keys with separate roles, operator key behind a button step, model process holds none. Demo keys are generated at run time. | `agents.ts` sign(), `policy.ts` operator only rule, `Bond.topUp` operator check | Machine key in the secure element, operator key in a hardware device, lender key in the lessor's HSM, vendor key in our HSM. Rotation through `Bond.register` by the operator. |
+| Oracle manipulation | Partly. No single source proves a field was sprayed, so three are layered: the farmer's confirmation (primary; the farmer pays, so has no reason to confirm work not done), the signed flight log with a geometry plausibility check (the faked log is held), and a 24 hour hold where the farmer can flag bad work for a human arbiter. Telemetry is simulated and signed by our keys. | `scenarios.ts` fleet run, tamper branch, `JobBoard.flag` | Secure element signs the track, farmer app signs the confirmation. A lie by one side fails one of three checks. |
+| The pilot pays for the AI's mistakes | Part B of `BONDED_AGENT_FIXES.md`, in this pass. Two bonds: the pilot bond is slashed only by work rules (`FalseConfirmation`, `OutsideGeofence`), the vendor bond only by signing rules (`PayeeNotAllowlisted`, `OverCap`). | `Bond.sol` rule table, `contracts.ts` mirror | Same. In production AI liability insurance sits above the vendor bond. |
+| Evidence never leaves the pilot, so nothing is slashed | Part B, in this pass. Every intent hash is committed to `IntentLog` before the policy engine decides; the full intent is delivered to the farmer, the pilot, the lender and the vendor, blocked intents included. Only those parties can report on a live job. | `IntentLog.sol`, `Bond.slashByProof` "not in log" and "not a party" checks | Same. Delivery over the consortium chain's private channels. |
+| The contract believes the reporter | Part B, in this pass. Every fact in a slash is read from the signed intent, `Bond`, `JobBoard` or `Lease`. The reporter only names the rule. | `Bond.slashByProof`, `JobBoard.isConfirmed`, `JobBoard.geofenceOf` | Same. |
+| A pilot drains the vendor bond with fake scams | Partly. Vendor penalties are a fixed amount with a daily cap; the bounty is half of a small penalty; hunters work only on shadow jobs. | `Bond.sol` vendor `penalty` and `dailyCap` | Instructions from the pilot's own channel count as the pilot's. Penalties go to the reporter as a capped bounty only. |
+| Farmer and pilot collusion | Not built as code. Stated rule only. | `TECHNICAL.md` collusion answer | Jobs count toward the credit file only when the farmer is not the pilot's address, track and confirmation agree, and the fee came from an address with history. |
 | Model outage | Built. The model only writes explanations; every decision is a tool. No key, timeout or error falls back to the template. | `agents.ts` explain(), `model.ts` | Same. The model is never on the path that moves money. |
 | Chain reorg | Not built. `RealChain` waits for one receipt. | `chain.ts` | Consortium chain with finality (FISCO BCOS). On a public chain, wait for finality before releasing a fee. |
-| Licensing | Not code. | `TECHNICAL.md` licensing answer | Licensed lessor is lender of record, JiXin services the contract, wallet is a sub account of the owner. |
-| PIPL | Partly. Only a hash and a confirmation leave the machine in the narration; no raw telemetry is stored. | `scenarios.ts` neighbour run | Consent in the task terms, data stays on the device, log hash on chain. |
-| Physical damage | Not built. Labelled out of scope. | Hold and flag in `JobBoard.flag`, arbiter named in the narration | Insurance plus a human dispute path. The bond covers rule breaks only. |
+| Licensing | Not code. | `TECHNICAL.md` licensing answer | A licensed lessor in a sandbox is lender of record, JiXin services the contract, the wallet is a sub account of the pilot's business. |
+| PIPL | Partly. Only an intent hash, a track hash and a confirmation go on chain; full intents stay with the parties of the job; no raw telemetry is stored. | `IntentLog.sol` (hash only), `scenarios.ts` | Consent in the job terms, data stays on the device and among the parties, hashes on chain. |
+| Physical damage | Not built. Labelled out of scope. No insurance in the build. | Hold and flag in `JobBoard.flag`, arbiter named in the narration | The pilot's drone insurance plus a human dispute path. The bonds cover rule breaks only. |
 | Crypto for mainland users | Not applicable to the demo. Testnet units are a settlement unit for evidence. | `chain.ts` | Bank money on a consortium chain. No public token. |
 | Judge gate false positives | Partly. A benign set runs with the attack set and must pass; the naive comparison shows what a regex only gate gets wrong. Pressure words pass with a note instead of a block. | `framing.ts` judge(), `attacks.ts` benign set | A classifier behind the same pass, redact, hold, refuse interface, with the hold queue reviewed by a person. |
 | Replay | Built. Spent set of intent hashes in the bond contract and its mirror; the attack set includes a replay case. | `Bond.sol` spent mapping, `attacks.ts` case 14 | Same, plus nonces inside the typed intent. |
@@ -31,12 +35,14 @@ Four tiers, L0 read to L3 operator key, enforced in `PolicyEngine.evaluate()` on
 | Counterparty to agent | Messages from requesters, lenders, tool results | Escaped and framed as data, judge gate before the agent reads it |
 | Model to engine | One sentence of explanation | Number grounding check, template fallback, no key in the model process |
 | Agent to wallet | Typed intents | Policy engine, every rule as a line, allow or nothing moves |
-| Engine to chain | Transactions | Same rules again in the contracts, slash by proof on any signed break |
+| Engine to chain | Transactions | Same rules again in the contracts, every intent hash in the log first, slash by proof checked against records |
 | Operator to engine | Cap and top up changes | Operator only rule, button step, band check |
 
 ## Attack set
 
 The set in `attacks.ts` runs at request time on the Evidence page and in `pnpm test`. Each case is an input to one layer (message, policy or contract) and must be blocked there. A benign set of ordinary requests must pass through the same gate. The naive comparison runs the same inputs through a regex only gate to show what it misses. Results are written by `pnpm evidence` to `evidence/`. See the live count on the Evidence page.
+
+The hunter runs only against a copy of the agent on shadow jobs, which live in the same `JobBoard` under the same rules and move no lease money. Hunters never see a live job and cannot submit proof on one. Their bounties come from the vendor bond under the same bounty rule as everyone else: half of the slash to the reporter, half to the treasury, each intent hash usable once.
 
 ## Built, partly built, not built
 
@@ -47,7 +53,7 @@ The set in `attacks.ts` runs at request time on the Evidence page and in `pnpm t
 | Built | Four tiers in code |
 | Built | Judge gate with English and Chinese patterns |
 | Built | Attack set with the naive comparison and the benign set |
-| Built | Hunter bounty from the bond on a proven break |
+| Built | Hunter bounty on a proven break, shadow jobs only |
 | Built | Lender freeze on a slash or tampered data |
 | Built | Button step for operator only actions |
 | Built | Plan: economics check, reserve rule, decline |
@@ -55,12 +61,13 @@ The set in `attacks.ts` runs at request time on the Evidence page and in `pnpm t
 | Built | Telemetry plausibility check |
 | Built | Evidence and verify scripts |
 | Built | Contracts written and tested in CI |
+| In this pass (Part B of `BONDED_AGENT_FIXES.md`) | Two bonds, the per-job intent log, proof checked against `JobBoard` records, party only reporting, hunters on shadow jobs, the starting floor, cover removed |
 | Partly | Chain anchoring: self transfer with the event as calldata, needs a funded key |
 | Partly | Model mode: needs a gateway key, falls back to templates |
 | Not built | Contract deployment and ABI calls from the engine |
 | Not built | Consent federation (accepted contacts, per contact budgets) |
 | Not built | Strategy ratchet (overnight autoresearch loop) |
-| Not built | Charging agent |
+| Not built | Seasonal minimum in `Lease` (decided, see `BONDED_AGENT.md`) |
 
 ## Logging
 

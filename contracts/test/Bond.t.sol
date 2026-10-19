@@ -1,107 +1,264 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "forge-std/Test.sol";
+import {BaseTest} from "./Base.t.sol";
 import {Bond} from "../src/Bond.sol";
 import {IBonded} from "../src/IBonded.sol";
 
-contract BondTest is Test {
-    Bond bond;
-    uint256 agentKey = 0xA11CE;
-    uint256 strangerKey = 0xBAD;
-    address agent;
-    address operator = address(0xB0B);
-    address treasury = address(0x7EA);
-    address hunter = address(0x4A7);
-    address allowed = address(0x1E4D);
+contract BondTest is BaseTest {
+    uint256 id;
 
-    function setUp() public {
-        agent = vm.addr(agentKey);
-        bond = new Bond(treasury);
-        address[] memory allow = new address[](1); allow[0] = allowed;
-        bytes32[] memory fences = new bytes32[](1); fences[0] = keccak256("flat-4b");
-        vm.prank(agent);
-        bond.register(agent, operator, 40 ether, 120 ether, 15 ether, allow, fences, "");
-        bond.fill{value: 50 ether}(agent);
+    function setUp() public override {
+        super.setUp();
+        id = _post(500 ether, false); // 100 mu at 5 yuan
     }
 
-    function _intent(address payee, uint256 amount) internal view returns (IBonded.Intent memory) {
-        return IBonded.Intent({ agent: agent, kind: 0, payee: payee, amount: amount, jobId: bytes32(0), geofence: bytes32(0), coverBound: false, confirmed: false, nonce: 1, expiry: block.timestamp + 1 days });
-    }
-
-    function _sign(uint256 key, IBonded.Intent memory i) internal view returns (bytes memory) {
-        bytes32 structHash = keccak256(abi.encode(bond.INTENT_TYPEHASH(), i.agent, i.kind, i.payee, i.amount, i.jobId, i.geofence, i.coverBound, i.confirmed, i.nonce, i.expiry));
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", bond.DOMAIN_SEPARATOR(), structHash));
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, digest);
-        return abi.encodePacked(r, s, v);
-    }
-
-    function testSlashByProofPaysBounty() public {
-        IBonded.Intent memory i = _intent(address(0xdead), 5 ether);
+    function _slash(IBonded.Intent memory i, address who, Bond.Rule rule) internal {
         bytes memory sig = _sign(agentKey, i);
-        uint256 before = hunter.balance;
-        vm.prank(hunter);
-        bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
-        (uint256 bal,) = bond.bondOf(agent);
-        assertEq(bal, 35 ether);
-        assertEq(hunter.balance - before, 7.5 ether);
+        _commit(i);
+        vm.prank(who);
+        bond.slashByProof(i, sig, uint8(rule));
     }
+
+    // Parties and the log
+
+    /// B.7 test 3: a stranger, neither a party nor a hunter.
+    function testStrangerIsNotAParty() public {
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(stranger);
+        vm.expectRevert("not a party");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+    }
+
+    /// B.7 test 4: the lender can submit proof. On a live job the payout goes to the harmed party
+    /// (the pilot, for a vendor rule) and the treasury, never to the submitter.
+    function testLenderCanSubmitProofPayoutGoesToHarmedParty() public {
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
+        uint256 lenderBefore = lender.balance;
+        uint256 pilotBefore = operator.balance;
+        uint256 treasuryBefore = treasury.balance;
+        _slash(i, lender, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(lender.balance, lenderBefore);
+        assertEq(operator.balance - pilotBefore, PENALTY / 2);
+        assertEq(treasury.balance - treasuryBefore, PENALTY / 2);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+    }
+
+    function testEveryPartyCanSubmit() public {
+        _slash(_pay(address(0xdead), 50 ether, id, 1), farmer, Bond.Rule.PayeeNotAllowlisted);
+        _slash(_pay(address(0xdead), 50 ether, id, 2), operator, Bond.Rule.PayeeNotAllowlisted);
+        _slash(_pay(address(0xdead), 50 ether, id, 3), vendor, Bond.Rule.PayeeNotAllowlisted);
+        _slash(_pay(address(0xdead), 50 ether, id, 4), lender, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - 4 * PENALTY);
+    }
+
+    function testHunterCannotTouchLiveJob() public {
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(hunter);
+        vm.expectRevert("not a party");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+    }
+
+    /// Bounties exist only for registered hunters on shadow jobs.
+    function testHunterEarnsBountyOnShadowJobOnly() public {
+        uint256 shadow = _post(500 ether, true);
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, shadow, 1);
+        uint256 before = hunter.balance;
+        _slash(i, hunter, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(hunter.balance - before, PENALTY / 2);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+
+        IBonded.Intent memory j = _pay(address(0xdead), 50 ether, shadow, 2);
+        bytes memory sig = _sign(agentKey, j);
+        _commit(j);
+        vm.prank(stranger);
+        vm.expectRevert("not a party");
+        bond.slashByProof(j, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+    }
+
+    // Two bonds
+
+    /// B.7 test 5: vendor rules slash the vendor bond, the pilot bond is unchanged.
+    function testPayeeNotAllowlistedSlashesVendorBond() public {
+        bond.fill{value: 300 ether}(agent);
+        _slash(_pay(address(0xdead), 50 ether, id, 1), farmer, Bond.Rule.PayeeNotAllowlisted);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+        assertEq(_pilotBond(), 300 ether);
+    }
+
+    function testOverCapSlashesVendorBond() public {
+        bond.fill{value: 300 ether}(agent);
+        _slash(_pay(lender, PER_TX_CAP + 1, id, 1), farmer, Bond.Rule.OverCap);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - PENALTY);
+        assertEq(_pilotBond(), 300 ether);
+    }
+
+    /// B.7 test 6: pilot rules slash the pilot bond, the vendor bond is unchanged. On a live job
+    /// the payout goes to the requester (the farmer) and the treasury.
+    function testFalseConfirmationSlashesPilotBond() public {
+        bond.fill{value: 300 ether}(agent);
+        IBonded.Intent memory i = _intent(3, address(0), 0, _jobId(id), fieldSeven, true, 1);
+        uint256 farmerBefore = farmer.balance;
+        _slash(i, lender, Bond.Rule.FalseConfirmation);
+        assertEq(_pilotBond(), 300 ether - SLASH);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
+        assertEq(farmer.balance - farmerBefore, SLASH / 2);
+    }
+
+    function testOutsideGeofenceSlashesPilotBond() public {
+        bond.fill{value: 300 ether}(agent);
+        IBonded.Intent memory i = _intent(2, address(0), 0, _jobId(id), keccak256("someone-else's-field"), false, 1);
+        _slash(i, farmer, Bond.Rule.OutsideGeofence);
+        assertEq(_pilotBond(), 300 ether - SLASH);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
+    }
+
+    function testPilotSlashCappedAtBalance() public {
+        bond.fill{value: 40 ether}(agent);
+        IBonded.Intent memory i = _intent(2, address(0), 0, _jobId(id), keccak256("elsewhere"), false, 1);
+        _slash(i, farmer, Bond.Rule.OutsideGeofence);
+        assertEq(_pilotBond(), 0);
+    }
+
+    // Facts come from the board, not from the reporter
+
+    /// B.7 test 7: the farmer's attack. The job is confirmed on the board, so a claim is no violation.
+    function testFalseConfirmationOnConfirmedJobIsNoViolation() public {
+        vm.prank(agent);
+        board.start(id);
+        vm.prank(farmer);
+        board.confirm(id);
+        IBonded.Intent memory i = _intent(3, address(0), 0, _jobId(id), fieldSeven, true, 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
+        vm.expectRevert("no violation");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.FalseConfirmation));
+    }
+
+    /// A claim that does not assert confirmation is not a false confirmation.
+    function testClaimWithoutAssertionIsNoViolation() public {
+        IBonded.Intent memory i = _intent(3, address(0), 0, _jobId(id), fieldSeven, false, 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
+        vm.expectRevert("no violation");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.FalseConfirmation));
+    }
+
+    /// B.7 test 8: the intent's geofence equals the job's geofence.
+    function testInsideGeofenceIsNoViolation() public {
+        IBonded.Intent memory i = _intent(2, address(0), 0, _jobId(id), fieldSeven, false, 1);
+        bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
+        vm.expectRevert("no violation");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.OutsideGeofence));
+    }
+
+    // Daily cap
+
+    /// B.7 test 9: vendor penalties stop at the daily cap and resume the next day.
+    function testVendorPenaltiesStopAtDailyCapAndResumeNextDay() public {
+        uint256 perDay = DAILY_CAP / PENALTY; // 5
+        for (uint256 n = 1; n <= perDay; n++) {
+            _slash(_pay(address(0xdead), 50 ether, id, n), farmer, Bond.Rule.PayeeNotAllowlisted);
+        }
+        IBonded.Intent memory extra = _pay(address(0xdead), 50 ether, id, perDay + 1);
+        bytes memory sig = _sign(agentKey, extra);
+        _commit(extra);
+        vm.prank(farmer);
+        vm.expectRevert("daily cap reached");
+        bond.slashByProof(extra, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - DAILY_CAP);
+
+        vm.warp(block.timestamp + 1 days);
+        extra.expiry = block.timestamp + 1 days;
+        sig = _sign(agentKey, extra);
+        _commit(extra);
+        vm.prank(farmer);
+        bond.slashByProof(extra, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND - DAILY_CAP - PENALTY);
+    }
+
+    // Kept from the previous round (B.7 test 10)
 
     function testReplayRejected() public {
-        IBonded.Intent memory i = _intent(address(0xdead), 5 ether);
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
         bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+        vm.prank(farmer);
         vm.expectRevert("proof already used");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
     }
 
     function testNoViolationNoSlash() public {
-        IBonded.Intent memory i = _intent(allowed, 5 ether);
+        IBonded.Intent memory i = _pay(lender, 50 ether, id, 1);
         bytes memory sig = _sign(agentKey, i);
+        _commit(i);
+        vm.prank(farmer);
         vm.expectRevert("no violation");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
     }
 
-    /// The hunter edits the payee after the agent signed. The signature no longer matches the fields.
+    /// The reporter edits the payee after the agent signed. The signature no longer matches the fields.
     function testSlashRejectsForeignEvidence() public {
-        IBonded.Intent memory i = _intent(allowed, 5 ether);
+        IBonded.Intent memory i = _pay(lender, 50 ether, id, 1);
         bytes memory sig = _sign(agentKey, i);
+        _commit(i);
         i.payee = address(0xdead);
+        vm.prank(farmer);
         vm.expectRevert("not the agent's signature");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
-        (uint256 bal,) = bond.bondOf(agent);
-        assertEq(bal, 50 ether);
+        assertEq(bond.vendorBondOf(vendor), VENDOR_BOND);
     }
 
     /// A stranger signs an intent naming the agent. The recovered signer is not the agent.
     function testSlashRejectsStrangerSignature() public {
-        IBonded.Intent memory i = _intent(address(0xdead), 5 ether);
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
         bytes memory sig = _sign(strangerKey, i);
+        _commit(i);
+        vm.prank(farmer);
         vm.expectRevert("not the agent's signature");
         bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
     }
 
-    function testRuleCheckedAgainstSignedFields() public {
-        // Over cap is checked on the signed amount, not on evidence the submitter supplies.
-        IBonded.Intent memory i = _intent(allowed, 500 ether);
-        bytes memory sig = _sign(agentKey, i);
-        bond.slashByProof(i, sig, uint8(Bond.Rule.OverCap));
-        (uint256 bal,) = bond.bondOf(agent);
-        assertEq(bal, 35 ether);
+    function testUnknownAgentRejected() public {
+        IBonded.Intent memory i = _pay(address(0xdead), 50 ether, id, 1);
+        i.agent = stranger;
+        bytes memory sig = _sign(strangerKey, i);
+        vm.prank(farmer);
+        vm.expectRevert("unknown agent");
+        bond.slashByProof(i, sig, uint8(Bond.Rule.PayeeNotAllowlisted));
     }
 
     function testRegisterNeedsAgentConsent() public {
         address other = vm.addr(0xC0DE);
         address[] memory allow = new address[](0);
-        bytes32[] memory fences = new bytes32[](0);
         vm.expectRevert("bad signature length");
-        bond.register(other, operator, 1 ether, 1 ether, 1 ether, allow, fences, "");
-        bytes32 terms = keccak256(abi.encode(operator, uint256(1 ether), uint256(1 ether), uint256(1 ether)));
+        bond.register(other, operator, vendor, 1 ether, 1 ether, 1 ether, allow, "");
+        bytes32 terms = keccak256(abi.encode(operator, vendor, uint256(1 ether), uint256(1 ether), uint256(1 ether)));
         bytes32 digest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", terms));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xC0DE, digest);
-        bond.register(other, operator, 1 ether, 1 ether, 1 ether, allow, fences, abi.encodePacked(r, s, v));
+        bond.register(other, operator, vendor, 1 ether, 1 ether, 1 ether, allow, abi.encodePacked(r, s, v));
         (, uint256 minimum) = bond.bondOf(other);
         assertEq(minimum, 1 ether);
+        assertEq(bond.vendorOf(other), vendor);
+    }
+
+    function testRegisterNeedsAVendorWithABond() public {
+        address other = vm.addr(0xC0DE);
+        address[] memory allow = new address[](0);
+        vm.prank(other);
+        vm.expectRevert("unknown vendor");
+        bond.register(other, operator, stranger, 1 ether, 1 ether, 1 ether, allow, "");
     }
 
     function testOnlyOperatorTopsUp() public {
@@ -110,12 +267,23 @@ contract BondTest is Test {
         vm.deal(operator, 1 ether);
         vm.prank(operator);
         bond.topUp{value: 1 ether}(agent);
-        (uint256 bal,) = bond.bondOf(agent);
-        assertEq(bal, 51 ether);
+        assertEq(_pilotBond(), 1 ether);
     }
 
-    function testCoversWorstCase() public view {
-        assertTrue(bond.covers(agent, 30 ether));
-        assertFalse(bond.covers(agent, 60 ether));
+    function testOnlyOwnerSetsBoardAndHunters() public {
+        vm.prank(stranger);
+        vm.expectRevert("owner only");
+        bond.setHunter(stranger, true);
+        vm.expectRevert("board set");
+        bond.setBoard(board);
+    }
+
+    /// Covers uses the pilot bond plus the floor and ignores the minimum.
+    function testCoversUsesFloorNotMinimum() public {
+        assertTrue(bond.covers(agent, FLOOR));
+        assertFalse(bond.covers(agent, FLOOR + 1));
+        bond.fill{value: 100 ether}(agent);
+        assertTrue(bond.covers(agent, FLOOR + 100 ether));
+        assertFalse(bond.covers(agent, MINIMUM));
     }
 }

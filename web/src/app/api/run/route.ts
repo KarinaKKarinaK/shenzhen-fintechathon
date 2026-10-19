@@ -10,11 +10,11 @@ export async function GET(req: Request) {
   if (!allow(ip)) return tooMany();
   if (!begin(ip)) return tooMany();
   const url = new URL(req.url);
-  const name = (url.searchParams.get("scenario") || "neighbour") as keyof typeof SCENARIOS;
+  const name = (url.searchParams.get("scenario") || "fleet") as keyof typeof SCENARIOS;
   const fast = url.searchParams.get("fast") === "1";
   // Real chain mode only for a caller holding the demo token. Everyone else gets the simulation.
   const real = demoAuthorised(req.headers);
-  const gen = SCENARIOS[name] ?? SCENARIOS.neighbour;
+  const gen = SCENARIOS[name] ?? SCENARIOS.fleet;
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {

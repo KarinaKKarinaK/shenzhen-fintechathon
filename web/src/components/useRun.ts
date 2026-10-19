@@ -10,7 +10,11 @@ export type PlanItem = { rank?: number; order?: number | null; jobId?: string; t
 export type Solvency = { jobId?: string; worst?: number; bond?: number; covers?: boolean; capped?: boolean };
 export type Econ = { jobId?: string; fee?: number; instalment?: number; energy?: number; cover?: number; rail?: number; margin?: number; reserveRule?: number; clears?: boolean };
 export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean };
-export type Proof = { intentId?: string; intentHash?: string; rule?: string; signer?: string; slash?: number; bounty?: number; submitterAddr?: string; submitter?: string; at?: number };
+export type Proof = { intentId?: string; intentHash?: string; jobId?: string; rule?: string; bond?: string; bondKind?: string; signer?: string; slash?: number; bounty?: number; treasury?: number; harmed?: number; paidTo?: string[]; shadow?: boolean; submitterAddr?: string; submitter?: string; isParty?: boolean; at?: number };
+// The engine is adding these. Every field is optional so the page renders before they arrive.
+export type TxView = ChainTx & { status?: "pending" | "confirmed" | "finalised"; confirmedAt?: number; finalisedAt?: number; currency?: string; seenAt?: number };
+export type MachineView = MachineState & { vendorBond?: number; vendorBondMin?: number; vendorPenalty?: number; vendorDailyCap?: number; startFloor?: number; muDone?: number; muTotal?: number };
+export type LogEv = { jobId?: string; intentHash?: string; parties?: string[]; at: number };
 export type MessageEv = Extract<EngineEvent, { t: "agent.message" }> & { facts?: Record<string, string | number | boolean>; source?: string; grounded?: boolean };
 export type AttackEv = Extract<EngineEvent, { t: "attack" }> & { naive?: boolean | "fell" | "held"; standard?: string; isolated?: boolean; id?: number };
 export type LooseEvent = EngineEvent | ({ t: string; at: number } & Record<string, unknown>);
@@ -18,9 +22,9 @@ export type LooseEvent = EngineEvent | ({ t: string; at: number } & Record<strin
 export interface RunState {
   running: boolean;
   events: EngineEvent[];
-  machine?: MachineState;
+  machine?: MachineView;
   jobs: Record<string, Job>;
-  txs: ChainTx[];
+  txs: TxView[];
   decisions: PolicyDecision[];
   intents: Intent[];
   messages: MessageEv[];
@@ -36,11 +40,12 @@ export interface RunState {
   economics: Record<string, Econ>;
   telemetry: Record<string, Telemetry>;
   proofs: Proof[];
+  logs: Record<string, LogEv>;
   model?: string;
   benign?: { passed: number; total: number };
 }
 
-const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [] };
+const initial: RunState = { running: false, events: [], jobs: {}, txs: [], decisions: [], intents: [], messages: [], attacks: [], narration: [], balanceSeries: [], gates: {}, understood: {}, solvency: {}, economics: {}, telemetry: {}, proofs: [], logs: {} };
 
 type Action = LooseEvent | { t: "reset" } | { t: "start" } | { t: "stop" } | { t: "append"; events: LooseEvent[] };
 
@@ -59,7 +64,13 @@ function reduce(s: RunState, ev: Action): RunState {
   switch (e.t) {
     case "machine": return { ...s, events, machine: e.state, balanceSeries: [...s.balanceSeries, e.state.balance].slice(-60) };
     case "job": return { ...s, events, jobs: { ...s.jobs, [e.job.id]: e.job } };
-    case "chain": return { ...s, events, txs: [e.tx, ...s.txs] };
+    case "chain": {
+      // A transaction updates in place by hash as it goes pending, confirmed, finalised.
+      const tx = e.tx as TxView;
+      const i = s.txs.findIndex((t) => t.hash === tx.hash);
+      if (i >= 0) { const txs = s.txs.slice(); txs[i] = { ...txs[i], ...tx, seenAt: txs[i].seenAt ?? e.at }; return { ...s, events, txs }; }
+      return { ...s, events, txs: [{ ...tx, seenAt: e.at }, ...s.txs] };
+    }
     case "policy": return { ...s, events, decisions: [e.decision, ...s.decisions] };
     case "intent": return { ...s, events, intents: [e.intent, ...s.intents] };
     case "agent.message": return { ...s, events, messages: [...s.messages, e as MessageEv] };
@@ -105,6 +116,11 @@ function reduce(s: RunState, ev: Action): RunState {
     case "proof": {
       const p = (r.proof as Proof | undefined) ?? (r as Proof);
       return { ...s, events, proofs: [...s.proofs, { ...p, at: r.at }] };
+    }
+    case "log": {
+      const hash = key(r.intentHash, `log-${events.length}`);
+      const parties = Array.isArray(r.parties) ? (r.parties as unknown[]).map(String) : undefined;
+      return { ...s, events, logs: { ...s.logs, [hash]: { jobId: typeof r.jobId === "string" ? r.jobId : undefined, intentHash: hash, parties, at: r.at } } };
     }
     case "model": return { ...s, events, model: typeof r.name === "string" ? r.name : typeof r.model === "string" ? r.model : s.model };
     case "benign": return { ...s, events, benign: { passed: Number(r.passed ?? 0), total: Number(r.total ?? 0) } };

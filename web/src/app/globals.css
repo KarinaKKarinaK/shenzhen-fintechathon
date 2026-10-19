@@ -151,3 +151,19 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 .stage[data-on="true"] { background: var(--color-red); color: white; }
 .stage[data-on="true"] .mono, .stage[data-on="true"] .text-muted, .stage[data-on="true"] .text-ink-2 { color: rgba(255,255,255,0.8); }
 .stage[data-done="true"]::after { content: ""; position: absolute; right: 8px; top: 8px; width: 8px; height: 8px; background: var(--color-gold); transform: rotate(45deg); }
+
+/* Five moments strip. Waiting is quiet, lit is gold, the active one is red. */
+.moment { background: #ffffff; border: 1px solid var(--color-line); color: var(--color-muted); }
+.moment[data-lit="true"] { color: var(--color-ink); border-color: var(--color-gold); background: var(--color-gold-soft); cursor: pointer; }
+.moment[data-lit="true"]:hover { background: #ecdca8; }
+.moment[data-active="true"] { background: var(--color-red); border-color: var(--color-red); color: white; }
+.moment[data-active="true"] .mono { color: rgba(255,255,255,0.8); }
+.moment[disabled] { cursor: default; }
+
+/* Pending transaction dot. */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pulse-dot { animation: blink 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
+
+/* Photo poster. The fallback block is designed, so a missing file still looks finished. */
+.poster-fallback { background-size: 56px 56px; }

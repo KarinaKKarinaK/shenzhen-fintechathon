@@ -2,10 +2,10 @@
 // only writes the explanation text or reads a message into fields. Numbers that move
 // money never come from the model.
 
-import { ADDR, KEYS, canonical, isKeyed, type KeyedActor } from "./keys";
+import { ADDR, KEYS, isKeyed, typedIntent, type KeyedActor } from "./keys";
 import { DEFAULT_POLICY } from "./policy";
 import { explain as modelExplain, read as modelRead, type Facts } from "./model";
-import type { Economics, Intent, Job, Actor, Understood, Provenance } from "./types";
+import { CURRENCY, type Economics, type Intent, type Job, type Actor, type Understood, type Provenance } from "./types";
 
 export { KEYS, ADDR, canonical } from "./keys";
 
@@ -21,7 +21,7 @@ export async function sign(actor: Actor, kind: Intent["kind"], fields: Partial<I
   nonces.set(actor, nonce);
   const body = { id, actor, kind, ...fields, nonce };
   const key = isKeyed(keyOf) ? KEYS[keyOf as KeyedActor] : KEYS.hunter;
-  const signature = await key.signMessage({ message: canonical(body) });
+  const signature = await key.signTypedData(typedIntent(body));
   const provenance: Provenance = fields.provenance ?? {
     amount: fields.amount === undefined ? "none" : "tool",
     payee: fields.payee === undefined ? "none" : "allowlist",
@@ -29,16 +29,24 @@ export async function sign(actor: Actor, kind: Intent["kind"], fields: Partial<I
   return { ...body, signer: key.address, signature, provenance };
 }
 
-export function economics(fee: number, rate: number, energy: number, cover: number, reserveRule: number): Economics {
+// Unit economics in yuan. Insurance is not in the build, so cover is always zero and is kept
+// only because the UI already reads the field.
+export function economics(fee: number, rate: number, energy: number, reserveRule: number): Economics {
   const instalment = Math.round(fee * rate * 100) / 100;
-  const rail = Math.round(fee * 0.02 * 100) / 100;
+  const rail = Math.round(fee * RAIL_SHARE * 100) / 100;
+  const cover = 0;
   const margin = Math.round((fee - instalment - energy - cover - rail) * 100) / 100;
-  return { fee, instalment, energy, cover, rail, margin, reserveRule, clears: margin >= reserveRule };
+  return { fee, instalment, energy, cover, rail, margin, reserveRule, clears: margin >= reserveRule, currency: CURRENCY };
 }
 
+export const RAIL_SHARE = 0.02; // the vendor's rail fee on every job
+export const BOND_SLICE = 0.1; // share of each fee that fills the pilot bond until the minimum
+
+// How a confirmed fee splits: rail fee, lease instalment, a slice to the pilot bond while it is
+// below the minimum, a capped 24 hour hold, the rest to the pilot's wallet.
 export function split(fee: number, instalment: number, bondGap: number, hold = 0): NonNullable<Job["split"]> {
-  const rail = Math.round(fee * 0.02 * 100) / 100;
-  const bond = Math.max(0, Math.min(bondGap, Math.round((fee - instalment - rail - hold) * 0.5 * 100) / 100));
+  const rail = Math.round(fee * RAIL_SHARE * 100) / 100;
+  const bond = Math.max(0, Math.min(bondGap, Math.round(fee * BOND_SLICE * 100) / 100, Math.round((fee - instalment - rail - hold) * 100) / 100));
   const owner = Math.round((fee - instalment - rail - bond - hold) * 100) / 100;
   return { owner, instalment, rail, bond };
 }

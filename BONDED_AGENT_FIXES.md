@@ -10,7 +10,7 @@ Checked against commit `7abd4ef` (contracts) on 20 October 2026.
 |---|---|
 | Reviewing the ideas | The summary, the cast, the status table and Part A. About ten minutes. |
 | Implementing (a person or a coding agent) | The status table, then Part B. Part B is self-contained: interfaces, rules, edge cases, tests and the order of work. Part A explains why. |
-| Working on the pitch | Part A.5 (the scenario and the closing statement) and Part C (open problems). |
+| Working on the pitch | Part A.5 (the scenario and the closing statement) and Part C (problems 6 to 9, now decided). |
 
 Words used throughout:
 
@@ -54,21 +54,21 @@ Words used throughout:
 
 ## Status at a glance
 
-"Decided" is our decision. "In code" is whether `contracts/` already does it.
+"Decided" is our decision. "In code" is whether `contracts/` and `web/src/engine` do it. Rows marked "Yes" are being built in the current pass by the contracts and engine implementers, following Part B; the CI build and the Foundry tests are the confirmation, not this table. Rows marked "Docs" are done in the markdown.
 
 | # | Problem | Decided | In code |
 |---|---|---|---|
-| 1 | The pilot pays for the AI's mistakes | Two bonds: pilot bond for pilot cheating, vendor bond for agent mistakes | No. One bond per agent |
-| 2 | Nobody but the pilot ever holds the evidence, so nothing is ever slashed | Per-job intent log: hash on chain before the policy engine decides, full intent delivered to every party, only parties report | No |
-| 3 | The bond starts at zero | Limits scale with the bond, a starting floor, the vendor bond covers the start (with 11) | Partly. Job size scales with the bond (25 percent of the fee) |
-| 4 | Where insurance fits | Not in the build. Bonds first, insurance only above them, in the pitch | No. `bindCover` and `NoCoverBound` still exist |
-| 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Contracts are scenario neutral. `BONDED_AGENT.md` still has two sides |
-| 10 | The contract believed the reporter | Every fact read from the signed intent and the contracts' own records | Half. Evidence is now bound to the signed fields. Confirmation and geofence are still taken from fields the agent signed instead of from `JobBoard` |
-| 11 | A new machine can never start | No minimum in `covers`, a starting floor | No. `covers` still requires the minimum |
-| 6 | Market section argues for insurance | Open | |
-| 7 | Seasonal income vs a fixed monthly minimum | Open | `Lease.monthlyMinimum` is fixed |
-| 8 | Scope | Open | |
-| 9 | Claims that can backfire | Open | |
+| 1 | The pilot pays for the AI's mistakes | Two bonds: pilot bond for pilot cheating, vendor bond for agent mistakes | Yes, this pass (B.3) |
+| 2 | Nobody but the pilot ever holds the evidence, so nothing is ever slashed | Per-job intent log: hash on chain before the policy engine decides, full intent delivered to every party, only parties report | Yes, this pass (B.1, B.3, B.6) |
+| 3 | The bond starts at zero | Limits scale with the bond, a starting floor, the vendor bond covers the start (with 11) | Yes, this pass (B.3, B.4) |
+| 4 | Where insurance fits | Not in the build. Bonds first, insurance only above them, in the pitch | Yes, this pass (B.2, B.4 remove cover) |
+| 5 | Too many scenarios | Agricultural drone pilot only, other machines as a closing statement | Docs. `BONDED_AGENT.md` is drone only. Contracts are scenario neutral |
+| 10 | The contract believed the reporter | Every fact read from the signed intent and the contracts' own records | Yes, this pass (B.3 rule table, B.4 views) |
+| 11 | A new machine can never start | No minimum in `covers`, a starting floor | Yes, this pass (B.3 `covers`) |
+| 6 | Market section argues for insurance | Financing story replaces it (Part C) | Docs. `BONDED_AGENT.md` Market and Who pays |
+| 7 | Seasonal income vs a fixed monthly minimum | Zero minimum outside spraying windows, catch up inside them (Part C) | No. Not in the build; `Lease.monthlyMinimum` stays fixed |
+| 8 | Scope | Frozen to Part B plus the demo story in A.5 (Part C) | Docs |
+| 9 | Claims that can backfire | Fixed wording (Part C) | Docs. `BONDED_AGENT.md`, `TECHNICAL.md`, `SELF_ASSESSMENT.md` |
 
 Already done in code (credit to the team, commit `7abd4ef`):
 
@@ -302,7 +302,7 @@ interface IJobBoardView {
 
 - No change needed for problems 1 to 11.
 - Recommended, not yet decided: `setRate` should be callable by the lender inside the band (the lender is the party that rewards a bond reaching the minimum), not only by the operator.
-- Problem 7 (seasonality) will change `monthlyMinimum`. Do not build until decided.
+- Problem 7 (seasonality) is decided in Part C but out of the build: `monthlyMinimum` stays fixed and the demo runs inside a spraying window.
 
 ## B.6 Agent runtime (`web/src/engine`)
 
@@ -354,11 +354,11 @@ JobBoard:
 4. Engine: EIP-712 signing, commit to the log, delivery to parties, mirror rules.
 5. Deploy to Base Sepolia and record one transaction hash per demo step.
 
-# Part C: still open
+# Part C: decided, docs only
 
-| # | Problem | Notes |
+| # | Problem | Decision |
 |---|---|---|
-| 6 | The market section of `BONDED_AGENT.md` still lists insurance pricing, agent liability insurance and "a take rate on every task and cover bound" as revenue, which A.4 rules out | Replace with the financing story: number of pilots, drone cost, the gap between subsidies and credit, fees per financed machine and on repayments |
-| 7 | Spraying is seasonal; `Lease.monthlyMinimum` is fixed, so pilots default in the off-season | Next to decide. Likely a seasonal minimum or zero outside spraying windows |
-| 8 | Scope is far bigger than the time left | Freeze the build to Part B plus the demo story in A.5 |
-| 9 | Claims that can backfire | WeBank named as lender in `BONDED_AGENT.md` (use "a licensed lessor, sandbox"); farm drone purchase subsidies (农机购置补贴) may exist, verify before saying pilots cannot get financing; "a credit bureau for machines" is shenzhen-comp's pitch; verify the market sources before they go on a slide |
+| 6 | The market section of `BONDED_AGENT.md` listed insurance pricing, agent liability insurance and "a take rate on every task and cover bound" as revenue, which A.4 rules out | Replaced with the financing story: pilots and drones, drone cost, the gap between subsidies and credit, a fee per financed machine, basis points on repayments, the 2 percent rail fee per job. Insurance sources dropped. A Bond economics section gives a worked schedule in yuan (drone 55,000, 13,750 mu, fees 3 to 15 per mu, bond slice, floor 200, vendor bond 5,000, penalty 200, daily cap 1,000, lender loss given default at months one, six and twelve with and without the bond), marked illustrative |
+| 7 | Spraying is seasonal; `Lease.monthlyMinimum` is fixed, so pilots default in the off-season | Decided: the minimum is zero outside spraying windows and cannot freeze the lease there; inside a window it applies and a shortfall carries into the next window month until caught up; windows come from the regional crop calendar and are set at `Lease.open`. Not in the build (problem 8). Written in `BONDED_AGENT.md`, Seasonal minimum |
+| 8 | Scope is far bigger than the time left | Frozen: Part B plus the seven step demo story in A.5. Nothing else on a slide as done. Cut order is in `BONDED_AGENT.md`, Scope |
+| 9 | Claims that can backfire | Fixed in the three docs: the lender is "a licensed lessor in a sandbox", WeBank is never named as the lender; farm machinery purchase subsidies (农机购置补贴) may cover part of a drone's price and must be verified before any slide says pilots cannot get financing; "a credit bureau for machines" is dropped (it is shenzhen-comp's pitch); every market figure is verified against its source before it goes on a slide |

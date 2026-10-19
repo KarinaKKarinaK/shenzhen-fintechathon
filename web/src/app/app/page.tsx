@@ -29,9 +29,8 @@ export default async function Page() {
   const blocked = results.filter((r) => r.blocked).length;
   const byLayer = ["message", "policy", "contract"].map((l) => ({ l, n: results.filter((r) => r.layer === l).length, b: results.filter((r) => r.layer === l && r.blocked).length }));
   const tiles = [
-    { href: "/app/fleet", title: "Fleet", body: "Drone on hire purchase. Decline, work, repay, own itself, then get caught." },
-    { href: "/app/neighbour", title: "Neighbour", body: "Household humanoid. Bond earned in, solvency proved, slashed, button top up." },
-    { href: "/app/evidence", title: "Evidence", body: `${ATTACKS.length} attack cases, naive against gated, and a console to try your own.` },
+    { href: "/app/fleet", title: "Live demo", body: "Five moments: declined job, instalment paid, faked log held, slash by proof, title transferred." },
+    { href: "/app/evidence", title: "Evidence", body: `${ATTACKS.length} attack cases, naive against gated. Try your own.` },
   ];
   return (
     <div className="mx-auto max-w-[1500px]">
@@ -67,15 +66,15 @@ export default async function Page() {
       <div className="mt-4"><Ticker /></div>
 
       <ol className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-        {[["Plan", "Rank the day's jobs by margin"], ["Lock", "Signed intent, fee locked"], ["Check", "Every rule, in code"], ["Work", "Proven by telemetry"], ["Confirm", "Fee released, split"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]].map(([t, b], i) => (
+        {[["Plan", "Rank the day's jobs by margin"], ["Lock", "Fee locked, intent logged"], ["Check", "Every rule, in code"], ["Work", "Flight log checked"], ["Confirm", "Farmer confirms, fee splits"], ["Repay", "Instalment to the lender"], ["Own", "Title moves on chain"]].map(([t, b], i) => (
           <li key={t} className="tile hover-lift"><div className="tech text-[10px] tracking-[0.2em] text-red">{String(i).padStart(2, "0")}</div><div className="mt-1 font-bold">{t}</div><div className="mt-1 text-xs text-ink-2">{b}</div></li>
         ))}
       </ol>
 
       <section className="aurora aurora-gold card mt-4 p-5 text-ink">
-        <h2 className="text-lg font-bold">Three contracts and one wallet standard</h2>
-        <p className="mt-1 text-sm text-ink/80">Bond, JobBoard and Lease hold the rules. The wallet signs typed intents and nothing else.</p>
-        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">{tiles.map((t) => (<Link key={t.href} href={t.href} className="cut-sm bg-white/85 p-3 backdrop-blur transition hover:bg-white"><div className="font-semibold">{t.title}</div><div className="text-xs text-ink-2">{t.body}</div></Link>))}</div>
+        <h2 className="text-lg font-bold">Four contracts, one wallet standard</h2>
+        <p className="mt-1 text-sm text-ink/80">Bond, JobBoard, Lease and IntentLog hold the rules. The wallet signs typed intents and nothing else. All amounts in yuan.</p>
+        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">{tiles.map((t) => (<Link key={t.href} href={t.href} className="cut-sm bg-white/85 p-3 backdrop-blur transition hover:bg-white"><div className="font-semibold">{t.title}</div><div className="text-xs text-ink-2">{t.body}</div></Link>))}</div>
       </section>
     </div>
   );

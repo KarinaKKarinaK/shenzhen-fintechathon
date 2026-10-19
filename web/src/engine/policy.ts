@@ -1,21 +1,20 @@
 // Deterministic policy engine. Sits between every agent and its wallet.
 // Rules are data. The model never sees this code and cannot change it.
+// All amounts are yuan.
 
-import { keccak256, recoverMessageAddress } from "viem";
-import { ADDR, canonical, isKeyed } from "./keys";
+import { keccak256 } from "viem";
+import { ADDR, isKeyed, recoverSigner } from "./keys";
 import type { Actor, Economics, Intent, Job, PolicyDecision, PolicyLine, Tier } from "./types";
 
 export interface Policy {
   allowlist: Record<string, string>; // name -> address
   contacts: Record<string, string>; // display name -> allowlist name
-  perTxCap: number;
-  dailyCap: number;
+  perTxCap: number; // yuan per signed payment
+  dailyCap: number; // yuan per day
   rateBand: [number, number]; // allowed instalment share of a fee
   maxPerHour: number;
   deviationPct: number;
   geofences: string[];
-  coverRequired: boolean;
-  earnInMaxFee: number; // a task this small may run while the bond is still filling
 }
 
 export const DEFAULT_POLICY: Policy = {
@@ -23,27 +22,39 @@ export const DEFAULT_POLICY: Policy = {
     lender: "0x5a1eC0ffee0000000000000000000000000000A1",
     requester: "0x7b2fC0ffee0000000000000000000000000000B2",
     charging: "0x9c3dC0ffee0000000000000000000000000000C3",
-    coverpool: "0x2d4eC0ffee0000000000000000000000000000D4",
     bond: "0x4e5fC0ffee0000000000000000000000000000E5",
     rail: "0x6f60C0ffee0000000000000000000000000000F6",
     hunter: "0x8a7bC0ffee0000000000000000000000000000A7",
   },
-  contacts: { "Farmer Lin": "requester", "Flat 4B": "requester" },
-  perTxCap: 120,
-  dailyCap: 600,
+  contacts: { "Farmer Lin": "requester", "Farmer Zhao": "requester" },
+  perTxCap: 1000,
+  dailyCap: 5000,
   rateBand: [0.2, 0.45],
   maxPerHour: 12,
   deviationPct: 25,
-  geofences: ["flat-4b", "field-north", "route-nanshan-futian", "route-field-a"],
-  coverRequired: true,
-  earnInMaxFee: 150,
+  geofences: ["field-north", "field-south", "field-east", "field-west"],
+};
+
+// The demo numbers, in yuan, shared by the scenarios and the attack set.
+export const DEMO = {
+  droneCost: 55_000,
+  leaseMu: 13_750, // the lease is spread over this many mu
+  startFloor: 200, // added to the pilot bond in the start check
+  bondMin: 2_000, // the reward threshold for the pilot bond, never a start condition
+  pilotSlash: 200, // fixed slash from the pilot bond per proven pilot violation
+  vendorBond: 5_000, // posted up front by the vendor
+  vendorPenalty: 200, // fixed slash from the vendor bond per proven agent violation
+  vendorDailyCap: 1_000, // max slashed from the vendor bond per day
+  leaseRate: 0.4, // instalment share of each fee
+  energyPerMu: 0.6, // charging cost per mu sprayed
+  reserveRule: 30, // minimum margin per job
 };
 
 // Permission tiers as data, for the dashboard.
 export const TIERS: { tier: Tier; name: string; rule: string; who: string }[] = [
   { tier: "L0", name: "Read", rule: "Read prices, balances, messages. Nothing moves.", who: "Any agent, the model" },
   { tier: "L1", name: "Draft", rule: "Write text and read messages into fields. Cannot name a payee or an amount.", who: "The model" },
-  { tier: "L2", name: "Engine allow", rule: "Payments on the allowlist inside the caps, tasks inside the geofence with cover bound.", who: "Machine key through the policy engine" },
+  { tier: "L2", name: "Engine allow", rule: "Payments on the allowlist inside the caps, tasks inside the job's field with the bond covering the job.", who: "Machine key through the policy engine" },
   { tier: "L3", name: "Operator key", rule: "Raise a cap, change the rate band, widen a geofence, top up the bond.", who: "The physical button only" },
 ];
 
@@ -54,7 +65,7 @@ export interface EvalContext {
   requester?: string;
   eco?: Economics;
   job?: Job;
-  bond?: { balance: number; min: number };
+  bond?: { balance: number; min: number; floor: number };
 }
 
 // Spend and rate state lives at module level so it survives across requests.
@@ -86,11 +97,8 @@ export class PolicyEngine {
     const p = this.policy;
     const b = book(this.scope, intent.actor);
 
-    // 1. Signature: the body must be signed by the key of the actor it names.
-    let signer = "0x0000000000000000000000000000000000000000";
-    try {
-      signer = await recoverMessageAddress({ message: canonical(intent), signature: intent.signature as `0x${string}` });
-    } catch { /* unparseable signature stays the zero address */ }
+    // 1. Signature: the typed intent must be signed by the key of the actor it names.
+    const signer = await recoverSigner(intent);
     const expected = isKeyed(intent.actor) ? ADDR[intent.actor] : null;
     const sigOk = !!expected && signer.toLowerCase() === expected.toLowerCase();
     L("signature", sigOk, sigOk ? `signed by ${short(signer)}, the ${intent.actor} key` : `signer ${short(signer)} is not the ${intent.actor} key ${short(expected ?? undefined)}`);
@@ -105,7 +113,7 @@ export class PolicyEngine {
     const amt = intent.amount ?? 0;
     if (money) {
       const amountOk = Number.isFinite(amt) && amt > 0 && Math.abs(Math.round(amt * 100) - amt * 100) < 1e-6;
-      L("amount", amountOk, amountOk ? `${amt} is a positive number with at most 2 decimals` : `${amt} is not a valid amount`);
+      L("amount", amountOk, amountOk ? `${amt} yuan is a positive number with at most 2 decimals` : `${amt} is not a valid amount`);
     }
 
     // 3. Provenance: a payee or amount read out of a message is never used.
@@ -127,8 +135,8 @@ export class PolicyEngine {
         const toLender = payee.toLowerCase() === p.allowlist.lender.toLowerCase();
         L("instalment payee", toLender, toLender ? "instalment goes to the lender" : "an instalment can only go to the lender");
       }
-      L("per transaction cap", amt <= p.perTxCap, `${amt} against cap ${p.perTxCap}`);
-      L("daily cap", b.spent + amt <= p.dailyCap, `${round(b.spent + amt)} against ${p.dailyCap} today`);
+      L("per transaction cap", amt <= p.perTxCap, `${amt} yuan against cap ${p.perTxCap} yuan`);
+      L("daily cap", b.spent + amt <= p.dailyCap, `${round(b.spent + amt)} yuan against ${p.dailyCap} yuan today`);
       L("rate limit", b.recent.length < p.maxPerHour, `${b.recent.length} of ${p.maxPerHour} this hour`);
       if (ctx.reference !== undefined) {
         const dev = Math.abs(amt - ctx.reference) / Math.max(ctx.reference, 1e-9) * 100;
@@ -149,9 +157,9 @@ export class PolicyEngine {
       L("contact", !!contact, contact ? `${ctx.requester} is a known contact (${contact})` : `${ctx.requester ?? "unknown sender"} is not on the contact list`);
       if (ctx.listing) {
         const inBand = amt >= ctx.listing.feeMin && amt <= ctx.listing.feeMax;
-        L("listing band", inBand, `fee ${amt} against listing ${ctx.listing.feeMin} to ${ctx.listing.feeMax}`);
+        L("listing band", inBand, `fee ${amt} yuan against listing ${ctx.listing.feeMin} to ${ctx.listing.feeMax} yuan`);
       } else L("listing band", false, "no listing to check the fee against");
-      if (ctx.eco) L("economics", ctx.eco.clears, `margin ${ctx.eco.margin} against reserve rule ${ctx.eco.reserveRule}`);
+      if (ctx.eco) L("economics", ctx.eco.clears, `margin ${ctx.eco.margin} yuan against reserve rule ${ctx.eco.reserveRule} yuan`);
       else L("economics", false, "no unit economics computed");
     }
 
@@ -160,17 +168,17 @@ export class PolicyEngine {
       L("job", !!job && job.status === "locked", job ? `job ${job.id} is ${job.status}` : "no such job");
       L("job geofence", !!job && intent.geofence === job.geofence, job ? `intent ${intent.geofence} against job ${job.geofence}` : "no job");
       L("geofence", p.geofences.includes(intent.geofence ?? ""), `task inside ${intent.geofence ?? "no geofence"}`);
-      if (p.coverRequired) L("cover bound", !!intent.coverBound, intent.coverBound ? "cover is bound for this task" : "no cover bound");
       if (ctx.bond && job) {
+        // Bond plus the starting floor must cover a quarter of the fee. No minimum here: a new
+        // machine with an empty bond can start small jobs. The minimum is a reward, not a gate.
         const worst = round(job.fee * 0.25);
-        const covers = ctx.bond.balance >= Math.max(ctx.bond.min, worst);
-        const earnIn = !covers && ctx.bond.balance < ctx.bond.min && job.fee <= p.earnInMaxFee;
-        L("solvency", covers || earnIn, covers ? `bond ${ctx.bond.balance} covers worst case ${worst} and minimum ${ctx.bond.min}` : earnIn ? `bond ${ctx.bond.balance} below minimum ${ctx.bond.min}, fee ${job.fee} within the earn-in cap ${p.earnInMaxFee}` : `bond ${ctx.bond.balance} does not cover worst case ${worst}`);
+        const covers = ctx.bond.balance + ctx.bond.floor >= worst;
+        L("solvency", covers, covers ? `bond ${ctx.bond.balance} plus floor ${ctx.bond.floor} covers a quarter of the fee, ${worst} yuan` : `bond ${ctx.bond.balance} plus floor ${ctx.bond.floor} does not cover a quarter of the fee, ${worst} yuan`);
       }
     }
 
     if (intent.kind === "claim_done") {
-      L("confirmation", !!intent.confirmed, intent.confirmed ? "requester signature present" : "no requester signature");
+      L("confirmation", !!intent.confirmed, intent.confirmed ? "farmer confirmation present" : "no farmer confirmation");
     }
 
     if (intent.kind === "set_cap" || intent.kind === "top_up") {

@@ -1,31 +1,41 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ChainTx, Intent, MachineState, PolicyDecision, PolicyLine, Job, Side } from "@/engine/types";
+import type { Intent, MachineState, PolicyDecision, PolicyLine, Job, Side } from "@/engine/types";
 import { short } from "@/engine/policy";
-import type { Gate, Understood, MessageEv, PlanItem, Solvency, Telemetry, Proof, LooseEvent } from "./useRun";
+import type { Gate, Understood, MessageEv, PlanItem, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
+import { timeOf, yuan } from "./money";
 
 const kindLabel: Record<string, string> = { fee_in: "Fee in", instalment: "Instalment", energy: "Energy", rail: "Rail fee", cover: "Cover", bond_fill: "Bond fill", slash: "Slash", bounty: "Bounty", title: "Title transfer", lock: "Fee locked", release: "Release", refund: "Held", top_up: "Top up" };
 const inbound = new Set(["fee_in", "top_up", "bounty", "release"]);
 const danger = new Set(["slash", "refund"]);
+const statusTone: Record<string, string> = { pending: "bg-paper-2 text-muted pulse-dot", confirmed: "bg-gold-soft text-ink", finalised: "bg-gold text-ink" };
 
-export function ChainFeed({ txs, compact = false }: { txs: ChainTx[]; compact?: boolean }) {
+export function ChainFeed({ txs, compact = false }: { txs: TxView[]; compact?: boolean }) {
   return (
     <div className="flex flex-col gap-2">
       <AnimatePresence initial={false}>
-        {txs.slice(0, compact ? 6 : 40).map((tx) => (
-          <motion.div key={tx.hash} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`mined rounded-xl border px-3 py-2 ${danger.has(tx.kind) ? "border-red/50 bg-red-soft/50" : inbound.has(tx.kind) ? "border-gold/60 bg-gold-soft/40" : "border-slate/40 bg-paper-2"}`}>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium">{kindLabel[tx.kind] ?? tx.kind}</span>
-              <span className={`text-sm tabular-nums ${danger.has(tx.kind) ? "text-red" : inbound.has(tx.kind) ? "text-red-deep" : "text-slate"}`}>{tx.kind === "title" ? "title" : `${inbound.has(tx.kind) ? "+" : "-"}${tx.amount}`}</span>
-            </div>
-            <div className="text-xs text-muted">{tx.label}</div>
-            <div className="mono mt-1 flex items-center justify-between text-muted">
-              {tx.explorer ? <a className="underline decoration-gold hover:text-red-deep" href={tx.explorer} target="_blank" rel="noreferrer">{short(tx.hash)}</a> : <span title={tx.hash}>{short(tx.hash)}</span>}
-              <span>block {tx.block}{tx.simulated ? " sim" : ""}</span>
-            </div>
-          </motion.div>
-        ))}
+        {txs.slice(0, compact ? 6 : 40).map((tx) => {
+          const status = tx.status ?? (tx.simulated ? "confirmed" : "pending");
+          return (
+            <motion.div key={tx.hash} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`mined rounded-xl border px-3 py-2 ${danger.has(tx.kind) ? "border-red/50 bg-red-soft/50" : inbound.has(tx.kind) ? "border-gold/60 bg-gold-soft/40" : "border-slate/40 bg-paper-2"}`}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-medium">{kindLabel[tx.kind] ?? tx.kind}<span className={`pill !px-1.5 !py-0.5 !text-[9px] ${statusTone[status]}`}>{status}</span></span>
+                <span className={`text-sm tabular-nums ${danger.has(tx.kind) ? "text-red" : inbound.has(tx.kind) ? "text-red-deep" : "text-slate"}`}>{tx.kind === "title" ? "title" : `${inbound.has(tx.kind) ? "+" : "-"}${yuan(tx.amount)}`}</span>
+              </div>
+              <div className="text-xs text-muted">{tx.label}</div>
+              <div className="mono mt-1 flex flex-wrap items-center justify-between gap-x-3 text-muted">
+                {tx.explorer && !tx.simulated ? <a className="underline decoration-gold hover:text-red-deep" href={tx.explorer} target="_blank" rel="noreferrer">{short(tx.hash)} on the explorer</a> : <span title={tx.hash}>{short(tx.hash)}</span>}
+                <span>block {tx.block}{tx.simulated ? " sim" : ""}</span>
+              </div>
+              <div className="mono mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-muted">
+                <span>sent {timeOf(tx.seenAt)}</span>
+                {status !== "pending" ? <span>confirmed {timeOf(tx.confirmedAt ?? tx.seenAt)}</span> : null}
+                {status === "finalised" ? <span className="text-gold-deep">finalised {timeOf(tx.finalisedAt)}</span> : null}
+              </div>
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
       {txs.length === 0 ? <div className="text-sm text-muted">No transactions yet. Start a run.</div> : null}
     </div>
@@ -163,24 +173,33 @@ export function PolicyCard({ decisions, intents }: { decisions: PolicyDecision[]
   );
 }
 
-// Four lines that light in sequence: the mechanism behind a slash.
-export function ProofCard({ proof }: { proof?: Proof }) {
-  if (!proof) return <div className="text-sm text-muted">No violation yet. A signed intent that breaks a rule is proof anyone can submit.</div>;
+// The mechanism behind a slash, one line at a time. Every fact is read from the signed intent and the contracts' records.
+export function ProofCard({ proof, log }: { proof?: Proof; log?: LogEv }) {
+  if (!proof) return <div className="text-sm text-muted">No violation yet. When a signed intent breaks a rule, a party of the job submits it and the contract checks it against its own records.</div>;
+  const bond = (proof.bond ?? proof.bondKind) === "pilot" ? "pilot" : "vendor";
+  const shadow = proof.shadow === true;
+  const treasury = typeof proof.treasury === "number" ? proof.treasury : undefined;
+  const paid = proof.paidTo?.length ? proof.paidTo.join(" and ")
+    : shadow ? `registered hunter ${short(proof.submitterAddr ?? proof.submitter)} as bounty${treasury !== undefined ? ` (${yuan(proof.bounty)}) and the treasury (${yuan(treasury)})` : ""}`
+    : treasury !== undefined ? `the harmed party (${yuan((proof.slash ?? 0) - treasury)}) and the treasury (${yuan(treasury)}), no bounty` : "the harmed party and the treasury, no bounty";
   const lines = [
-    `signed intent ${short(proof.intentHash ?? proof.intentId)}`,
-    `rule broken: ${proof.rule ?? "unknown"}`,
+    `signed intent ${short(proof.intentHash ?? proof.intentId)}${log ? `, in the log${log.parties?.length ? `, delivered to ${log.parties.join(", ")}` : ""}` : ""}`,
+    `rule broken: ${proof.rule ?? "unknown"}, tagged ${bond} bond`,
     `signature verified, signer ${short(proof.signer)}`,
-    `slashed ${proof.slash ?? 0}, bounty ${proof.bounty ?? 0} to hunter ${short(proof.submitterAddr ?? proof.submitter)}`,
+    `${yuan(proof.slash)} slashed from the ${bond} bond, paid to ${paid}`,
   ];
   return (
-    <ol className="flex flex-col gap-1.5">
-      {lines.map((l, i) => (
-        <motion.li key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.35 }} className="flex items-center gap-2 text-sm">
-          <span className={`tech grid h-5 w-5 shrink-0 place-items-center text-[10px] font-bold ${i === 3 ? "bg-red text-white" : "bg-gold text-ink"}`}>{i + 1}</span>
-          <span className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{l}</span>
-        </motion.li>
-      ))}
-    </ol>
+    <div>
+      <ol className="flex flex-col gap-1.5">
+        {lines.map((l, i) => (
+          <motion.li key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.35 }} className="flex items-start gap-2 text-sm">
+            <span className={`tech mt-0.5 grid h-5 w-5 shrink-0 place-items-center text-[10px] font-bold ${i === 3 ? "bg-red text-white" : "bg-gold text-ink"}`}>{i + 1}</span>
+            <span className={i === 3 ? "font-semibold text-red" : "text-ink-2"}>{l}</span>
+          </motion.li>
+        ))}
+      </ol>
+      <p className="mt-3 border-t border-line pt-2 text-xs text-muted">{bond === "vendor" ? "The pilot bond is untouched. The vendor pays for the agent's mistakes." : "The vendor bond is untouched. The pilot pays for the pilot's own cheating."} On live jobs only a party of the job can submit, and no bounty goes to the submitter. Bounties exist only for registered hunters on shadow jobs.</p>
+    </div>
   );
 }
 
@@ -190,22 +209,34 @@ export function BondGauge({ value, min, slashes, side, solvency }: { value: numb
   const pct = Math.min(1, value / max);
   const minPct = Math.min(1, min / max);
   const low = value < min;
-  const sub = solvency ? (solvency.covers ? `worst case ${solvency.worst}, bond ${solvency.bond ?? value}, covers` : "earning in, capped task") : low ? "No new tasks until the button tops it up" : "Covers the worst case";
+  const sub = solvency ? (solvency.covers ? `worst case ${yuan(solvency.worst)}, covered` : "small jobs only while it fills") : low ? "Reaching the minimum unlocks a better rate" : "Covers the worst case";
   return (
     <div className="flex items-center gap-4">
-      <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={`Bond ${value} of minimum ${min}`}>
+      <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label={`Pilot bond ${yuan(value)} of minimum ${yuan(min)}`}>
         <circle cx="56" cy="56" r={r} fill="none" stroke="#efe9d8" strokeWidth="10" />
         <circle cx="56" cy="56" r={r} fill="none" stroke={low ? "#c8102e" : "#b8860b"} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${pct * c} ${c}`} transform="rotate(-90 56 56)" style={{ transition: "stroke-dasharray 600ms ease, stroke 300ms" }} />
         <line x1="56" y1="4" x2="56" y2="16" stroke="#1b2a2a" strokeWidth="2" transform={`rotate(${minPct * 360} 56 56)`} />
-        <text x="56" y="52" textAnchor="middle" fontSize="20" fontWeight="600" fill="#1b2a2a">{value.toFixed(0)}</text>
-        <text x="56" y="68" textAnchor="middle" fontSize="10" fill="#7f8d8e">min {min}</text>
+        <text x="56" y="52" textAnchor="middle" fontSize="16" fontWeight="600" fill="#1b2a2a">{yuan(value)}</text>
+        <text x="56" y="68" textAnchor="middle" fontSize="10" fill="#7f8d8e">min {yuan(min)}</text>
       </svg>
       <div className="text-sm">
-        <div className="font-medium">{low ? "Below the minimum" : "Bond"}</div>
+        <div className="font-medium">{side === "neighbour" ? "Bond" : "Pilot bond"}{low ? ", under the minimum" : ""}</div>
         <div className={solvency?.covers ? "text-gold-deep" : "text-muted"}>{sub}</div>
         <div className="text-muted">{slashes} slash{slashes === 1 ? "" : "es"} on record</div>
-        <div className="text-xs text-muted">{side === "neighbour" ? `Earned in from task fees, ${value.toFixed(0)} so far` : "Posted up front by the operator"}</div>
+        <div className="text-xs text-muted">A slice of every fee. Slashed only for the pilot&apos;s own cheating.</div>
       </div>
+    </div>
+  );
+}
+
+// The vendor's own money, posted up front. Slashed for the agent's mistakes, never the pilot's.
+export function VendorBond({ m }: { m?: MachineView }) {
+  const v = m?.vendorBond, min = m?.vendorBondMin;
+  return (
+    <div className="text-sm">
+      <div className="flex items-end justify-between"><span className="font-medium">Vendor bond</span><span className="kpi tabular-nums">{v === undefined ? "n/a" : yuan(v)}</span></div>
+      <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-paper-2"><div className="h-full bg-gold" style={{ width: `${min ? Math.min(100, ((v ?? 0) / min) * 100) : v ? 100 : 0}%` }} /></div>
+      <div className="mt-1 text-xs text-muted">Posted by the vendor{min ? `, minimum ${yuan(min)}` : ""}. One fixed penalty per proven agent mistake{m?.vendorPenalty ? ` (${yuan(m.vendorPenalty)})` : ""}{m?.vendorDailyCap ? `, capped at ${yuan(m.vendorDailyCap)} a day` : ""}. The pilot never pays for the AI.</div>
     </div>
   );
 }
@@ -216,9 +247,9 @@ export function LeaseBar({ m }: { m?: MachineState }) {
   const pct = Math.min(100, (paid / m.leaseTotal) * 100);
   return (
     <div>
-      <div className="mb-1 flex justify-between text-sm"><span>Lease paid</span><span className="tabular-nums">{paid.toFixed(2)} of {m.leaseTotal}</span></div>
+      <div className="mb-1 flex justify-between text-sm"><span>Lease paid</span><span className="tabular-nums">{yuan(paid)} of {yuan(m.leaseTotal)}</span></div>
       <div className="h-3 overflow-hidden rounded-full bg-paper-2"><motion.div className={`h-full ${m.owned ? "bg-gold" : "bg-slate"}`} animate={{ width: `${pct}%` }} transition={{ type: "spring", stiffness: 80, damping: 20 }} /></div>
-      <div className="mt-1 text-xs text-muted">{m.owned ? "Title transferred. The machine belongs to the operator." : "Instalments are taken from every fee by rule."}</div>
+      <div className="mt-1 text-xs text-muted">{m.owned ? "Title transferred. The drone belongs to the pilot." : "An instalment comes out of every confirmed fee by rule."}</div>
     </div>
   );
 }
@@ -228,8 +259,8 @@ export function BalanceSheet({ m, series }: { m?: MachineState; series: number[]
   return (
     <div>
       <div className="flex items-end justify-between">
-        <div><div className="text-xs text-muted">Operating balance</div><div className="kpi tabular-nums">{(m?.balance ?? 0).toFixed(2)}</div></div>
-        <div className="text-right text-xs text-muted">reserve rule {m?.reserve ?? 0}<br />{m?.tasksDone ?? 0} tasks done</div>
+        <div><div className="text-xs text-muted">Operating balance, yuan</div><div className="kpi tabular-nums">{yuan(m?.balance)}</div></div>
+        <div className="text-right text-xs text-muted">reserve rule {yuan(m?.reserve)}<br />{m?.tasksDone ?? 0} tasks done</div>
       </div>
       <svg viewBox="0 0 120 32" className="mt-2 h-8 w-full" role="img" aria-label="Balance over the run">
         {series.map((v, i) => <rect key={i} x={(i / Math.max(series.length, 1)) * 120} y={32 - (v / max) * 30} width={Math.max(1, 120 / Math.max(series.length, 1) - 1)} height={(v / max) * 30} rx="1" fill="#b8860b" opacity={0.35 + 0.65 * (i / Math.max(series.length, 1))} />)}
@@ -245,13 +276,13 @@ export function PlanTable({ plan }: { plan?: PlanItem[] }) {
     <div className="mb-3">
       <div className="mb-1 flex items-center justify-between text-xs text-muted"><span>Plan, ranked by margin per mu</span><span>{plan.filter((p) => !p.declined).length} of {plan.length} taken</span></div>
       <table className="passbook w-full text-xs">
-        <thead><tr><th className="text-left">#</th><th className="text-left">Job</th><th className="text-right">Fee</th><th className="text-right">Margin / mu</th><th className="text-left">Reason</th></tr></thead>
+        <thead><tr><th className="text-left">#</th><th className="text-left">Job</th><th className="text-right">Fee, yuan</th><th className="text-right">Margin per mu, yuan</th><th className="text-left">Reason</th></tr></thead>
         <tbody>
           {plan.map((p, i) => {
             const declined = p.declined ?? (p.clears === false || p.order === null);
             return (
               <tr key={p.jobId ?? i} className={declined ? "text-muted" : ""}>
-                <td>{declined ? "-" : (p.order ?? p.rank ?? i + 1)}</td><td className={declined ? "line-through decoration-red/60" : "text-ink"}>{p.title ?? p.jobId}</td><td className="text-right tabular-nums">{p.fee ?? ""}</td><td className="text-right tabular-nums">{(p.marginPerMu ?? p.margin ?? 0).toFixed(2)}</td><td>{declined ? <span className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">declined</span> : null} {p.reason ?? ""}</td>
+                <td>{declined ? "-" : (p.order ?? p.rank ?? i + 1)}</td><td className={declined ? "line-through decoration-red/60" : "text-ink"}>{p.title ?? p.jobId}</td><td className="text-right tabular-nums">{p.fee === undefined ? "" : yuan(p.fee)}</td><td className="text-right tabular-nums">{yuan(p.marginPerMu ?? p.margin ?? 0, 2)}</td><td>{declined ? <span className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">declined</span> : null} {p.reason ?? ""}</td>
               </tr>
             );
           })}
@@ -292,23 +323,29 @@ export function JobList({ jobs, hold = 20 }: { jobs: Record<string, Job>; hold?:
     <ul className="flex flex-col gap-2">
       {list.map((j) => (
         <li key={j.id} className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2 text-sm">
-          <div className="min-w-0"><div className="font-medium">{j.title}</div><div className="text-xs text-muted">{j.requester}, {j.window}{j.split ? `, split owner ${j.split.owner} instalment ${j.split.instalment} rail ${j.split.rail} bond ${j.split.bond}` : ""}</div>
-            {j.status === "released" ? <span className="mt-1 inline-block rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] text-ink-2">hold {Math.min(hold, j.fee)}, releases in 24h</span> : null}</div>
-          <div className="flex items-center gap-2"><span className="tabular-nums">{j.fee}</span><span className={`pill ${tone[j.status]}`}>{j.status}</span></div>
+          <div className="min-w-0"><div className="font-medium">{j.title}</div><div className="text-xs text-muted">{j.requester}, {j.window}{j.split ? `, split pilot ${yuan(j.split.owner)} instalment ${yuan(j.split.instalment)} rail ${yuan(j.split.rail)} bond ${yuan(j.split.bond)}` : ""}</div>
+            {j.status === "released" ? <span className="mt-1 inline-block rounded-sm bg-gold-soft px-1.5 py-0.5 text-[10px] text-ink-2">hold {yuan(Math.min(hold, j.fee))}, releases in 24h</span> : null}</div>
+          <div className="flex items-center gap-2"><span className="tabular-nums">{yuan(j.fee)}</span><span className={`pill ${tone[j.status]}`}>{j.status}</span></div>
         </li>
       ))}
     </ul>
   );
 }
 
-export function Narration({ lines }: { lines: string[] }) {
+// The scene caption. A pinned moment stays in front; the engine's latest line runs under it.
+export function Narration({ lines, pinned }: { lines: string[]; pinned?: string }) {
   const last = lines[lines.length - 1];
   return (
-    <AnimatePresence mode="wait">
-      <motion.p key={last ?? "none"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-sm leading-relaxed text-ink-2">
-        {last ?? "Press start. Each step is narrated as the agents act."}
-      </motion.p>
-    </AnimatePresence>
+    <div aria-live="polite">
+      {pinned ? (
+        <AnimatePresence mode="wait"><motion.p key={pinned} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-base font-semibold leading-snug text-ink">{pinned}</motion.p></AnimatePresence>
+      ) : null}
+      <AnimatePresence mode="wait">
+        <motion.p key={last ?? "none"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`leading-relaxed text-ink-2 ${pinned ? "mt-1 text-xs" : "text-sm"}`}>
+          {last ?? "Press start. Five moments, narrated as they happen."}
+        </motion.p>
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -320,7 +357,7 @@ export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; 
   async function press() {
     setBusy(true); setErr(null);
     try {
-      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: b!.what, amount: 20, scenario }) });
+      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: b!.what, amount: 200, scenario }) });
       if (!r.ok) throw new Error(`button returned ${r.status}`);
       const j = (await r.json()) as { events?: LooseEvent[] };
       onEvents?.(j.events ?? []);
@@ -333,7 +370,7 @@ export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; 
       ) : <span className="relative inline-block h-10 w-10 rounded-full bg-gold" aria-hidden />}
       <div className="text-sm">
         <div className="font-medium">{b.waiting ? "Waiting for the operator's button" : "Button pressed"}</div>
-        <div className="text-muted">{b.what}</div>
+        <div className="text-muted">{b.what === "top_up" ? "Top up the pilot bond by ¥200" : b.what}</div>
         <div className="text-xs text-muted">operator only{!b.waiting && b.signer ? <span className="mono ml-1">signer {short(b.signer)}</span> : ""}</div>
         {err ? <div className="text-xs text-red">{err}</div> : null}
       </div>
