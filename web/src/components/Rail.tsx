@@ -34,8 +34,11 @@ export function Rail() {
     <header className="navbar fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-4 px-4 md:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={t("rail.homeAria")}>
-          <Seal size={28} />
-          <span className="navbar-brand hidden text-[19px] font-semibold tracking-tight sm:inline">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
+          <Seal size={34} />
+          <span className="navbar-brand hidden leading-tight sm:block">
+            <span className="block text-[17px] font-semibold tracking-tight">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
+            <span lang="zh-Hans" className="cjk-serif block text-[12px] text-ink-2">自食其力</span>
+          </span>
         </Link>
         <nav className="flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto px-2" aria-label={t("rail.sections")}>
           {items.map((it) => {
