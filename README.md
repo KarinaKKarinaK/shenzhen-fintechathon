@@ -7,7 +7,7 @@ Deadline: 20 October 2026, 23:59 Beijing time. Registration and submission close
 ## Files
 
 - `HACKATHON.md`: everything we know about the competition. Rules, topics, scoring, deliverables, timeline, prizes, contacts, judge profile, and open questions to confirm with the organizers.
-- `IDEAS.md`: the full brainstorm. Twelve ideas, each with the pitch, the local hook, the demo moment, the security story, and the build risk.
+- `IDEAS.md`: the full brainstorm. Fourteen ideas, each with the pitch, the local hook, the demo moment, the security story, and the build risk.
 - `CORE_IDEA.md`: the ranked shortlist and the one we are building, with scope, architecture, and demo script.
 - `SECURITY.md`: the security layer that goes into whichever idea we pick. Permission tiers, policy engine, injection defense, and the attack test cases we ship with the code.
 - `PLAN.md`: hour by hour plan to the deadline and the submission checklist.

@@ -178,6 +178,34 @@ Inclusion angle. Strong. Protects first-time and cross-border buyers from mis-se
 
 Build risk. Low to medium. Mostly analysis, so the agentic part (cooling-off cancellation, tracking the refund) must be real or task completion suffers. Can read as hostile to the insurance industry, so frame it as the customer side of the regulator's own rules.
 
+## 13. North Claim: Hong Kong insurance claims for treatment in Shenzhen (Topic D)
+
+The pitch. Hong Kong residents increasingly get dental work, checkups and surgery in Shenzhen because it is cheaper and faster, and the elderly health voucher already works at selected Shenzhen hospitals. Their Hong Kong insurer often covers the treatment, but the claim fails on paperwork: Chinese fapiao, Chinese medical records, RMB amounts, network hospital lists, per day and per item limits. The agent takes a photo of the fapiao and the discharge summary, verifies the fapiao format and QR data, translates and itemizes, checks every line against the policy limits in code, files the claim in a sandbox after one approval, and tracks it.
+
+Why Shenzhen. Cross-border medical care is one of the most visible Hong Kong and Shenzhen habits of the last few years. Judges from WeBank know people who do this every month.
+
+Demo moment. Upload a Shenzhen hospital fapiao. Thirty seconds later: an itemized claim in English, limits applied, two lines flagged as excluded with the clause, filed after one approval. Then upload a forged fapiao with a changed amount and the agent rejects it with the reason.
+
+Security story. Health data is sensitive personal information under PIPL and PDPO, so separate consent, minimisation and local processing. Fapiao forgery and amount inflation are the natural attack tests. Hard rule in code: never claim more than the receipt. Tiers: L0 read policy, L1 draft claim, L2 file inside limits, L3 change of payout account.
+
+Inclusion angle. Elderly cross-border patients who cannot do this paperwork themselves.
+
+Build risk. Low to medium. Mock the insurer API, use real public Hong Kong policy wordings, and use a fixed fapiao schema with OCR mocked for the demo. Fits with Hidden Coverage as a second scenario on the same policy schema.
+
+## 14. Signal 8: parametric income protection for gig riders during typhoons (Topic D, on-chain optional)
+
+The pitch. When Hong Kong hoists Typhoon Signal 8 or Shenzhen issues a red typhoon warning, delivery platforms stop and riders earn nothing. The agent runs a parametric cover: it reads the official warning feed, checks each rider's recent activity from platform logs, computes lost income from that rider's own last four weeks, and pays out automatically. No claim form.
+
+Why Shenzhen. Both cities shut down several times a year. Shenzhen's warning rules suspend work, transport and business under a red typhoon warning. Riders are the ones who lose the day.
+
+Demo moment. A live map. The warning fires. Three hundred riders paid in one minute, each with a logged computation and, if on chain, a hash. Then a spoofed warning from a fake source arrives and the agent ignores it because the trigger must come from the official feed.
+
+Security story. The oracle is the product. Official source only, signed and cached. Caps per rider and per event. Fake activity logs and a spoofed feed are the attack tests. The agent cannot move money without a verified trigger, enforced in code, and on chain if we deploy the pool as a contract.
+
+Inclusion angle. Gig workers with no sick pay and no savings. The strongest inclusion story after Hidden Coverage.
+
+Build risk. Medium. Underwriting needs a licence, so frame the agent as the claims engine for a licensed insurer's product or a platform's hardship fund, and say so in the self-assessment. Reuses the delivery rider research from the Hong Kong hackathon (check IP with that team).
+
 ## What every idea shares
 
 See SECURITY.md. Permission tiers in code. The model never holds a key. A live injection attack blocked on camera. Numbers from tools. Twenty attack tests in the repo.
