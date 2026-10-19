@@ -351,19 +351,23 @@ body:has(.landing-root) .landing-root { margin: 0; }
 
 
 /* Top bar, after the reference site: full width, the page's own base colour (near white in light,
-   near black in dark) so a bounce above it is seamless, hairline underneath, small uppercase links
-   that darken (or brighten) when active, a gradient progress line on the bottom edge. */
+   near black in dark) so a bounce above it is seamless, hairline underneath, pill links (red on the
+   current page, soft gold on hover), a gradient progress line on the bottom edge. */
 .navbar { background: var(--color-paper); border-bottom: 1px solid rgba(31,26,23,0.1); transform: translateZ(0); will-change: transform; }
 :root[data-theme="dark"] .navbar { border-bottom-color: rgba(255,255,255,0.09); }
-.navbar .navlink { font-size: 11.5px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-muted); transition: color 150ms; }
-.navbar .navlink:hover, .navbar .navlink[aria-current="page"] { color: var(--color-ink); }
+.navbar .navlink { position: relative; isolation: isolate; border-radius: 999px; padding: 0.45rem 0.95rem; font-size: 14px; font-weight: 600; color: var(--color-ink-2); transition: color 160ms; }
+.navbar .navlink::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: linear-gradient(135deg, var(--color-seal), #d94a3f); opacity: 0; transform: scale(0.85); transition: opacity 200ms, transform 220ms cubic-bezier(.2,.9,.3,1.2); }
+.navbar .navlink:hover { color: var(--color-ink); }
+.navbar .navlink:not([aria-current="page"]):hover::before { opacity: 0.16; transform: scale(1); background: var(--color-gold); }
+.navbar .navlink[aria-current="page"] { color: #fff; }
+.navbar .navlink[aria-current="page"]::before { opacity: 1; transform: scale(1); box-shadow: 0 8px 20px -10px rgba(184,50,42,0.8), inset 0 0 0 1px rgba(201,162,39,0.5); }
 .navbar .navbar-brand { color: var(--color-ink); }
 .navbar-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, var(--color-seal), var(--color-gold)); transition: transform 80ms linear; }
 .navbar .cjk-serif { letter-spacing: 0.04em; }
 .navbar-right .lang-toggle, .navbar-right .theme-toggle { height: 34px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--color-line); }
 .navbar-right .lang-toggle { width: auto; padding: 0 0.7rem; }
 .navbar-right .theme-toggle { width: 34px; }
-@media (max-width: 640px) { .navbar nav { gap: 0.9rem; justify-content: flex-start; } }
+@media (max-width: 640px) { .navbar nav { gap: 0.1rem; justify-content: flex-start; } .navbar .navlink { padding: 0.35rem 0.6rem; font-size: 13px; } }
 
 /* Scroll reveal (components/ScrollReveal.tsx): rise and fade in once, siblings in turn. */
 .rv { opacity: 0; transform: translateY(22px); transition: opacity 650ms cubic-bezier(.2,.7,.2,1), transform 750ms cubic-bezier(.2,.7,.2,1); }

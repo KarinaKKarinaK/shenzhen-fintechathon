@@ -37,7 +37,7 @@ export function Rail() {
           <Seal size={28} />
           <span className="navbar-brand hidden text-[19px] font-semibold tracking-tight sm:inline">Zishi <span lang="zh-Hans" className="cjk-serif">自食</span></span>
         </Link>
-        <nav className="flex min-w-0 flex-1 items-center justify-center gap-5 overflow-x-auto px-2" aria-label={t("rail.sections")}>
+        <nav className="flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto px-2" aria-label={t("rail.sections")}>
           {items.map((it) => {
             const on = path === it.href;
             return <Link key={it.href} href={it.href} aria-current={on ? "page" : undefined} className="navlink whitespace-nowrap">{t(it.label)}</Link>;
