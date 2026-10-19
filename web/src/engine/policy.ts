@@ -49,6 +49,9 @@ export const DEMO = {
   leaseRate: 0.4, // instalment share of each fee
   energyPerMu: 0.6, // charging cost per mu sprayed
   reserveRule: 30, // minimum margin per job
+  budgetMu: 55, // mu the drone can spray on one charge
+  chargesPerDay: 4, // charges available in a working day
+  dayMinutes: 480, // the working day
 };
 
 // Permission tiers as data, for the dashboard.

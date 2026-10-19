@@ -4,10 +4,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { runAll, runBenign, ATTACKS } from "./attacks";
-import { PolicyEngine, DEFAULT_POLICY } from "./policy";
+import { PolicyEngine, DEFAULT_POLICY, DEMO } from "./policy";
 import { SLASH_RULES } from "./contracts";
-import { sign } from "./agents";
+import { sign, economics } from "./agents";
 import { frame, PREAMBLE } from "./framing";
+import { METRICS as GATE } from "./ml/gate";
+import { METRICS as PLAUS } from "./ml/plausibility";
+import { run } from "./ratchet";
+import { honestLog, plausible } from "./oracle";
+import { plan } from "./planner";
 
 async function main() {
   const results = await runAll();
@@ -30,6 +35,22 @@ async function main() {
   const removed = ["NoCoverBound", "UnconfirmedClaim", "coverBound", "bindCover"].filter((r) => engineSrc.includes(r));
   if (removed.length) { console.error("removed rules still referenced:", removed); process.exit(1); }
   console.log(`rules: ${SLASH_RULES.join(", ")} each have a contract case; cover and unconfirmed-claim rules are gone`);
+
+  // Learned components, each measured on a held out set picked by a fixed seed.
+  console.log("message classifier (held out):", GATE);
+  console.log("telemetry anomaly model (held out):", PLAUS);
+  const ratchet = run(60);
+  console.log(`strategy ratchet: baseline ${ratchet.baselineProfit}, best ${ratchet.bestProfit} after ${ratchet.steps.length} steps, ${ratchet.steps.filter((s) => s.kept).length} kept`);
+  if (GATE.accuracy < 0.9) { console.error("classifier accuracy below 0.9", GATE); process.exit(1); }
+  if (PLAUS.detectionRate < 0.9) { console.error("anomaly detection rate below 0.9", PLAUS); process.exit(1); }
+  if (PLAUS.falseAlarmRate > 0.1) { console.error("anomaly false alarm rate above 0.1", PLAUS); process.exit(1); }
+  if (!(ratchet.bestProfit >= ratchet.baselineProfit)) { console.error("ratchet went backwards", ratchet); process.exit(1); }
+  const honest = honestLog("job-201", 60);
+  if (!honest.ok) { console.error("honest flight log flagged", honest); process.exit(1); }
+  const faked = plausible("job-204", 2400, 400, 2, 50);
+  if (faked.ok) { console.error("faked flight log not flagged", faked); process.exit(1); }
+  const day = plan({ jobs: [{ id: "a", title: "a", fee: 240, mu: 60, distanceM: 300, windowMin: 480 }, { id: "b", title: "b", fee: 60, mu: 20, distanceM: 300, windowMin: 480 }], budgetMu: 55, charges: 2, dayMinutes: 480, eco: (fee, mu) => economics(fee, DEMO.leaseRate, mu * DEMO.energyPerMu, DEMO.reserveRule), reason: (k) => k });
+  if (day.method !== "knapsack" || day.usedMu !== 60 || day.items.find((i) => i.jobId === "b")?.why !== "below") { console.error("planner result unexpected", day); process.exit(1); }
 
   // Architecture check: the model layer cannot reach keys, chain, contracts, policy or signing.
   const src = fs.readFileSync(path.join(__dirname, "model.ts"), "utf8");

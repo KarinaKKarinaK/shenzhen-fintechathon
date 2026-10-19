@@ -11,7 +11,8 @@ import { PolicyEngine, DEFAULT_POLICY, DEMO, short } from "./policy";
 import { frame, judge } from "./framing";
 import { intentHash } from "./keys";
 import { honestLog, plausible } from "./oracle";
-import { CURRENCY, type Actor, type ChainTx, type Economics, type EngineEvent, type Intent, type Job, type MachineState, type PlanItem } from "./types";
+import { plan } from "./planner";
+import { CURRENCY, type Actor, type ChainTx, type Economics, type EngineEvent, type Intent, type Job, type MachineState } from "./types";
 import { ATTACKS, runCase } from "./attacks";
 import { tr, type Lang, type TrKey, type TrVars } from "./i18n";
 
@@ -46,7 +47,7 @@ class Settler {
 
 function gateEvent(from: Actor, text: string, relation: "owner" | "counterparty" | "unknown", label: string): Extract<EngineEvent, { t: "gate" }> {
   const v = judge(text, relation);
-  return { t: "gate", from, action: v.action, categories: v.categories, reason: v.reason, framed: frame(label, relation, text), at: now() };
+  return { t: "gate", from, action: v.action, categories: v.categories, reason: v.reason, risk: v.risk, framed: frame(label, relation, text), at: now() };
 }
 
 const facts = (eco: Economics) => ({ fee: eco.fee, instalment: eco.instalment, energy: eco.energy, rail: eco.rail, margin: eco.margin, reserveRule: eco.reserveRule, clears: eco.clears, currency: eco.currency });
@@ -95,7 +96,7 @@ function baseMachine(): MachineState {
   };
 }
 
-type Field = { id: string; title: string; crop: "rice" | "maize" | "passion fruit"; mu: number; rate: number; from: [number, number]; to: [number, number]; tamper?: boolean; last?: boolean };
+type Field = { id: string; title: string; crop: "rice" | "maize" | "passion fruit"; mu: number; rate: number; distanceM: number; from: [number, number]; to: [number, number]; tamper?: boolean; last?: boolean };
 
 export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   const d = opts.fast ? 60 : 1100;
@@ -130,21 +131,30 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
   // The title is shown in the chosen language. The farmer's message to the agent stays English:
   // the gate and the reader parse English, and the benign set in attacks.ts checks those exact texts.
   const titleOf = (crop: Field["crop"], mu: number, l: Lang) => tr(l, "job.title", { mu, crop: { k: `crop.${crop}` as TrKey } });
+  // job-205 clears the reserve rule but does not fit the day's battery budget next to the others;
+  // the knapsack declines it and it is never messaged.
   const fields: Field[] = [
-    { id: "job-201", crop: "rice", mu: 60, rate: 4, from: [-4, -2], to: [4, -2], last: true },
-    { id: "job-202", crop: "maize", mu: 20, rate: 3, from: [-4, 0], to: [-1, 0] },
-    { id: "job-203", crop: "passion fruit", mu: 100, rate: 15, from: [-4, 2], to: [4, 2] },
-    { id: "job-204", crop: "rice", mu: 50, rate: 5, from: [4, 0], to: [-4, 0], tamper: true },
+    { id: "job-201", crop: "rice", mu: 60, rate: 4, distanceM: 300, from: [-4, -2], to: [4, -2], last: true },
+    { id: "job-202", crop: "maize", mu: 20, rate: 3, distanceM: 250, from: [-4, 0], to: [-1, 0] },
+    { id: "job-203", crop: "passion fruit", mu: 100, rate: 15, distanceM: 500, from: [-4, 2], to: [4, 2] },
+    { id: "job-204", crop: "rice", mu: 50, rate: 5, distanceM: 400, from: [4, 0], to: [-4, 0], tamper: true },
+    { id: "job-205", crop: "maize", mu: 30, rate: 5, distanceM: 900, from: [1, 3], to: [4, 3] },
   ].map((f) => ({ ...f, title: titleOf(f.crop as Field["crop"], f.mu, lang) }) as Field);
-  const ecoOf = (f: Field) => economics(round(f.mu * f.rate), lease.rate, round(f.mu * DEMO.energyPerMu), m.reserve);
+  const ecoAt = (fee: number, mu: number) => economics(fee, lease.rate, round(mu * DEMO.energyPerMu), m.reserve);
+  const ecoOf = (f: Field) => ecoAt(round(f.mu * f.rate), f.mu);
 
-  // Task planning: rank every listing by margin per mu, decline what does not clear the reserve rule.
-  const ranked = fields.map((f) => ({ f, eco: ecoOf(f) })).sort((a, b) => b.eco.margin / b.f.mu - a.eco.margin / a.f.mu);
-  let order = 0;
-  const plan: PlanItem[] = ranked.map(({ f, eco }) => ({ jobId: f.id, title: f.title, fee: eco.fee, margin: eco.margin, marginPerMu: round(eco.margin / f.mu), clears: eco.clears, reason: t(eco.clears ? "plan.clears" : "plan.below", { margin: eco.margin, rule: eco.reserveRule }), order: eco.clears ? ++order : null }));
-  yield { t: "plan", items: plan, at: now() };
+  // Task planning: a knapsack over the day. Jobs below the reserve rule are declined outright,
+  // the rest compete for the battery budget and the day's minutes, maximising margin.
+  const dayPlan = plan({
+    jobs: fields.map((f) => ({ id: f.id, title: f.title, fee: round(f.mu * f.rate), mu: f.mu, distanceM: f.distanceM, windowMin: DEMO.dayMinutes })),
+    budgetMu: DEMO.budgetMu, charges: DEMO.chargesPerDay, dayMinutes: DEMO.dayMinutes, eco: ecoAt,
+    reason: (k, v) => t(`plan.${k}` as TrKey, v),
+  });
+  yield { t: "plan", items: dayPlan.items, budgetMu: dayPlan.budgetMu, usedMu: dayPlan.usedMu, charges: dayPlan.charges, chargesUsed: dayPlan.chargesUsed, totalMargin: dayPlan.totalMargin, usedMinutes: dayPlan.usedMinutes, method: dayPlan.method, at: now() };
   await wait(d);
   yield* s.tick();
+  const fieldOf = new Map(fields.map((f) => [f.id, f]));
+  const ranked = dayPlan.items.map((p) => ({ f: fieldOf.get(p.jobId)!, p })).map(({ f, p }) => ({ f, p, eco: ecoOf(f) }));
 
   // Moment 4, run between the last two jobs: an injected message, a blocked intent in the log,
   // a party proves it, the vendor bond pays.
@@ -176,7 +186,9 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield* s.tick();
   }
 
-  const sequence = [...ranked.filter((r) => !r.eco.clears), ...ranked.filter((r) => r.eco.clears)];
+  // Below the reserve rule first (moment 1), then the accepted jobs in knapsack order. A job the
+  // knapsack declined for budget or time is never messaged.
+  const sequence = [...ranked.filter((r) => r.p.why === "below"), ...ranked.filter((r) => r.p.accepted).sort((a, b) => (a.p.order ?? 99) - (b.p.order ?? 99))];
   for (const { f, eco } of sequence) {
     if (f.last) yield* slashMoment("job-203");
     const fee = eco.fee;
@@ -194,7 +206,7 @@ export async function* fleet(opts: RunOpts = {}): AsyncGenerator<EngineEvent> {
     yield { t: "job", job: { ...job, status: "locked" }, at: now() };
     yield tx(await board.post(job));
     const u = await understand(text);
-    yield { t: "understood", jobId: job.id, fields: { task: u.task, window: u.window || job.window, fee: u.fee, geofence: u.geofence || job.geofence, payeeName: u.payeeName }, source: u.source, at: now() };
+    yield { t: "understood", jobId: job.id, fields: { task: u.task, window: u.window || job.window, fee: u.fee, geofence: u.geofence || job.geofence, payeeName: u.payeeName }, source: u.source, confidence: u.confidence, at: now() };
     yield { t: "economics", jobId: job.id, eco, at: now() };
     const txt = await explain("machine", facts(eco), t(eco.clears ? "m.accept" : "m.decline", { fee, margin: eco.margin, inst: eco.instalment, energy: eco.energy, rail: eco.rail, rule: eco.reserveRule }), lang);
     m.status = "negotiating"; yield emitM();

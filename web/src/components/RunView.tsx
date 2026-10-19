@@ -1,9 +1,10 @@
 "use client";
+import { captureDemoToken } from "./demoToken";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Scene from "./SceneLoader";
 import { useRun } from "./useRun";
-import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PlanTable, PolicyCard, ProofCard, TelemetryCard, VendorBond } from "./Panels";
+import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, LeaseBar, Narration, PlanCard, PlanTable, PolicyCard, ProofCard, TelemetryCard, VendorBond } from "./Panels";
 import { BondHistory, CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
 import { Stages } from "./Stages";
 import { Ticker } from "./Ticker";
@@ -26,7 +27,10 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const breached = useMemo(() => state.proofs.some((p) => p.rule === "geofence") || slashTxs.some((x) => /geofence/i.test(x.label)), [state.proofs, slashTxs]);
   const slashed = slashTxs.length > 0;
   const elapsed = state.events.length ? (state.events[state.events.length - 1].at - state.events[0].at) / 1000 : 0;
-  const chainMode = state.txs[0]?.simulated === false ? "Base Sepolia" : R.simulated;
+  const [realReady, setRealReady] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setRealReady(captureDemoToken()); }, []);
+  const chainMode = state.txs[0]?.simulated === false ? "Base Sepolia" : realReady && state.txs.length === 0 ? "Base Sepolia, armed" : R.simulated;
   const modelMode = state.model ?? (state.messages.some((x) => x.source === "model") ? "Claude" : R.scripted);
   const frozen = m?.status === "frozen";
   const lastJob = Object.values(state.jobs).slice(-1)[0];
@@ -142,7 +146,10 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
             <section className="card p-4"><VendorBond m={m} /></section>
           </div>
 
-          <section className="card mt-4 p-4"><h2 className="mb-3 text-sm font-semibold">{R.jobs}</h2><PlanTable plan={state.plan} /><JobList jobs={state.jobs} /></section>
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(300px,1fr)_minmax(0,2fr)]">
+            <section className="card p-4"><PlanCard plan={state.plan} meta={state.planMeta} /></section>
+            <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.jobs}</h2><PlanTable plan={state.plan} /><JobList jobs={state.jobs} /></section>
+          </div>
 
           <aside className="aurora aurora-black card-dark mt-4 flex flex-col p-4" style={{ maxHeight: 480 }}>
             <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">{R.eventStream}</h2><Link href="/app/evidence" className="mono text-white/60 underline decoration-gold">{R.evidenceLink}</Link></div>

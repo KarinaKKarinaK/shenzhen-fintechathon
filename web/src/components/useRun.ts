@@ -1,4 +1,5 @@
 "use client";
+import { demoHeaders } from "./demoToken";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { ChainTx, EngineEvent, Intent, Job, MachineState, PolicyDecision, Side } from "@/engine/types";
 import { translate, type Lang } from "@/i18n/LangProvider";
@@ -6,11 +7,13 @@ import { translate, type Lang } from "@/i18n/LangProvider";
 // Loose shapes for the events the backend is adding. Every field is optional so the page
 // renders even when an event arrives without it.
 export type Gate = { action?: string; categories?: string[]; reason?: string; framed?: string; preamble?: string; messageIndex?: number; index?: number };
-export type Understood = { jobId?: string; task?: string; window?: string; fee?: number; geofence?: string; payeeName?: string | null; hadAddress?: boolean; addressInText?: boolean; by?: string; source?: string };
-export type PlanItem = { rank?: number; order?: number | null; jobId?: string; title?: string; fee?: number; marginPerMu?: number; margin?: number; reason?: string; declined?: boolean; clears?: boolean };
+export type Understood = { jobId?: string; task?: string; window?: string; fee?: number; geofence?: string; payeeName?: string | null; hadAddress?: boolean; addressInText?: boolean; by?: string; source?: string; confidence?: number };
+export type PlanItem = { rank?: number; order?: number | null; jobId?: string; title?: string; fee?: number; mu?: number; marginPerMu?: number; margin?: number; reason?: string; declined?: boolean; accepted?: boolean; clears?: boolean };
+// The knapsack planner adds these to the plan event.
+export type PlanMeta = { budgetMu?: number; usedMu?: number; charges?: number; totalMargin?: number; method?: string };
 export type Solvency = { jobId?: string; worst?: number; bond?: number; covers?: boolean; capped?: boolean };
 export type Econ = { jobId?: string; fee?: number; instalment?: number; energy?: number; cover?: number; rail?: number; margin?: number; reserveRule?: number; clears?: boolean };
-export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean };
+export type Telemetry = { jobId?: string; trackM?: number; track?: number; swath?: number; seconds?: number; areaSupported?: number; areaClaimed?: number; ratio?: number; ok?: boolean; held?: boolean; z?: number; reasons?: string[] };
 export type Proof = { intentId?: string; intentHash?: string; jobId?: string; rule?: string; bond?: string; bondKind?: string; signer?: string; slash?: number; bounty?: number; treasury?: number; harmed?: number; paidTo?: string[]; shadow?: boolean; submitterAddr?: string; submitter?: string; isParty?: boolean; at?: number };
 // The engine is adding these. Every field is optional so the page renders before they arrive.
 export type TxView = ChainTx & { status?: "pending" | "confirmed" | "finalised"; confirmedAt?: number; finalisedAt?: number; currency?: string; seenAt?: number };
@@ -37,6 +40,7 @@ export interface RunState {
   gates: Record<number, Gate>;
   understood: Record<string, Understood>;
   plan?: PlanItem[];
+  planMeta?: PlanMeta;
   solvency: Record<string, Solvency>;
   economics: Record<string, Econ>;
   telemetry: Record<string, Telemetry>;
@@ -98,8 +102,16 @@ function reduce(s: RunState, ev: Action): RunState {
       return { ...s, events, understood: { ...s.understood, [u.jobId ?? "last"]: u, last: u } };
     }
     case "plan": {
-      const items = (r.items ?? r.plan ?? r.jobs) as PlanItem[] | undefined;
-      return { ...s, events, plan: Array.isArray(items) ? items : s.plan };
+      // Items as one list, or as accepted and declined lists from the knapsack planner.
+      let items = (r.items ?? r.plan ?? r.jobs) as PlanItem[] | undefined;
+      if (!Array.isArray(items)) {
+        const acc = Array.isArray(r.accepted) ? (r.accepted as PlanItem[]).map((p) => ({ ...p, declined: false })) : [];
+        const dec = Array.isArray(r.declined) ? (r.declined as PlanItem[]).map((p) => ({ ...p, declined: true })) : [];
+        items = acc.length || dec.length ? [...acc, ...dec] : undefined;
+      }
+      const num = (k: string) => (typeof r[k] === "number" ? (r[k] as number) : undefined);
+      const planMeta: PlanMeta = { budgetMu: num("budgetMu"), usedMu: num("usedMu"), charges: num("charges"), totalMargin: num("totalMargin"), method: typeof r.method === "string" ? r.method : undefined };
+      return { ...s, events, plan: Array.isArray(items) ? items : s.plan, planMeta };
     }
     case "solvency": {
       const v = (r.solvency as Solvency | undefined) ?? (r as Solvency);
@@ -113,7 +125,7 @@ function reduce(s: RunState, ev: Action): RunState {
     case "telemetry": {
       const t = (r.telemetry as Record<string, unknown> | undefined) ?? r;
       const n = (k: string) => (typeof t[k] === "number" ? (t[k] as number) : undefined);
-      const v: Telemetry = { jobId: key(t.jobId, "last"), trackM: n("trackM") ?? n("track"), swath: n("swath") ?? n("swathM"), seconds: n("seconds"), areaSupported: n("areaSupported") ?? n("areaMu"), areaClaimed: n("areaClaimed") ?? n("claimedMu"), ratio: n("ratio"), ok: typeof t.ok === "boolean" ? t.ok : undefined, held: typeof t.held === "boolean" ? t.held : typeof t.ok === "boolean" ? !t.ok : undefined };
+      const v: Telemetry = { jobId: key(t.jobId, "last"), trackM: n("trackM") ?? n("track"), swath: n("swath") ?? n("swathM"), seconds: n("seconds"), areaSupported: n("areaSupported") ?? n("areaMu"), areaClaimed: n("areaClaimed") ?? n("claimedMu"), ratio: n("ratio"), ok: typeof t.ok === "boolean" ? t.ok : undefined, held: typeof t.held === "boolean" ? t.held : typeof t.ok === "boolean" ? !t.ok : undefined, z: n("z"), reasons: Array.isArray(t.reasons) ? (t.reasons as unknown[]).map(String) : undefined };
       return { ...s, events, telemetry: { ...s.telemetry, [v.jobId ?? "last"]: v, last: v } };
     }
     case "proof": {
@@ -145,7 +157,7 @@ export function useRun(scenario: Side, lang: Lang = "en") {
     const ac = new AbortController();
     abort.current = ac;
     try {
-      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { signal: ac.signal });
+      const res = await fetch(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { signal: ac.signal, headers: demoHeaders() });
       const reader = res.body!.getReader();
       const dec = new TextDecoder();
       let buf = "";

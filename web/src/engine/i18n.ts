@@ -49,6 +49,8 @@ export const T = {
   },
   "plan.clears": { en: "margin {margin} yuan clears the reserve rule of {rule} yuan", zh: "利润 {margin} 元高于 {rule} 元的保留规则" },
   "plan.below": { en: "margin {margin} yuan is below the reserve rule of {rule} yuan", zh: "利润 {margin} 元低于 {rule} 元的保留规则" },
+  "plan.budget": { en: "margin {margin} yuan clears the reserve rule, but the day's battery budget of {budget} mu earns more on other jobs", zh: "利润 {margin} 元高于保留规则，但当天 {budget} 亩的电池预算用在其他任务上收益更高" },
+  "plan.window": { en: "needs {minutes} minutes, the job's window allows {window}", zh: "需要 {minutes} 分钟，任务的时间窗口只有 {window} 分钟" },
   "n.tricked": {
     en: "Suppose the agent is tricked anyway and signs it. Every intent is committed to the log and delivered to the farmer, the pilot, the lender and the vendor before the policy engine decides. It cannot be quietly dropped.",
     zh: "假设智能体还是被骗并签了名。每一条意图在策略引擎裁决之前，都会先写入日志并送达农户、飞手、出租方和供应商，无法被悄悄丢弃。",

@@ -13,7 +13,7 @@ import { SafeByDesign, HoldsUp, OnlyHere } from "./Pillars";
 import { useLang } from "@/i18n/LangProvider";
 
 export type Limits = { payees: number; perTxCap: number; dailyCap: number; maxPerHour: number; deviationPct: number; bandLo: number; bandHi: number; floor: number };
-const STRENGTH_ICONS = ["key", "gate", "calc", "pen", "scale", "chain"];
+const STRENGTH_ICONS = ["key", "gate", "calc", "pen", "scale", "chain", "learn"];
 
 export function LandingView({ attackN, benignN, limits }: { attackN: number; benignN: number; limits: Limits }) {
   const { d, t } = useLang();

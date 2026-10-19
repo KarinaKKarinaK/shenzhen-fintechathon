@@ -1,11 +1,12 @@
 "use client";
+import { demoHeaders } from "./demoToken";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Intent, MachineState, PolicyDecision, PolicyLine, Job, Side } from "@/engine/types";
 import { DEFAULT_POLICY, short } from "@/engine/policy";
 import { ADDR } from "@/engine/keys";
 import { ruleLabel } from "@/engine/i18n";
-import type { Gate, Understood, MessageEv, PlanItem, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
+import type { Gate, Understood, MessageEv, PlanItem, PlanMeta, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
 import { timeOf, yuan } from "./money";
 import { useLang } from "@/i18n/LangProvider";
 
@@ -336,7 +337,7 @@ export function PlanTable({ plan }: { plan?: PlanItem[] }) {
         <thead><tr><th className="text-left">#</th><th className="text-left">{P.thJob}</th><th className="text-right">{P.thFee}</th><th className="text-right">{P.thMargin}</th><th className="text-left">{P.thReason}</th></tr></thead>
         <tbody>
           {plan.map((p, i) => {
-            const declined = p.declined ?? (p.clears === false || p.order === null);
+            const declined = p.declined ?? (p.accepted !== undefined ? !p.accepted : p.clears === false || p.order === null);
             return (
               <tr key={p.jobId ?? i} className={declined ? "text-muted" : ""}>
                 <td>{declined ? "-" : (p.order ?? p.rank ?? i + 1)}</td><td className={declined ? "line-through decoration-red/60" : "text-ink"}>{p.title ?? p.jobId}</td><td className="text-right tabular-nums">{p.fee === undefined ? "" : yuan(p.fee)}</td><td className="text-right tabular-nums">{yuan(p.marginPerMu ?? p.margin ?? 0, 2)}</td><td>{declined ? <span className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">{P.declined}</span> : null} {p.reason ?? ""}</td>
@@ -370,6 +371,42 @@ export function TelemetryCard({ t: tele }: { t?: Telemetry }) {
       <div className="mt-2 flex justify-between text-xs"><span>{P.supported} <b className="tabular-nums">{supported}</b> {P.mu}</span><span>{P.claimed} <b className="tabular-nums">{claimed}</b> {P.mu}</span></div>
       <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-red/15"><div className={`h-full ${held ? "bg-red" : "bg-gold"}`} style={{ width: `${pct}%` }} /></div>
       <div className="mt-1 text-xs text-muted">{held ? t("panels.teleHeld", { r: ratio.toFixed(1) }) : t("panels.teleOk", { r: ratio.toFixed(2) })}</div>
+      {typeof tele.z === "number" || tele.reasons?.length ? (
+        <div className="mt-2 border-t border-line pt-2 text-xs">
+          <div className="flex items-center justify-between"><span className="text-muted">{P.zLabel}</span><span className={`tabular-nums font-semibold ${held ? "text-red" : "text-gold-deep"}`}>{typeof tele.z === "number" ? tele.z.toFixed(2) : "?"}</span></div>
+          {tele.reasons?.length ? <ul className="mt-1 flex flex-wrap gap-1">{tele.reasons.map((r) => <li key={r} className="pill !px-1.5 !py-0.5 !text-[9px] bg-red-soft text-red">{r}</li>)}</ul> : <div className="mt-1 text-muted">{P.noReasons}</div>}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// The knapsack result: budget against used mu, charges, the jobs taken and the jobs left, expected margin.
+export function PlanCard({ plan, meta }: { plan?: PlanItem[]; meta?: PlanMeta }) {
+  const { d, t } = useLang();
+  const P = d.panels;
+  if (!plan?.length && !meta) return <div><h2 className="mb-3 text-sm font-semibold">{P.planCard}</h2><div className="text-sm text-muted">{P.planNone}</div></div>;
+  const isDeclined = (p: PlanItem) => p.declined ?? (p.accepted !== undefined ? !p.accepted : p.clears === false || p.order === null);
+  const taken = (plan ?? []).filter((p) => !isDeclined(p)).sort((a, b) => (a.order ?? a.rank ?? 0) - (b.order ?? b.rank ?? 0));
+  const left = (plan ?? []).filter(isDeclined);
+  const budget = meta?.budgetMu, used = meta?.usedMu;
+  const fill = budget ? Math.min(100, ((used ?? 0) / budget) * 100) : 0;
+  const total = meta?.totalMargin ?? taken.reduce((a, p) => a + (p.margin ?? 0), 0);
+  return (
+    <div className="text-sm">
+      <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">{P.planCard}</h2>{meta?.method ? <span className="pill bg-gold text-ink">{meta.method}</span> : null}</div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="tile !p-2"><div className="text-muted">{P.budgetMu}</div><div className="tabular-nums">{budget ?? "?"} {P.mu}</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.usedMu}</div><div className="tabular-nums">{used ?? "?"} {P.mu}</div></div>
+        <div className="tile !p-2"><div className="text-muted">{P.charges}</div><div className="tabular-nums">{meta?.charges ?? "?"}</div></div>
+      </div>
+      {budget ? <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-paper-2"><div className="h-full bg-gold" style={{ width: `${fill}%` }} /></div> : null}
+      <div className="mt-2 flex items-center justify-between text-xs"><span className="text-muted">{P.totalMargin}</span><span className="tech text-base font-bold text-gold-deep">{yuan(total, 2)}</span></div>
+      <ul className="mt-2 flex flex-col gap-1 text-xs">
+        {taken.map((p, i) => <li key={p.jobId ?? `a${i}`} className="flex gap-2"><span className="tech w-5 shrink-0 text-gold-deep">{p.order ?? p.rank ?? i + 1}</span><span className="min-w-0 flex-1 truncate text-ink">{p.title ?? p.jobId}</span><span className="shrink-0 tabular-nums text-muted">{p.mu !== undefined ? `${p.mu} ${P.mu}, ` : ""}{yuan(p.margin ?? 0, 2)}</span></li>)}
+        {left.map((p, i) => <li key={p.jobId ?? `d${i}`} className="flex gap-2 text-muted"><span className="w-5 shrink-0 text-red">x</span><span className="min-w-0 flex-1 truncate line-through decoration-red/60">{p.title ?? p.jobId}</span><span className="shrink-0 truncate">{p.reason ?? P.declined}</span></li>)}
+      </ul>
+      <div className="mt-2 text-[11px] text-muted">{t("panels.planTaken", { a: taken.length, b: (plan ?? []).length })}</div>
     </div>
   );
 }
@@ -422,7 +459,7 @@ export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; 
   async function press() {
     setBusy(true); setErr(null);
     try {
-      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: b!.what, amount: 200, scenario, lang }) });
+      const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json", ...demoHeaders() }, body: JSON.stringify({ what: b!.what, amount: 200, scenario, lang }) });
       if (!r.ok) throw new Error(`button returned ${r.status}`);
       const j = (await r.json()) as { events?: LooseEvent[] };
       onEvents?.(j.events ?? []);

@@ -4,13 +4,14 @@ import { JudgeConsole } from "./JudgeConsole";
 import { LastRun, useAttackSet } from "./EvidenceLab";
 import { AttackGrid, naiveFell, type AttackResult } from "./AttackGrid";
 import { useLang } from "@/i18n/LangProvider";
+import { LearnedComponents } from "./Learned";
 
 const CONTRACT_NAMES = ["Bond", "JobBoard", "Lease"];
 const API_LINES: [string, string][] = [["GET", "/api/attacks"], ["GET", "/api/run?scenario=fleet&fast=1&lang=zh"], ["POST", "/api/judge"]];
 
-function Row({ title, children }: { title: string; children: ReactNode }) {
+function Row({ title, children, open }: { title: string; children: ReactNode; open?: boolean }) {
   return (
-    <details className="group border-b border-line last:border-b-0">
+    <details className="group border-b border-line last:border-b-0" open={open}>
       <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="tech text-[10px] text-red transition group-open:rotate-90">&#9656;</span>{title}</summary>
       <div className="px-4 pb-4 text-sm">{children}</div>
     </details>
@@ -52,6 +53,7 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
       </section>
 
       <section className="card mt-4">
+        <Row title={E.learnedTitle} open><p className="mb-3 text-xs text-muted">{E.learnedNote}</p><LearnedComponents /></Row>
         <Row title={E.contractsTitle}>
           <div className="overflow-x-auto">
             <table className="passbook w-full text-xs">

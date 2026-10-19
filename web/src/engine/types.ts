@@ -119,8 +119,14 @@ export interface PlanItem {
   clears: boolean;
   reason: string;
   order: number | null;
+  mu?: number;
+  minutes?: number;
+  accepted?: boolean;
+  why?: "clears" | "below" | "budget" | "window";
 }
 
+// A flight log scored by the anomaly model in ml/plausibility.ts. z is the largest absolute
+// robust z-score over the derived features, reasons names the features over the threshold.
 export interface Telemetry {
   jobId: string;
   trackM: number;
@@ -130,17 +136,21 @@ export interface Telemetry {
   claimedMu: number;
   ratio: number;
   ok: boolean;
+  batteryPct: number;
+  altVar: number;
+  z: number;
+  reasons: string[];
 }
 
 export type EngineEvent =
   | { t: "narration"; text: string; at: number }
   | { t: "agent.message"; from: Actor; to: Actor; text: string; untrusted: boolean; at: number; facts?: Record<string, string | number | boolean>; source?: "model" | "template"; grounded?: boolean }
-  | { t: "gate"; from: Actor; action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string; framed: string; at: number }
-  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number }
-  | { t: "plan"; items: PlanItem[]; at: number }
+  | { t: "gate"; from: Actor; action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string; framed: string; at: number; risk?: number }
+  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number; confidence?: number }
+  | { t: "plan"; items: PlanItem[]; at: number; budgetMu?: number; usedMu?: number; charges?: number; chargesUsed?: number; totalMargin?: number; usedMinutes?: number; method?: "knapsack" }
   | { t: "solvency"; jobId: string; worst: number; bond: number; min: number; floor: number; covers: boolean; earnIn: boolean; at: number }
   | { t: "economics"; jobId: string; eco: Economics; at: number }
-  | { t: "telemetry"; jobId: string; trackM: number; swathM: number; seconds: number; areaMu: number; claimedMu: number; ratio: number; ok: boolean; at: number }
+  | { t: "telemetry"; jobId: string; trackM: number; swathM: number; seconds: number; areaMu: number; claimedMu: number; ratio: number; ok: boolean; at: number; batteryPct?: number; altVar?: number; z?: number; reasons?: string[] }
   // The intent log: the hash is committed for the job before the policy engine decides, and the
   // full intent goes to every party listed. Blocked intents are logged too.
   | { t: "log"; jobId: string; intentHash: string; at: number; parties: string[] }

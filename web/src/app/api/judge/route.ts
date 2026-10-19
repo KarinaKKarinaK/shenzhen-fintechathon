@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const framed = frame("judge-console", "unknown", body);
   const u = await understand(body);
   const amount = u.fee > 0 ? u.fee : null;
-  const understood = { action: u.action, payeeName: u.payeeName, amount, source: u.source, droppedAddress: u.droppedAddress };
+  const understood = { action: u.action, payeeName: u.payeeName, amount, source: u.source, confidence: u.confidence, droppedAddress: u.droppedAddress };
 
   let shadow: { intent: Intent; decision: PolicyDecision } | null = null;
   if (u.action === "pay") {

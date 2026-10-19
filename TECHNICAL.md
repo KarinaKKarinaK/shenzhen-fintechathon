@@ -91,7 +91,92 @@ Lease: `instalment = min(fee * rate, balance)`; at balance zero the title moves 
 - The requester signs the confirmation with their own key.
 - Geometry: area claimed must fit distance over time at the swath width, and the track must stay inside the geofence.
 
-A lie by one side fails one of the three. A machine that inflates area fails geometry (the faked flight log in the fleet run). A requester who refuses to confirm done work is contradicted by the track and geometry and goes to the labelled arbiter. Both sides lying together is collusion, answered below.
+A lie by one side fails one of the three. A machine that inflates area fails geometry (the faked flight log in the fleet run, scored by the anomaly model below). A requester who refuses to confirm done work is contradicted by the track and geometry and goes to the labelled arbiter. Both sides lying together is collusion, answered below.
+
+## Learned and optimising components
+
+Four components learn or search instead of following a fixed rule. None of them moves money. Each one feeds a score or a plan into the same deterministic path: gate, policy engine, intent log, contracts. Every number they report is computed at module load or at request time from data the agent cannot edit, and the UI labels it as such.
+
+### Pipeline
+
+```mermaid
+flowchart TD
+    M[Inbound message] --> F[framing.ts: escape and wrap as relay-message]
+    F --> R[Gate rules: pass, redact, hold, refuse]
+    F --> C[ml/gate.ts classifier: p attack]
+    R --> G{Combine}
+    C --> G
+    G -->|rules pass and p above 0.8| H[hold: classifier flagged]
+    G -->|pass| U[understand: model with Zod schema, or rules reader]
+    U --> P[planner.ts: knapsack over the day]
+    P --> E[agents.ts economics and sign]
+    E --> L[IntentLog commit and deliver]
+    L --> PE[policy.ts PolicyEngine.evaluate]
+    PE -->|allow| K[contracts.ts mirrors or chain.ts]
+    PE -->|deny or escalate| X[logged, nothing moves]
+    T[Telemetry] --> O[oracle.ts]
+    O --> Z[ml/plausibility.ts: robust z]
+    Z --> K
+    S[ratchet.ts: strategy search] -.->|reserveRule, minMarginPerMu, maxJobsPerCharge| P
+```
+
+### 1. Message classifier (`web/src/engine/ml/gate.ts`)
+
+What it is. A logistic regression in plain TypeScript, no dependencies, trained at module load. Features are character 3-grams hashed into 2^14 buckets, so English and Chinese get the same treatment without a tokenizer.
+
+Data. `web/src/engine/ml/corpus.ts`: the 52 attack texts from `attacks.ts`, at least 60 handwritten attack paraphrases in English and Chinese, and at least 80 benign messages in English and Chinese (job posts, confirmations, questions, small talk). A fixed seed holds out 25 percent as the test split; the model never sees it in training.
+
+Interface. `classify(text)` returns `{ p, label, topFeatures }`. `METRICS` holds `{ trainN, testN, accuracy, precision, recall, f1, falseAlarmRate, seed }`, all computed on the held out split.
+
+How it joins the gate. The rules in `framing.ts` still decide pass, redact, hold or refuse. The classifier adds a risk score. When the rules pass but `p > 0.8`, the action becomes hold with reason "classifier flagged". `selfcheck.ts` requires all 52 attacks blocked and all benign messages passing; the threshold and the corpus are tuned until that holds.
+
+Where it shows. Evidence page, "Learned components" row, Message classifier card: the metrics, a small bar for precision, recall and f1, and the held out note. The dashboard's four numbers row adds classifier f1. The understood event already carries `source: "model" | "rules"` and gains a `confidence` from 0 to 1.
+
+What it is not. Not a replacement for the rules, which keep the last word on refuse. Not trained on live traffic. Not a general language model.
+
+### 2. Telemetry anomaly model (`web/src/engine/ml/plausibility.ts`)
+
+What it is. A robust z-score model over four derived features of a flight: area ratio (claimed mu against track length times swath), speed, battery per mu, altitude variance. Each feature gets a median and a median absolute deviation; a flight's score is the largest absolute robust z across the four.
+
+Data. 2000 synthetic flights from physical rules with noise, fixed seed: track length, seconds, swath, claimed mu, battery used, altitude variance. 15 percent are tampered: claimed mu inflated, replayed track, impossible speed, battery too low for the distance. The tamper labels are used only to measure the model, never to fit it.
+
+Interface. `score(flight)` returns `{ z, ok, reasons }`. `METRICS` holds `{ n, tampered, detectionRate, falseAlarmRate, threshold, seed }`.
+
+How it joins the oracle. `oracle.ts` calls `score()` instead of the single area ratio check. The telemetry event gains `z` and `reasons`. A flight that fails is held, as before; the hold now names which feature failed.
+
+Where it shows. Evidence page, Telemetry anomaly model card: detection rate, false alarm rate, threshold. In the live demo Details section the telemetry card shows `z` and the reasons.
+
+What it is not. Not trained on real drone logs. It catches the four tamper patterns it was built to catch and says so in the metrics.
+
+### 3. Day planner (`web/src/engine/planner.ts`)
+
+What it is. A bounded knapsack solved by dynamic programming. Input: candidate jobs (fee, mu, field distance, window), a battery budget in mu per charge, charges available, and the `economics()` function. It maximises total margin subject to the mu per charge and the day's time. This replaces the greedy ranking that `scenarios.ts` used.
+
+Interface. The plan event keeps its existing fields and adds `{ budgetMu, usedMu, charges, totalMargin, method: "knapsack" }`, with an ordered list of accepted and declined jobs, each with a reason.
+
+Where it shows. Live demo Details section, Plan card: budget mu, used mu, accepted and declined with reasons, total margin.
+
+What it is not. Not learned. It is exact for the inputs it is given and does not predict demand. The reserve rule is still checked per job by `economics()` after the plan, so the plan cannot accept a job the policy would decline.
+
+### 4. Strategy ratchet (`web/src/engine/ratchet.ts`)
+
+What it is. Hill climbing over a strategy `{ reserveRule, minMarginPerMu, maxJobsPerCharge, acceptLowFeeIfIdle }`. A frozen eval simulates one week of jobs from a fixed seed and returns profit after instalments. The reserve rule is a hard constraint: a strategy that breaks it scores negative infinity, so the search cannot trade safety for profit.
+
+Search. N steps, default 60, with a fixed random walk seed. Each step proposes one change and keeps it only if profit improves. Every step is logged as `{ step, proposal, profit, kept }`.
+
+Interface. `run(steps)` returns `{ steps, best, baselineProfit, bestProfit }`. `GET /api/ratchet?steps=60` returns the same and caches the result per steps value in module memory. The eval is a separate function the strategy has no access to.
+
+Where it shows. Evidence page, Strategy ratchet card: a line of profit over steps with kept steps marked gold, baseline and best as numbers, and a Run again button that calls `/api/ratchet`.
+
+What it is not. Not an overnight loop against live data. Not a model. It tunes four numbers against one frozen week, and the chart shows exactly which steps were kept.
+
+### Metrics endpoint
+
+`GET /api/metrics` returns `{ gate: METRICS, plausibility: METRICS, ratchet: { baselineProfit, bestProfit }, planner: { method }, chain: "real" | "sim", model: "real" | "scripted" }`. The Evidence page reads this once per load. Nothing on that page is typed in by hand.
+
+### What stays deterministic
+
+The classifier and the anomaly model only raise holds. The planner only orders work. The ratchet only moves four parameters inside the reserve rule. The policy engine, the intent log and the contracts are unchanged and still check every signed intent against the same rules as before.
 
 ## Demo units
 

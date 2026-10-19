@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Ticker } from "./Ticker";
 import { yuan } from "./money";
 import { useLang } from "@/i18n/LangProvider";
+import { pct, useMetrics } from "./Learned";
 
 // Which attack cases exercise each policy field.
 const EXERCISED: Record<string, string> = { allowlist: "2, 9, 12, 19", perTxCap: "7, 15", dailyCap: "8", rateBand: "5", maxPerHour: "6", deviationPct: "3, 5", geofences: "20", coverRequired: "20" };
@@ -16,6 +17,8 @@ export function DashboardView({ attackN, blocked, total, byLayer, policy, allowl
   const { d, t } = useLang();
   const D = d.dashboard;
   const [more, setMore] = useState(false);
+  const { metrics, state } = useMetrics();
+  const f1 = pct(metrics?.gate?.f1) ?? (state === "loading" ? "..." : d.run.na);
   const fields = D.fields as Record<string, string>;
   const tiles = [
     { href: "/app/fleet", title: D.liveTitle, body: D.liveBody },
@@ -26,13 +29,14 @@ export function DashboardView({ attackN, blocked, total, byLayer, policy, allowl
     [D.kpis.perTx, yuan(caps.perTx)],
     [D.kpis.daily, yuan(caps.daily)],
     [D.kpis.band, t("landing.chips.band", { lo: Math.round(caps.band[0] * 100), hi: Math.round(caps.band[1] * 100) })],
+    [D.kpis.f1, f1],
   ];
   return (
     <div className="mx-auto max-w-[1500px]">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><div className="tech text-[11px] tracking-[0.25em] text-red">自食其力 ZISHI</div><h1 className="display text-4xl md:text-5xl">{D.title}</h1></div><span className="pill border border-line bg-white text-ink-2">{t("dashboard.blockedNow", { b: blocked, n: total })}</span></div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {kpis.map(([k, v]) => <div key={k} className="tile"><div className="text-xs text-muted">{k}</div><div className="kpi mt-1 tabular-nums">{v}</div></div>)}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        {kpis.map(([k, v]) => <div key={k} className="tile"><div className="text-xs text-muted">{k}</div><div className="kpi mt-1 tabular-nums">{v}</div>{k === D.kpis.f1 ? <div className="mt-0.5 text-[10px] text-muted">{D.kpis.f1Sub}</div> : null}</div>)}
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
