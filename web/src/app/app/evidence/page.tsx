@@ -18,7 +18,7 @@ export default function Page() {
         <div className="card p-4"><div className="text-xs text-muted">Model mode</div><div className="mt-1 text-sm">{process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY ? "Model writes the explanations. Decisions stay in code." : "Scripted explanations. Decisions in code. Set an API key to let the model write the text."}</div></div>
       </div>
 
-      <section className="grain grain-gold card mt-4 p-5"><JudgeConsole /></section>
+      <section className="aurora aurora-cream card mt-4 p-5"><JudgeConsole /></section>
 
       <section className="card mt-4 p-4">
         <h2 className="mb-3 text-sm font-semibold">Attack results</h2>

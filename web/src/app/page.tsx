@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Hero3D } from "@/components/Hero3D";
-import { Logo } from "@/components/Logo";
+import { Logo, Mark } from "@/components/Logo";
 import { Ticker } from "@/components/Ticker";
 import { Fan } from "@/components/Fan";
 
@@ -38,11 +38,19 @@ export default function Home() {
 
       <div className="mt-4"><Ticker /></div>
 
+      <section className="aurora cut mt-4 grid min-h-[260px] place-items-center p-8">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Mark size={84} />
+          <div className="display text-3xl md:text-4xl">JiXin, machine credit</div>
+          <p className="max-w-lg text-sm text-white/80">A wallet that puts the machine's own money at risk, so a lender can trust a drone, a robot or an agent with a loan. Built for the WeBank panel in WeBank's own vocabulary.</p>
+        </div>
+      </section>
+
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         {[["20", "attack cases blocked, as proof"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l]) => (<div key={l} className="tile"><div className="kpi">{v}</div><div className="mt-1 text-xs text-muted">{l}</div></div>))}
       </div>
 
-      <section className="grain grain-black card-dark cut mt-4 p-6">
+      <section className="aurora aurora-black card-dark cut mt-4 p-6">
         <div className="flex flex-wrap items-end justify-between gap-2"><h2 className="display text-2xl text-white">Drones first. Where else it applies</h2><span className="tech text-[11px] tracking-[0.2em] text-white/60">CLICK A CARD</span></div>
         <Fan items={uses} />
       </section>
@@ -52,13 +60,13 @@ export default function Home() {
           <h2 className="display text-2xl">What the competition requires</h2>
           <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">{requirements.map((r) => <li key={r} className="cut-sm bg-paper-2 px-3 py-2 text-sm text-ink-2">{r}</li>)}</ul>
         </div>
-        <div className="grain grain-gold card p-5">
+        <div className="aurora aurora-gold card p-5 text-ink">
           <h2 className="display text-2xl">How it scores</h2>
-          <ul className="mt-3 grid grid-cols-2 gap-2">{scoring.map(([w, n, h]) => <li key={n} className="cut-sm bg-white/85 p-3 backdrop-blur"><div className="kpi text-red">{w}</div><div className="mt-1 text-sm font-bold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
+          <ul className="mt-3 grid grid-cols-2 gap-2">{scoring.map(([w, n, h]) => <li key={n} className="cut-sm bg-white/88 p-3 backdrop-blur"><div className="kpi text-red">{w}</div><div className="mt-1 text-sm font-bold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
         </div>
       </section>
 
-      <section className="grain grain-red card-dark cut mt-4 p-6 text-white">
+      <section className="aurora card-dark cut mt-4 p-6 text-white">
         <div className="flex flex-wrap items-end justify-between gap-3"><h2 className="display text-2xl">What no other entry has</h2><span className="tech text-[11px] tracking-[0.2em] text-white/70">ABOUT 150 PUBLIC ENTRIES READ</span></div>
         <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">{firsts.map((f) => <li key={f} className="cut-sm bg-white/10 px-3 py-2 text-sm backdrop-blur">{f}</li>)}</ul>
         <div className="mt-5 flex gap-2"><Link href="/app" className="btn btn-gold">Open mission control</Link><a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.12)", color: "white" }}>Design and research</a></div>

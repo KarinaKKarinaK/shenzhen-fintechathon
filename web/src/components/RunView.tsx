@@ -45,7 +45,7 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)]">
-        <section className="grain card cut relative" style={{ minHeight: 560 }}>
+        <section className="aurora aurora-cream card cut relative" style={{ minHeight: 560 }}>
           <span className="bracket left-3 top-3 z-10 border-t border-l" /><span className="bracket right-3 top-3 z-10 border-t border-r" /><span className="bracket bottom-3 left-3 z-10 border-b border-l" /><span className="bracket bottom-3 right-3 z-10 border-b border-r" />
           <div className="absolute inset-0 overflow-hidden"><Scene side={side} machine={m} txs={state.txs} jobs={state.jobs} breached={breached} /></div>
           <div className="pointer-events-none absolute left-4 top-4 flex gap-2">
@@ -61,9 +61,9 @@ export function RunView({ side, title, intro }: { side: Exclude<Side, "attack">;
           </div>
         </section>
 
-        <aside className="card-dark flex flex-col p-4" style={{ maxHeight: 560 }}>
+        <aside className="aurora aurora-black card-dark flex flex-col p-4" style={{ maxHeight: 560 }}>
           <div className="mb-2 flex items-center justify-between"><h2 className="tech text-[11px] tracking-[0.2em] text-gold">EVENT STREAM</h2><span className="mono text-white/60">{state.events.length} events, {elapsed.toFixed(1)} s</span></div>
-          <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/40 p-3"><EventStream events={state.events} dark /></div>
+          <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-black/55 p-3 backdrop-blur-sm"><EventStream events={state.events} dark /></div>
         </aside>
       </div>
 

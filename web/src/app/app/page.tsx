@@ -29,9 +29,9 @@ export default function Page() {
         ))}
       </ol>
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.4fr]">
-        <section className="grain grain-gold card p-5">
+        <section className="aurora aurora-gold card p-5 text-ink">
           <h2 className="text-lg font-bold">The bond rail</h2>
-          <p className="mt-1 text-sm text-ink-2">Lock, earn, work, slash by proof, own. Four contracts' worth of rules in one loop.</p>
+          <p className="mt-1 text-sm text-ink/80">Lock, earn, work, slash by proof, own. Four contracts' worth of rules in one loop.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">{tiles.map((t) => (<Link key={t.href} href={t.href} className="cut-sm bg-white/85 p-3 backdrop-blur transition hover:bg-white"><div className="font-semibold">{t.title}</div><div className="text-xs text-ink-2">{t.body}</div></Link>))}</div>
         </section>
         <section className="card p-5">
