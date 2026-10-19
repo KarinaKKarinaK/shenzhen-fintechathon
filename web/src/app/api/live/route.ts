@@ -4,11 +4,11 @@ import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 1800;
+export const maxDuration = 300; // the Vercel hobby plan allows at most 300 seconds
 
 // GET /api/live?scenario=fleet&lang=zh&every=8&seed=42&fast=1
 // A feed of seeded jobs through the wallet, one every `every` seconds, until the client goes
-// away or 30 minutes pass. Same seed, same jobs. One connection per IP.
+// away or 5 minutes pass (the hosting limit). Same seed, same jobs. One connection per IP.
 export async function GET(req: Request) {
   const ip = ipOf(req);
   if (!allow(ip)) return tooMany();
