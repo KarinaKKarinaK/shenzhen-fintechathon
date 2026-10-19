@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, Geist_Mono } from "next/font/google";
+import { Manrope, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Rail } from "@/components/Rail";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const instrument = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--font-instrument" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", weight: ["400", "500", "600", "700", "800"] });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: "Surety",
-  description: "A wallet for machines that earn, pay and post a bond. Built for the Shenzhen FinTechathon 2026, Topic F.",
+  title: "JiXin",
+  description: "JiXin (机信), machine credit. A wallet for machines that earn, pay and post a bond.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrument.variable} ${mono.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${manrope.variable} ${mono.variable}`}>
+      <body>
+        <div className="flex min-h-screen">
+          <aside className="sticky top-0 h-screen w-[84px] shrink-0 px-4 py-5"><div className="card flex h-full flex-col items-center"><Rail /></div></aside>
+          <main className="min-w-0 flex-1 py-5 pr-5">{children}</main>
+        </div>
+      </body>
     </html>
   );
 }

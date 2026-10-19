@@ -6,7 +6,7 @@ Deadline: 20 October 2026, 23:59 Beijing time. Registration and submission close
 
 ## The app
 
-Live: https://surety-fintechathon.vercel.app
+Live: https://jixin-fintechathon.vercel.app
 
 - Landing page: who it is for (agricultural pilots, fleets, households with a humanoid, small factories, software agents), how one task flows, the competition's requirements mapped to where they live, the scoring criteria, and what no other entry has.
 - Mission control (`/app`): a left rail with Overview, Neighbourhood, Fleet, Attack lab and Evidence.
@@ -36,7 +36,7 @@ Optional environment (see `web/.env.example`): an AI gateway or Anthropic key le
 - `HACKATHON.md`: everything we know about the competition. Rules, topics, scoring, deliverables, timeline, prizes, contacts, judge profile, and open questions to confirm with the organizers.
 - `IDEAS.md`: the full brainstorm. Thirty-five ideas, each with the pitch, the local hook, the demo moment, the security story, and the build risk.
 - `FINAL_IDEAS.md`: the top four ideas for Topic F scored on the rubric, the layers to add, the recommendation, and the three competitors to beat with how to beat them.
-- `BONDED_AGENT.md`: Surety, the final idea. One wallet standard for machines that earn, pay and post a bond, with two sides: commercial fleets and individuals lending a robot to a neighbour. Flows, the bond, the hunter, CoverAI and competitor comparison, scoring, risks, demo, app, SCP, autoresearch, market.
+- `BONDED_AGENT.md`: JiXin (机信), the final idea. One wallet standard for machines that earn, pay and post a bond, with two sides: commercial fleets and individuals lending a robot to a neighbour. Flows, the bond, the hunter, CoverAI and competitor comparison, scoring, risks, demo, app, SCP, autoresearch, market.
 - `CORE_IDEA.md`: the ranked shortlist and the one we are building, with scope, architecture, and demo script.
 - `SECURITY.md`: the security layer that goes into whichever idea we pick. Permission tiers, policy engine, injection defense, and the attack test cases we ship with the code.
 - `PLAN.md`: hour by hour plan to the deadline and the submission checklist.

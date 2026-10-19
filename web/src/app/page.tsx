@@ -1,145 +1,70 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 import { Hero3D } from "@/components/Hero3D";
 
 const uses = [
-  { who: "Agricultural drone pilots", title: "A drone that pays for itself one mu at a time", body: "Over 200,000 pilots in China spray fields for 3 to 15 yuan per mu and pay about 55,000 yuan for the drone up front. On the rail the lender finances it, every verified mu pays an instalment from the flight log, and the title moves to the pilot when it is paid. Data driven credit for people with nothing to pledge but the machine.", judge: "Inclusive finance" },
-  { who: "Delivery and logistics fleets", title: "A thousand drones with automatic repayment", body: "Each machine is a bonded wallet. Fees come in per confirmed delivery, instalments go out by rule, counterparties such as charging pads are paid without accounts payable, and the lender reads repayment and exposure from chain. Capital priced on verifiable repayment, no reconciliation.", judge: "Real scenario, real execution" },
-  { who: "A household with a humanoid", title: "Lend the robot to the neighbour for an afternoon", body: "The owner lists allowed tasks, hours and a geofence once with the button. The neighbour's agent and the robot's agent settle terms. The fee locks, the robot works inside the fence, the neighbour confirms, the fee splits into owner share, instalment, rail fee and bond. If the robot breaks a rule the neighbour is paid from the bond without a lawsuit.", judge: "Individuals, both sides protected" },
-  { who: "Small factories", title: "A robot arm that repays its own lease per part", body: "The counter and a plausibility check verify parts made. Repayment per verified part, frozen on tampered data. The same bond, the same lease contract, the same title transfer. Credit for workshops that no bank underwrites today.", judge: "Data driven credit" },
-  { who: "Software agents", title: "An agent that must post a bond before it may pay", body: "A procurement or payment agent is a wallet on the same standard. Its vendor stakes the bond. If it is jailbroken and tries a forbidden payment, the signed intent is the proof, the bond pays, and the hunter who found it gets the bounty.", judge: "Risk control for agent wallets" },
+  { who: "Agricultural drone pilots", line: "A drone that pays for itself one mu at a time. 200,000 pilots, nothing to pledge but the machine." },
+  { who: "Delivery fleets", line: "A thousand drones with automatic repayment and a compliance proof per machine." },
+  { who: "A household with a humanoid", line: "Lend the robot to the neighbour. The fee locks, the fence holds, the bond pays if it breaks a rule." },
+  { who: "Small factories", line: "A robot arm that repays its lease per verified part. Frozen on tampered data." },
+  { who: "Software agents", line: "An agent must post a bond before it may pay. Jailbroken means slashed." },
 ];
-
-const requirements = [
-  { name: "Permission hierarchy", where: "Four tiers in code. Read, draft, execute within caps, and a physical button for anything that raises a cap, widens a geofence or tops up a bond. The model cannot press the button." },
-  { name: "Injection defense", where: "Every inbound message is wrapped as untrusted data with an escaped block, a judge gate can pass, redact, hold or refuse, and payees never come from text. Twenty attack cases run live on the evidence page." },
-  { name: "Hallucination prevention", where: "Every number comes from a tool. The economics check, the split, the instalment and the plausibility check are functions. The model only writes the explanation sentence." },
-  { name: "Intent understanding", where: "A request in plain language becomes a typed, signed intent with a job id, a fee, a geofence and a window before anything is evaluated." },
-  { name: "Task planning", where: "Price, route, schedule and reserve rule are planned by the machine agent, and unprofitable jobs are declined with the reason shown." },
-  { name: "On-chain execution", where: "Bond, job and lease contracts. Every fee, instalment, slash, bounty and title transfer is a transaction with a hash. Simulated by default and labelled, real on Base Sepolia with a funded key." },
-];
-
-const scoring = [
-  { w: "40", name: "Task completion", how: "Paid work end to end with no human: economics, cover, task, confirmation, fee in, instalment out, bond filling, title transferred. One hash per step." },
-  { w: "30", name: "Security and compliance", how: "Bond slashed by proof, not by us. Message gate, policy engine, geofence and confirmation rules, fraud control on work done, twenty attacks with results, honest self assessment." },
-  { w: "30", name: "Innovation and interaction", how: "Machines that earn, pay and own themselves. Agents with money at risk. A neighbour hiring a bonded robot. Mission control with a live 3D scene and a judge console." },
-  { w: "+5", name: "On-chain challenge", how: "Three contracts on a public testnet with verified source. Same bytecode on a FISCO BCOS node for the production story." },
-];
-
-const firsts = [
-  "An agent with consequences. It locks its own money before it may act, and loses it on cryptographic proof of a violation. No trusted party decides.",
-  "Two agents with opposite incentives transacting: machine and lender, robot and neighbour.",
-  "A machine as the borrower. Income per verified unit of work, automatic repayment, title transfer on chain.",
-  "The bond is earned, not posted, so people with nothing to pledge can start.",
-  "An attacker as a feature. The hunter is paid from bonds for proven violations in a shadow run.",
-  "A physical button as the top permission tier. The only key that can raise a cap.",
-];
+const requirements = ["Permission hierarchy: four tiers, a physical button on top", "Injection defense: every message is data, a judge gate, payees never from text", "Hallucination prevention: every number from a tool", "Intent understanding: plain language to a signed typed intent", "Task planning: price, route, schedule, reserve rule", "On-chain execution: bond, job and lease contracts, one hash per step"];
+const scoring = [["40", "Task completion", "Paid work end to end, no human, one hash per step"], ["30", "Security", "Bond slashed by proof, gate, policy engine, 20 attacks live"], ["30", "Innovation", "Machines that earn, pay and own themselves"], ["+5", "On-chain", "Three contracts on a public testnet"]];
+const firsts = ["An agent that loses its own money on proof of a violation", "Two agents with opposite incentives transacting", "A machine as the borrower, title transfer on chain", "The bond is earned, not posted", "An attacker as a feature, paid from bonds", "A physical button as the top permission tier"];
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
-      <header className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
-        <Logo />
-        <nav className="hidden items-center gap-6 text-sm md:flex" aria-label="Page">
-          <a href="#uses" className="hover:text-teal-deep">Who it is for</a>
-          <a href="#flow" className="hover:text-teal-deep">How it works</a>
-          <a href="#requirements" className="hover:text-teal-deep">Requirements</a>
-          <a href="#scoring" className="hover:text-teal-deep">Scoring</a>
-          <a href="#firsts" className="hover:text-teal-deep">What is new</a>
-        </nav>
-        <Link href="/app" className="btn btn-ink">Open mission control</Link>
-      </header>
-
-      <section className="grain grain-light"><div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-6 pb-16 pt-6 lg:grid-cols-[1fr_1.15fr] lg:items-center">
-        <div>
-          <p className="text-sm text-ink-2">Shenzhen FinTechathon 2026, International Track, Topic F</p>
-          <h1 className="serif mt-3 text-5xl leading-[1.02] md:text-7xl">A wallet for machines that earn, pay and post a bond.</h1>
-          <p className="mt-5 max-w-xl text-lg text-ink-2">A drone, a humanoid or a software agent gets paid per verified unit of work, pays its lender and its costs to other agents, keeps money at risk that is slashed on proof of a violation, and owns itself once the lease is paid.</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/app/neighbourhood" className="btn btn-teal">Watch a robot work for a neighbour</Link>
-            <Link href="/app/fleet" className="btn btn-ghost">Watch a drone pay off its lease</Link>
-            <Link href="/app/attack" className="btn btn-ghost">Try to break it</Link>
+    <div className="mx-auto max-w-[1500px]">
+      <section className="grad card relative overflow-hidden" style={{ minHeight: 620 }}>
+        <div className="absolute inset-0"><Hero3D /></div>
+        <div className="pointer-events-none relative z-10 flex h-full min-h-[620px] flex-col justify-between p-7 md:p-10">
+          <div className="flex items-start justify-between">
+            <div><div className="text-sm font-semibold text-ink">JiXin 机信</div><div className="text-xs text-ink-2">machine credit</div></div>
+            <span className="pill bg-white/85 text-ink backdrop-blur">Shenzhen FinTechathon 2026, Topic F</span>
           </div>
-          <dl className="mt-10 grid max-w-xl grid-cols-3 gap-4 border-t border-line pt-5 text-sm">
-            <div><dt className="text-muted">Attack cases</dt><dd className="serif text-3xl">20</dd></div>
-            <div><dt className="text-muted">Contracts</dt><dd className="serif text-3xl">3</dd></div>
-            <div><dt className="text-muted">Human decisions per task</dt><dd className="serif text-3xl">0</dd></div>
-          </dl>
-        </div>
-        <div className="card-dark grain grain-dark relative overflow-hidden" style={{ height: 520 }}>
-          <div className="absolute inset-0"><Hero3D /></div>
-          <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-night/70 px-3 py-2 text-xs text-[#cfe3df] backdrop-blur">Drag to look around. Dots are money moving between the machine, the lender and the bond.</div>
-        </div>
-      </div></section>
-
-      <section id="uses" className="border-t border-line bg-paper-2/60 py-16">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <h2 className="serif text-4xl md:text-5xl">One rail, five kinds of worker</h2>
-          <p className="mt-3 max-w-2xl text-ink-2">The demo shows a drone and a humanoid. The same three contracts and the same rules serve all of these.</p>
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {uses.map((u) => (
-              <article key={u.who} className="card flex flex-col p-5">
-                <div className="text-sm text-teal-deep">{u.who}</div>
-                <h3 className="serif mt-1 text-2xl leading-tight">{u.title}</h3>
-                <p className="mt-3 flex-1 text-sm text-ink-2">{u.body}</p>
-                <div className="mt-4 text-xs text-muted">What a judge sees: {u.judge}</div>
-              </article>
-            ))}
+          <div className="pointer-events-auto max-w-2xl">
+            <h1 className="display text-5xl text-ink md:text-7xl">Machines that earn, pay and post a bond.</h1>
+            <p className="mt-4 max-w-md text-base text-ink-2">A wallet standard for drones, humanoids and agents. Paid per verified unit of work, slashed on proof, owned once the lease is paid.</p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link href="/app/fleet" className="btn btn-ink">Watch a drone pay off its lease</Link>
+              <Link href="/app/neighbourhood" className="btn btn-ghost">Lend a robot to a neighbour</Link>
+              <Link href="/app/attack" className="btn btn-ghost">Try to break it</Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="flow" className="py-16">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <h2 className="serif text-4xl md:text-5xl">How one task flows</h2>
-          <ol className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            {["A request arrives as untrusted data. The gate passes, redacts, holds or refuses it.", "The machine agent prices the task with a tool. Below the reserve rule it declines and says why.", "The signed intent goes through the policy engine. Allowlist, caps, geofence, cover.", "The fee locks on the job contract. The bond must cover the worst case or the task does not start.", "The machine works. Its secure element proves where and for how long. The requester confirms.", "The fee splits by rule: owner, instalment, rail, bond. At zero lease the title moves on chain."].map((s, i) => (
-              <li key={i} className="card p-4 text-sm"><div className="serif text-2xl text-teal-deep">{i + 1}</div><p className="mt-2 text-ink-2">{s}</p></li>
-            ))}
-          </ol>
-          <div className="card-dark grain grain-dark mt-6 p-6">
-            <h3 className="serif text-2xl">When the agent breaks a rule</h3>
-            <p className="mt-2 max-w-3xl text-[#cfe3df]">Every action is signed before the policy engine sees it. A signed intent that breaks a rule the contract can check is proof. Anyone can submit it. The bond contract verifies the signature and the rule, slashes, and pays the submitter a bounty. The lender reads the slash and tightens the rate band. Only the operator's physical button can top the bond up. That is accountability without a human in the loop, and it is what lets a lender trust a machine with a loan.</p>
-          </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[["20", "attack cases, blocked live"], ["3", "contracts"], ["0", "human decisions per task"], ["2", "sides, one rail"]].map(([v, l]) => (<div key={l} className="tile"><div className="kpi">{v}</div><div className="mt-1 text-xs text-muted">{l}</div></div>))}
+      </div>
+
+      <section className="mt-6">
+        <h2 className="text-2xl font-bold tracking-tight">Who it is for</h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {uses.map((u) => (<div key={u.who} className="card p-4"><div className="text-xs font-semibold text-turq-deep">{u.who}</div><p className="mt-2 text-sm text-ink-2">{u.line}</p></div>))}
         </div>
       </section>
 
-      <section id="requirements" className="border-t border-line bg-paper-2/60 py-16">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <h2 className="serif text-4xl md:text-5xl">What the competition requires, and where it lives</h2>
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {requirements.map((r) => (<div key={r.name} className="card p-5"><h3 className="font-semibold">{r.name}</h3><p className="mt-2 text-sm text-ink-2">{r.where}</p></div>))}
-          </div>
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <div className="card p-5">
+          <h2 className="text-2xl font-bold tracking-tight">What the competition requires</h2>
+          <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">{requirements.map((r) => <li key={r} className="rounded-xl bg-cream px-3 py-2 text-sm text-ink-2">{r}</li>)}</ul>
+        </div>
+        <div className="grad-up grad card p-5 text-ink">
+          <h2 className="text-2xl font-bold tracking-tight">How it scores</h2>
+          <ul className="mt-3 grid grid-cols-2 gap-2">{scoring.map(([w, n, h]) => <li key={n} className="rounded-xl bg-white/80 p-3 backdrop-blur"><div className="kpi">{w}</div><div className="mt-1 text-sm font-semibold">{n}</div><div className="text-xs text-ink-2">{h}</div></li>)}</ul>
         </div>
       </section>
 
-      <section id="scoring" className="py-16">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <h2 className="serif text-4xl md:text-5xl">How it scores</h2>
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {scoring.map((s) => (<div key={s.name} className="card p-5"><div className="serif text-5xl text-teal-deep">{s.w}</div><h3 className="mt-2 font-semibold">{s.name}</h3><p className="mt-2 text-sm text-ink-2">{s.how}</p></div>))}
-          </div>
+      <section className="card mt-4 bg-ink p-5 text-white">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-2xl font-bold tracking-tight">What no other entry has</h2>
+          <span className="text-xs text-white/60">about 150 public entries read</span>
         </div>
+        <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">{firsts.map((f) => <li key={f} className="rounded-xl bg-white/8 px-3 py-2 text-sm">{f}</li>)}</ul>
+        <div className="mt-4 flex gap-2"><Link href="/app" className="btn btn-turq">Open mission control</Link><a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" target="_blank" rel="noreferrer" className="btn" style={{ background: "rgba(255,255,255,0.1)", color: "white" }}>Design and research</a></div>
       </section>
-
-      <section id="firsts" className="border-t border-line bg-ink py-16 text-paper">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <h2 className="serif text-4xl md:text-5xl">What no other entry has</h2>
-          <p className="mt-3 max-w-2xl text-[#cfe3df]">We read about 150 public entries for this track. Every one is a single assistant that proposes, with code that decides and a human that confirms. None of these six exist anywhere in the field.</p>
-          <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {firsts.map((f, i) => (<li key={i} className="rounded-2xl border border-white/10 bg-night p-5 text-sm text-[#e6f2ef]">{f}</li>))}
-          </ul>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/app" className="btn btn-teal">Open mission control</Link>
-            <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon" className="btn btn-ghost-light" target="_blank" rel="noreferrer">Read the design and the research</a>
-          </div>
-        </div>
-      </section>
-
-      <footer className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-6 py-8 text-sm text-muted">
-        <Logo size={22} />
-        <span>Agents decide nothing about money. Tools compute, contracts enforce, the button approves.</span>
-      </footer>
+      <footer className="px-2 py-6 text-xs text-muted">JiXin 机信 rhymes with WeChat and sits next to WeBank's own naming. A homophone of 积信, accumulated trust, which is what the on chain record becomes.</footer>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// Shared types for the Surety engine. Every event the backend emits is one of these.
+// Shared types for the JiXin engine. Every event the backend emits is one of these.
 
 export type Side = "neighbour" | "fleet" | "attack";
 

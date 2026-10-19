@@ -1,11 +1,17 @@
-export function Logo({ size = 28 }: { size?: number }) {
+export function Mark({ size = 36 }: { size?: number }) {
   return (
-    <span className="inline-flex items-center gap-2">
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-        <rect x="2" y="2" width="28" height="28" rx="9" fill="#14302d" />
-        <path d="M9 20.5c1.6 2 4 3 7 3 3.8 0 6-1.7 6-4.2 0-2.6-2.2-3.5-5.7-4.2C13.2 14.5 11 13.6 11 11.4 11 9.2 13 8 16.2 8c2.6 0 4.6.9 6 2.6" stroke="#63dcd2" strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
-      <span className="serif text-xl leading-none">Surety</span>
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ead9a9" /><stop offset="1" stopColor="#3db1b8" /></linearGradient></defs>
+      <rect x="2" y="2" width="36" height="36" rx="12" fill="url(#g)" />
+      <path d="M12 26V14h4l4 7 4-7h4v12" stroke="#1b2a2a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+export function Logo({ size = 32 }: { size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-2.5">
+      <Mark size={size} />
+      <span className="flex flex-col leading-none"><span className="text-lg font-800 tracking-tight" style={{ fontWeight: 800 }}>JiXin</span><span className="text-[11px] text-muted">机信, machine credit</span></span>
     </span>
   );
 }

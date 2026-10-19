@@ -11,9 +11,11 @@
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "@react-three/postprocessing": "3.0.4",
     "ai": "^7.0.143",
     "framer-motion": "^14.4.0",
     "next": "16.4.2",
+    "postprocessing": "6.37.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "three": "^0.186.1",

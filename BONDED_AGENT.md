@@ -1,6 +1,6 @@
-# Surety: a wallet for machines that earn, pay and post a bond
+# JiXin: a wallet for machines that earn, pay and post a bond
 
-Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, developed into two sides on one rail. Working name Surety, after the surety bond, the real product where a party posts money to guarantee it will perform.
+Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, developed into two sides on one rail. Name JiXin (机信), machine credit. Rhymes with WeChat, sits next to WeBank in naming, homophone of 积信, accumulated trust. The bond itself is a surety bond, the real product where a party posts money to guarantee it will perform.
 
 ## One sentence
 
@@ -103,7 +103,7 @@ The autoresearch loop applied to the machine's business strategy: which tasks to
 
 CoverAI (HK AI Summit hackathon, October 2026) is robot operating data turned into evidence for safer deployments and fairer insurance pricing. Every task is rule checked before it runs, an insurer partner approves or rejects a cohort based premium indication, evidence is preserved, the insurer decides on claims, and each reviewed failure becomes a test scenario. Synthetic robots, no money moves, no chain.
 
-| | CoverAI | Surety |
+| | CoverAI | JiXin |
 |---|---|---|
 | Centre | Insurance pricing and safety evidence | The machine's balance sheet, financing and peer to peer work |
 | Does the machine hold money | No | Yes: income, costs, reserve, bond |
