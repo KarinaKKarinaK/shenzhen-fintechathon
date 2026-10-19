@@ -25,7 +25,7 @@ export function Rail() {
           <span className="tip">{t(it.label)}</span>
         </Link>
       ))}
-      <div className="mt-auto flex flex-col items-center gap-2"><LangToggle /><ThemeToggle /><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>机信 JIXIN</span><span className="h-6 w-px bg-gold" /></div>
+      <div className="mt-auto flex flex-col items-center gap-2"><LangToggle /><ThemeToggle /><span className="tech text-[10px] tracking-[0.3em] text-muted" style={{ writingMode: "vertical-rl" }}>自食其力 ZISHI</span><span className="h-6 w-px bg-gold" /></div>
     </nav>
   );
 }

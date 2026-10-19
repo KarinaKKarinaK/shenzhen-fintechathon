@@ -1,7 +1,7 @@
 "use client";
 import { useLang } from "./LangProvider";
 
-// EN / 中 switch on the rail, next to the theme toggle. Remembered per browser under jixin-lang.
+// EN / 中 switch on the rail, next to the theme toggle. Remembered per browser under zishi-lang.
 export function LangToggle() {
   const { lang, setLang, t } = useLang();
   const zh = lang === "zh";

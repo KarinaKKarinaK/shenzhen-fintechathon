@@ -11,7 +11,7 @@ export function ThemeToggle() {
   function toggle() {
     const next = !dark; setDark(next);
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    try { localStorage.setItem("jixin-theme", next ? "dark" : "light"); } catch {}
+    try { localStorage.setItem("zishi-theme", next ? "dark" : "light"); } catch {}
   }
   return (
     <button type="button" onClick={toggle} aria-pressed={dark} aria-label={dark ? t("theme.toLight") : t("theme.toDark")} title={dark ? t("theme.light") : t("theme.dark")} className="grid h-10 w-10 place-items-center rounded-[4px] text-ink-2 transition hover:bg-gold-soft hover:text-ink">

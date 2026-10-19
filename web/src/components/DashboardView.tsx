@@ -29,7 +29,7 @@ export function DashboardView({ attackN, blocked, total, byLayer, policy, allowl
   ];
   return (
     <div className="mx-auto max-w-[1500px]">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><div className="tech text-[11px] tracking-[0.25em] text-red">机信 JIXIN</div><h1 className="display text-4xl md:text-5xl">{D.title}</h1></div><span className="pill border border-line bg-white text-ink-2">{t("dashboard.blockedNow", { b: blocked, n: total })}</span></div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><div className="tech text-[11px] tracking-[0.25em] text-red">自食其力 ZISHI</div><h1 className="display text-4xl md:text-5xl">{D.title}</h1></div><span className="pill border border-line bg-white text-ink-2">{t("dashboard.blockedNow", { b: blocked, n: total })}</span></div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {kpis.map(([k, v]) => <div key={k} className="tile"><div className="text-xs text-muted">{k}</div><div className="kpi mt-1 tabular-nums">{v}</div></div>)}

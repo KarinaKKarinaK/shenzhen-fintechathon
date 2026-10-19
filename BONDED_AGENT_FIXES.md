@@ -1,6 +1,6 @@
-# JiXin (Bonded Agent): design fixes
+# Zishi (Bonded Agent): design fixes
 
-Problems found in the JiXin design (`BONDED_AGENT.md`) and the contracts (`contracts/`), what we decided, and exactly what to change in code.
+Problems found in the Zishi design (`BONDED_AGENT.md`) and the contracts (`contracts/`), what we decided, and exactly what to change in code.
 
 Checked against commit `7abd4ef` (contracts) on 20 October 2026.
 
@@ -310,7 +310,7 @@ For every action the agent takes:
 
 1. Compute numbers with tools. The model may explain them, never produce them.
 2. Validate the action against the schema and the tool outputs. Discard anything malformed. Discarded actions are never signed.
-3. Build the typed intent (B.2 fields) and sign it with the agent key under the JiXin EIP-712 domain. The engine currently signs a canonical string with `recoverMessageAddress`; switch to EIP-712 so the same signature verifies on chain.
+3. Build the typed intent (B.2 fields) and sign it with the agent key under the Zishi EIP-712 domain. The engine currently signs a canonical string with `recoverMessageAddress`; switch to EIP-712 so the same signature verifies on chain.
 4. Commit `hashIntent(intent)` to `IntentLog` for its job.
 5. Deliver the full intent and signature to every party of the job (farmer, pilot, lender, vendor).
 6. Only then run the policy engine. Blocked intents stay committed and delivered.

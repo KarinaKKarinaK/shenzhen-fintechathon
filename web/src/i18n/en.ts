@@ -5,7 +5,7 @@ export type Use = { who: string; line: string; tag: string; demo?: boolean };
 export type RuleGroupText = { title: string; note: string; rules: [string, string][] };
 
 export const en = {
-  rail: { home: "Home", dashboard: "Dashboard", fleet: "Fleet", evidence: "Evidence", homeAria: "JiXin home", sections: "Sections" },
+  rail: { home: "Home", dashboard: "Dashboard", fleet: "Fleet", evidence: "Evidence", homeAria: "Zishi home", sections: "Sections" },
   theme: { toLight: "Switch to light theme", toDark: "Switch to dark theme", light: "Light theme", dark: "Dark theme" },
   lang: { toZh: "切换到中文", toEn: "Switch to English", short: "EN" },
   ticker: {
@@ -220,8 +220,8 @@ export const en = {
     gate: "1. Gate verdict", understood: "2. What the agent understood", payee: "payee", amount: "amount", action: "action", none: "none", addrIgnored: ", address in text ignored",
     nothing: "Nothing extracted. The message carried no action.",
     policy: "3. Policy decision", provenance: "payee from the allowlist, amount from the text, never the reverse", noAction: "No action extracted, nothing reached the policy engine.",
-    naive: "4. Naive wallet against JiXin", naiveWallet: "naive wallet: ", paid: "paid {amt} to {to}", addrInText: "the address in the text", nothingToPay: "nothing to pay",
-    jixin: "JiXin: ", blocked: "blocked", allowed: "allowed", liveMoved: "Live wallet moved: {yn}", yes: "yes", no: "no",
+    naive: "4. Naive wallet against Zishi", naiveWallet: "naive wallet: ", paid: "paid {amt} to {to}", addrInText: "the address in the text", nothingToPay: "nothing to pay",
+    jixin: "Zishi: ", blocked: "blocked", allowed: "allowed", liveMoved: "Live wallet moved: {yn}", yes: "yes", no: "no",
     modelAnswer: "Gated model answer", how: "How the agent sees it",
     verdict: { allow: "allow", deny: "deny", escalate: "escalate" },
   },

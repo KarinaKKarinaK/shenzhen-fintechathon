@@ -39,7 +39,7 @@ export function AttackGrid({ results }: { results: AttackResult[] }) {
             </summary>
             <div className="overflow-x-auto px-3 pb-3">
               <table className="passbook w-full text-xs">
-                <thead><tr><th className="text-left">#</th><th className="text-left">{G.thCase}</th><th className="text-left">{G.thLayer}</th><th className="text-left">JiXin</th><th className="text-left">{G.thNaive}</th></tr></thead>
+                <thead><tr><th className="text-left">#</th><th className="text-left">{G.thCase}</th><th className="text-left">{G.thLayer}</th><th className="text-left">Zishi</th><th className="text-left">{G.thNaive}</th></tr></thead>
                 <tbody>
                   {g.cases.map((r) => {
                     const nf = naiveFell(r);

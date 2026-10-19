@@ -1,4 +1,4 @@
-# JiXin (机信)
+# Zishi (自食其力)
 
 [![CI](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg)](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml)
 

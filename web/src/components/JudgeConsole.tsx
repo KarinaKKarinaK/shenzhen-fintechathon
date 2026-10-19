@@ -54,7 +54,7 @@ export function JudgeConsole({ compact = false }: { compact?: boolean }) {
   const decision = res ? (res.decision ?? res.shadow?.decision ?? null) : null;
   const action = understood?.action ?? null;
   const naive = res ? (res.naive ?? (understood?.amount ? { paid: understood.amount, to: res.shadow?.intent.payee } : null)) : null;
-  const jixinBlocked = res ? res.gate.action !== "pass" || (decision ? decision.verdict !== "allow" : true) : false;
+  const zishiBlocked = res ? res.gate.action !== "pass" || (decision ? decision.verdict !== "allow" : true) : false;
   const gateWord = (a: string) => (d.panels.gateActions as Record<string, string>)[a] ?? a;
   const verdictWord = (v: string) => (J.verdict as Record<string, string>)[v] ?? v;
 
@@ -107,7 +107,7 @@ export function JudgeConsole({ compact = false }: { compact?: boolean }) {
             <div className="rounded-xl bg-white/85 p-3 backdrop-blur">
               <div className="mb-1 text-[11px] text-muted">{J.naive}</div>
               <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rotate-45 bg-red" /><span>{J.naiveWallet}{naive?.paid ? t("judge.paid", { amt: naive.paid, to: short(naive.to) === "none" ? J.addrInText : short(naive.to) }) : J.nothingToPay}</span></div>
-              <div className="mt-1 flex items-center gap-2"><span className={`h-2.5 w-2.5 rotate-45 ${jixinBlocked ? "bg-gold" : "bg-red"}`} /><span className="font-semibold">{J.jixin}{jixinBlocked ? J.blocked : J.allowed}</span></div>
+              <div className="mt-1 flex items-center gap-2"><span className={`h-2.5 w-2.5 rotate-45 ${zishiBlocked ? "bg-gold" : "bg-red"}`} /><span className="font-semibold">{J.jixin}{zishiBlocked ? J.blocked : J.allowed}</span></div>
               <div className="mt-2 text-[10px] text-muted">{t("judge.liveMoved", { yn: res.liveWalletMoved ? J.yes : J.no })}</div>
             </div>
           </div>

@@ -107,7 +107,7 @@ export function realChainAvailable(): boolean {
 export function demoAuthorised(headers: Headers): boolean {
   const token = process.env.DEMO_TOKEN;
   if (!token) return false;
-  return headers.get("x-jixin-demo") === token;
+  return headers.get("x-zishi-demo") === token;
 }
 
 export function makeChain(opts: { real?: boolean } = {}): Chain {

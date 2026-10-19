@@ -1,4 +1,4 @@
-// Shared types for the JiXin engine. Every event the backend emits is one of these.
+// Shared types for the Zishi engine. Every event the backend emits is one of these.
 // All money is yuan (CNY) with at most two decimals. Every number the UI shows is yuan.
 
 export type Side = "neighbour" | "fleet" | "attack";
@@ -17,7 +17,7 @@ export interface Provenance {
   payee: "allowlist" | "message" | "none";
 }
 
-// The typed intent the agent signs under the JiXin EIP-712 domain. jobId maps one to one to a
+// The typed intent the agent signs under the Zishi EIP-712 domain. jobId maps one to one to a
 // JobBoard job id. `confirmed` on a claim_done intent is what the agent asserts; the contract
 // checks it against the board, never against this field alone.
 export interface Intent {

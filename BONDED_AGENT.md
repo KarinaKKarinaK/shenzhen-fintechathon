@@ -1,6 +1,6 @@
-# JiXin: a wallet for an agricultural drone that earns, repays and owns itself
+# Zishi: a wallet for an agricultural drone that earns, repays and owns itself
 
-Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, built for one machine: an agricultural spraying drone on hire purchase. Name JiXin (机信), machine credit. Rhymes with WeChat, sits next to WeBank in naming, homophone of 积信, accumulated trust. The bond is a surety bond, the real product where a party posts money to guarantee it will perform.
+Final version of the combined idea: Bonded Agent (idea 15), the robot that pays for itself (idea 27), the hunter (idea 35), Hard Button (idea 21), the SCP message layer and the autoresearch loop, built for one machine: an agricultural spraying drone on hire purchase. Name Zishi (自食其力), zì shí qí lì, to feed yourself by your own labour: the robot that pays for itself. The bond is a surety bond, the real product where a party posts money to guarantee it will perform.
 
 Decisions and the implementation spec are in `BONDED_AGENT_FIXES.md`. Where this file and that one differ, that one wins.
 
@@ -184,7 +184,7 @@ The autoresearch loop applied to the drone's business strategy: which jobs to ac
 
 CoverAI (HK AI Summit hackathon, October 2026) is robot operating data turned into evidence for safer deployments and fairer insurance pricing. Every task is rule checked before it runs, an insurer partner approves or rejects a cohort based premium indication, evidence is preserved, the insurer decides on claims, and each reviewed failure becomes a test scenario. Synthetic robots, no money moves, no chain.
 
-| | CoverAI | JiXin |
+| | CoverAI | Zishi |
 |---|---|---|
 | Centre | Insurance pricing and safety evidence | The machine's balance sheet and financing |
 | Does the machine hold money | No | Yes: income, costs, reserve, bond |

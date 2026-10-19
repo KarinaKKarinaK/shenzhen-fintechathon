@@ -1,6 +1,6 @@
-# JiXin technical document
+# Zishi technical document
 
-JiXin (机信) is a wallet for machines. A machine earns per verified unit of work, pays its lender and its suppliers, keeps a bond that is slashed on cryptographic proof of a rule break, and owns itself once the lease is paid. The demo is an agricultural drone on hire purchase. Everything below is grounded in `web/src/engine` and `contracts/`.
+Zishi (自食其力) is a wallet for machines. A machine earns per verified unit of work, pays its lender and its suppliers, keeps a bond that is slashed on cryptographic proof of a rule break, and owns itself once the lease is paid. The demo is an agricultural drone on hire purchase. Everything below is grounded in `web/src/engine` and `contracts/`.
 
 ## Architecture
 
@@ -99,7 +99,7 @@ A lie by one side fails one of the three. A machine that inflates area fails geo
 
 ## Questions judges will ask
 
-Licensing. A licensed lessor in a sandbox is lender of record. JiXin services the contract. The machine's wallet is a ring fenced sub account of the owner, not a legal person. The testnet is a sandbox.
+Licensing. A licensed lessor in a sandbox is lender of record. Zishi services the contract. The machine's wallet is a ring fenced sub account of the owner, not a legal person. The testnet is a sandbox.
 
 Why a bond and not reputation. Reputation is a score somebody else assigns and can be rebuilt with a new key. A bond is the agent's own money, slashed by a contract on a signature, and the counterparty reads before the task that it covers the worst case.
 

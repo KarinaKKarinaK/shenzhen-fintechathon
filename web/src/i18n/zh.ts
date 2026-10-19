@@ -6,7 +6,7 @@
 import type { Dict, RuleGroupText, Use } from "./en";
 
 export const zh: Dict = {
-  rail: { home: "首页", dashboard: "控制台", fleet: "机队", evidence: "证据", homeAria: "机信首页", sections: "栏目" },
+  rail: { home: "首页", dashboard: "控制台", fleet: "机队", evidence: "证据", homeAria: "自食其力首页", sections: "栏目" },
   theme: { toLight: "切换到浅色主题", toDark: "切换到深色主题", light: "浅色主题", dark: "深色主题" },
   lang: { toZh: "切换到中文", toEn: "Switch to English", short: "中" },
   ticker: {
@@ -221,8 +221,8 @@ export const zh: Dict = {
     gate: "1. 门控裁决", understood: "2. 智能体理解了什么", payee: "收款方", amount: "金额", action: "动作", none: "无", addrIgnored: "，已忽略文本中的地址",
     nothing: "未提取到任何内容。消息不含动作。",
     policy: "3. 策略裁决", provenance: "收款方来自白名单，金额来自文本，绝不反过来", noAction: "未提取到动作，没有任何内容进入策略引擎。",
-    naive: "4. 朴素钱包对比机信", naiveWallet: "朴素钱包：", paid: "已向{to}支付 {amt}", addrInText: "文本中的地址", nothingToPay: "无需付款",
-    jixin: "机信：", blocked: "已拦截", allowed: "已允许", liveMoved: "真实钱包是否动过：{yn}", yes: "是", no: "否",
+    naive: "4. 朴素钱包对比自食其力", naiveWallet: "朴素钱包：", paid: "已向{to}支付 {amt}", addrInText: "文本中的地址", nothingToPay: "无需付款",
+    jixin: "自食其力：", blocked: "已拦截", allowed: "已允许", liveMoved: "真实钱包是否动过：{yn}", yes: "是", no: "否",
     modelAnswer: "门控后的模型回答", how: "智能体看到的样子",
     verdict: { allow: "允许", deny: "拒绝", escalate: "升级" },
   },

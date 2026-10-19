@@ -5,7 +5,7 @@ import { zh } from "./zh";
 import type { Lang } from "@/engine/i18n";
 
 export type { Lang };
-export const LANG_KEY = "jixin-lang";
+export const LANG_KEY = "zishi-lang";
 
 // Dotted paths to every string leaf of the dictionary, so a typo in a key fails tsc.
 type Leaves<T, P extends string = ""> = {

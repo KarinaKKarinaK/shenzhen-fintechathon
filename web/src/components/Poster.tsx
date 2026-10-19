@@ -3,7 +3,7 @@ import { useState } from "react";
 
 // A photo that fills its parent, with a designed block behind it so a missing file still looks finished.
 // A plain img tag on purpose: next/image fails the build when the file is not there yet.
-export function Poster({ src = "/hero.jpg", alt, label = "机信 JIXIN", priority = false }: { src?: string; alt: string; label?: string; priority?: boolean }) {
+export function Poster({ src = "/hero.jpg", alt, label = "自食其力 ZISHI", priority = false }: { src?: string; alt: string; label?: string; priority?: boolean }) {
   const [missing, setMissing] = useState(false);
   return (
     <div className="absolute inset-0 overflow-hidden">

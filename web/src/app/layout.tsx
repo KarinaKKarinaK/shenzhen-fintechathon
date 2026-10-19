@@ -9,16 +9,16 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 const chakra = Chakra_Petch({ subsets: ["latin"], variable: "--font-chakra", weight: ["500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "JiXin",
-  description: "JiXin (机信), machine credit. A wallet for machines that earn, pay and post a bond.",
+  title: "Zishi 自食其力",
+  description: "Zishi (自食其力), the robot that pays for itself. A wallet for machines that earn, pay and post a bond.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${mono.variable} ${chakra.variable}`}>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('jixin-theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}" }} />
-        <script dangerouslySetInnerHTML={{ __html: "try{var l=localStorage.getItem('jixin-lang');if(l!=='zh'&&l!=='en'){l=(navigator.language||'').toLowerCase().indexOf('zh')===0?'zh':'en'}document.documentElement.lang=l==='zh'?'zh-CN':'en'}catch(e){}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('zishi-theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "try{var l=localStorage.getItem('zishi-lang');if(l!=='zh'&&l!=='en'){l=(navigator.language||'').toLowerCase().indexOf('zh')===0?'zh':'en'}document.documentElement.lang=l==='zh'?'zh-CN':'en'}catch(e){}" }} />
       </head>
       <body>
         <LangProvider>
