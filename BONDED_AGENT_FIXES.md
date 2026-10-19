@@ -10,7 +10,7 @@ A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what w
 |---|---|---|---|
 | 1 | Who pays when the AI agent makes a mistake | Two bonds, the vendor is liable for the AI | No. One bond per agent, still described as protection against a compromised agent |
 | 2 | Nobody outside the pilot can submit proof, so the bond can never be slashed | Private log per job, delivered to every party, hashes on chain | No. And the contract can be drained with made-up evidence (10) |
-| 3 | The bond starts at zero, so it protects the lender least when risk is highest | Limits scale with the bond, the vendor bond covers the start | Partly. Job size scales with the bond, but the minimum blocks a new machine from ever starting (11) |
+| 3 | The bond starts at zero, so it protects the lender least when risk is highest | Limits scale with the bond, a 200 yuan starting floor, the vendor bond covers the start (with 11) | Partly. Job size scales with the bond, but the minimum blocks a new machine from ever starting (11) |
 | 4 | Where insurance fits | Not in the build, only above the bonds | Partly. Physical damage is out, but "cover bound" is still required and insurance is still in the market section |
 | 5 | The document mixes delivery drone, agricultural drone, robot arm and humanoids | Open | Worse. Now two sides: drone fleet and a neighbour hiring a humanoid |
 | 6 | The market section argues for insurance pricing, which the product section rules out | Open | Still there |
@@ -18,7 +18,7 @@ A running log of the holes found in BONDED_AGENT.md (now named JiXin) and what w
 | 8 | Scope is far bigger than the time left | Open | Worse. Both sides are in the required demo |
 | 9 | Claims that can backfire: WeBank named as lessor, farm drone subsidies may exist, unverified market sources | Open | Partly. Financing caveat kept; WeBank still named as lender; "credit bureau for machines" still there |
 | 10 | The contract believes the reporter: slashing evidence is typed in, not read from the signed intent and the job records | Reporter submits only the full signed intent and a rule; the contract reads every fact from the intent, `Bond` and `JobBoard` | No. Bug in `Bond.sol` |
-| 11 | A new machine can never start a job | New | Bug in `Bond.sol` with `JobBoard.sol` |
+| 11 | A new machine can never start a job | Drop the minimum from the start check, 200 yuan starting floor, the minimum unlocks a better rate and board listing | No. Bug in `Bond.sol` with `JobBoard.sol` |
 
 ## 1. Who pays when the AI agent makes a mistake
 
@@ -207,9 +207,31 @@ A report that points at a real violation pays. A report that points at something
 
 Mainly `Bond.sol`, plus the signing format in the agent code. The same rule applies everywhere else: never take a fact from the caller when the contract can read it. `JobBoard.confirm` breaks this rule too (see "Other contract notes").
 
-### 11. New: a new machine can never start
+### 11. A new machine can never start
 
-`Bond.covers` requires the balance to be at least the minimum. A new machine's bond starts at zero and only fills from confirmed jobs, but `JobBoard.start` refuses any job until `covers` is true. So with a minimum above zero, nothing ever starts. Fix: drop the minimum from `covers` and let the exposure check alone scale job size, with a small floor, and keep the minimum only for being listed on the board or for a better rate.
+#### The problem
+
+Two rules block each other. `Bond.covers` only counts a bond as big enough once it reaches the minimum. `JobBoard.start` only lets a job start if `covers` is true. A new drone's bond starts at zero and only fills from confirmed jobs. So it cannot start a job without a bond, and cannot build a bond without a job. With any minimum above zero, nothing ever starts. Like a job that requires experience you can only get from the job.
+
+#### The decision
+
+1. Drop the minimum from the start check. Only the rule that scales with job size stays: the bond must cover a share of the job's fee (currently 25 percent). Small jobs need a small bond, big jobs a big one.
+2. A starting allowance. Every new machine gets a floor of 200 yuan (about 50 mu of spraying, one small job), so a job may start when bond plus floor covers 25 percent of the fee. The first small jobs fill the bond and bigger jobs unlock. This is the "earns its way up" moment in the demo.
+3. The minimum becomes something to earn, not a wall. Reaching it unlocks a better loan rate from the lender and listing on the main job board.
+
+Why a zero bond is safe for small first jobs:
+
+- The client cannot lose money: the fee only releases on their confirmation.
+- The lender cannot lose the machine: it owns it until the lease is paid.
+- The agent's mistakes are covered from day one by the vendor bond (fix 1), which is posted up front.
+- The only uncovered risk is the owner cheating, and the floor keeps the first jobs small.
+
+This completes fix 3.
+
+#### What it takes in code
+
+- `Bond.covers`: remove the minimum, add the floor. A job starts if `balance + floor >= exposure`.
+- The minimum stays in `Bond` but is read only by the board listing and by the lender when it changes the rate in `Lease`.
 
 ### Other contract notes
 
