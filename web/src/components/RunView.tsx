@@ -8,6 +8,7 @@ import { AgentFeed, BalanceSheet, BondGauge, ButtonRing, ChainFeed, JobList, Lea
 import { CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
 import { KpiTiles } from "./Kpis";
 import { Moments, momentsOf, type MomentKey } from "./Moments";
+import { YourData } from "./YourData";
 import type { Side } from "@/engine/types";
 import { useLang } from "@/i18n/LangProvider";
 import { layerLabel } from "@/engine/i18n";
@@ -16,9 +17,21 @@ import { layerLabel } from "@/engine/i18n";
 const TABS = ["money", "safety", "jobs", "log"] as const;
 type Tab = (typeof TABS)[number];
 
+// One page, three ways to drive the same engine: the scripted story, an endless feed of seeded
+// jobs, or the visitor's own data. Same scene, moments, tiles and details for all three.
+const MODES = ["story", "feed", "data"] as const;
+type Mode = (typeof MODES)[number];
+
 export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const { d, t, lang } = useLang();
-  const { state, start, stop, reset, append } = useRun(side, lang);
+  const { state, start, startStream, stop, reset, append } = useRun(side, lang);
+  const [mode, setMode] = useState<Mode>("story");
+  // /app/live redirects here with ?mode=feed or ?mode=data.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("mode");
+    if (q === "feed" || q === "data") setMode(q); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
+  const switchMode = (next: Mode) => { if (next === mode) return; stop(); reset(); setMode(next); };
   const R = d.run;
   const title = side === "fleet" ? d.fleet.title : d.neighbour.title;
   const intro = side === "fleet" ? d.fleet.intro : d.neighbour.intro;
@@ -47,15 +60,17 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   useEffect(() => {
     if (prevLang.current === lang) return;
     prevLang.current = lang;
-    if (!state.running && state.events.length && state.lang !== lang) start(state.fast ?? true);
+    if (mode === "story" && !state.running && state.events.length && state.lang !== lang) start(state.fast ?? true);
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Five moments. The newest one takes the caption as it lands; a click pins an earlier one until the next lands.
-  const moments = useMemo(() => momentsOf(state.events, lang), [state.events, lang]);
+  // In the feed and on your data, moments light again each time they recur.
+  const moments = useMemo(() => momentsOf(state.events, lang, mode !== "story"), [state.events, lang, mode]);
   const lit = moments.filter((x) => typeof x.at === "number");
   const latest = lit.length ? lit.reduce((a, b) => ((b.at ?? 0) > (a.at ?? 0) ? b : a)).key : null;
+  const stamp = lit.reduce((n, x) => n + (x.at ?? 0), 0);
   const [pick, setPick] = useState<{ key: MomentKey; n: number } | null>(null);
-  const active = pick && pick.n === lit.length ? pick.key : latest;
+  const active = pick && pick.n === stamp ? pick.key : latest;
   const pinned = moments.find((x) => x.key === active)?.text;
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("money");
@@ -68,16 +83,33 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
           <div className="tech text-[11px] tracking-[0.25em] text-red">{side === "fleet" ? R.eyebrowFleet : R.eyebrowNeighbour}</div>
           <h1 className="display text-4xl md:text-5xl">{title}</h1>
           <p className="mt-2 max-w-xl text-sm text-ink-2">{intro}</p>
-          {side === "fleet" ? <Link href="/app/live" className="link mt-2 inline-block text-sm">{R.yourData}</Link> : null}
-        </div>
-        <div className="flex items-center gap-2">
-          {!state.running ? <button className="btn btn-red" onClick={() => start(false)}>{R.start}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
-          <button className="btn btn-ghost" onClick={() => start(true)} disabled={state.running}>{R.fast}</button>
-          <button className="btn btn-ghost" onClick={reset} disabled={state.running}>{R.clear}</button>
         </div>
       </header>
 
-      <div className="mb-4"><Moments moments={moments} active={active} onSelect={(key) => setPick({ key, n: lit.length })} /></div>
+      <div className="mb-4 flex flex-wrap items-center gap-3 border-y border-line py-3">
+        <div role="tablist" aria-label={R.modesAria} className="flex gap-1">
+          {MODES.map((k) => <button key={k} type="button" role="tab" aria-selected={mode === k} onClick={() => switchMode(k)} className={`tech px-3 py-1.5 text-sm font-bold uppercase tracking-wide transition-colors ${mode === k ? "border-b-2 border-red text-ink" : "text-muted hover:text-ink"}`}>{R.modes[k]}</button>)}
+        </div>
+        <span className="text-sm text-muted">{R.modeNotes[mode]}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {mode === "story" ? (
+            <>
+              {!state.running ? <button className="btn btn-red" onClick={() => start(false)}>{R.start}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
+              <button className="btn btn-ghost" onClick={() => start(true)} disabled={state.running}>{R.fast}</button>
+              <button className="btn btn-ghost" onClick={reset} disabled={state.running}>{R.clear}</button>
+            </>
+          ) : mode === "feed" ? (
+            <>
+              <span className="pill bg-gold-soft text-ink">{t("live.processed", { n: state.processed })}</span>
+              {!state.running ? <button className="btn btn-red" onClick={() => startStream(`/api/live?scenario=fleet&lang=${lang}`)}>{d.live.startLive}</button> : <button className="btn btn-ghost" onClick={stop}>{R.stop}</button>}
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      {mode === "data" ? <YourData state={state} lang={lang} onRun={(url, init) => startStream(url, init)} onStop={stop} /> : null}
+
+      <div className="mb-4"><Moments moments={moments} active={active} onSelect={(key) => setPick({ key, n: stamp })} /></div>
 
       <div className="mb-4"><KpiTiles m={m} /></div>
 

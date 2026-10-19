@@ -125,6 +125,8 @@ export const en = {
     stoppedBy: "stopped by the {where}", passedAt: "got past the {where}", noAttacks: "No attacks in this run yet.",
     chainFeed: "Chain feed", jobs: "Jobs", eventStream: "EVENT STREAM", evidenceLink: "evidence",
     connectionLost: "Connection lost: {msg}", yourData: "Run it on your data",
+    modesAria: "How to run the demo", modes: { story: "Story", feed: "Live feed", data: "Your data" },
+    modeNotes: { story: "One drone, five moments, from first job to owning itself.", feed: "Random jobs keep arriving until you stop. Nothing is scripted.", data: "Run your own jobs, flight logs and messages through the same rules." },
   },
   moments: {
     declined: "Job declined", instalment: "Instalment paid", held: "Faked log held", slash: "Slash by proof", title: "Title transferred",

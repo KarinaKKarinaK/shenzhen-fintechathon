@@ -356,7 +356,7 @@ The demo token arrives once as `?demo=TOKEN` on the app URL, is kept in the brow
 
 ## 9. Bring your own data
 
-The scripted scenarios are one way in. `/app/live` runs the same engine on other data in two modes. Nothing else changes: gate, planner, policy engine, intent log, mirrors and chain adapter are the ones above.
+The scripted scenarios are one way in. The demo page (`/app/fleet`) runs the same engine on other data in two more modes, Live feed and Your data. Nothing else changes: gate, planner, policy engine, intent log, mirrors and chain adapter are the ones above.
 
 | Mode | What happens |
 |---|---|

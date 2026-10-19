@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect } from "react";
 import Image from "next/image";
 import { Hero3D } from "./Hero3D";
 import { Seal } from "./Seal";
@@ -29,6 +30,11 @@ export function LandingView({ attackN, benignN, limits }: { attackN: number; ben
     [L.holds.chain, L.holds.chainLine],
   ];
   const stats = [String(attackN), "3", "0", "2"];
+  // Marks the page so globals.css can drop main's padding and stop the overscroll bounce.
+  useEffect(() => {
+    document.documentElement.classList.add("on-landing");
+    return () => document.documentElement.classList.remove("on-landing");
+  }, []);
   return (
     <div className="landing-root">
       <section className="duotone flex min-h-[100svh] items-end text-white">

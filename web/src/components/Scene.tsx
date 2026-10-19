@@ -145,6 +145,7 @@ function Village({ windows, roof, origin = [12, 0, -9] as [number, number, numbe
 }
 
 const LabelsCtx = createContext(true);
+// pos is relative to the parent group, so a label inside a positioned group passes [0, 0, 0].
 function Label({ pos, title, value, accent = "#c8102e", y = 2.6 }: { pos: [number, number, number]; title: string; value?: string; accent?: string; y?: number }) {
   const show = useContext(LabelsCtx);
   if (!show) return null;
@@ -175,7 +176,7 @@ function Bank({ pos, paid, total, windows, owned = false, frozen = false }: { po
       <mesh position={[0, 1.6, 0.95]}><boxGeometry args={[1.2, 0.3, 0.05]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={0.8} metalness={0.6} roughness={0.3} /></mesh>
       <mesh position={[-1.5 + pct * 3, 0.36, 1.2]}><boxGeometry args={[0.08, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
       <mesh position={[0, 0.33, 1.2]}><boxGeometry args={[3, 0.04, 0.12]} /><meshStandardMaterial color="#bdb5a3" /></mesh>
-      <Label pos={pos} title={t("scene.lender")} value={t("scene.lenderVal", { paid: paid.toFixed(1), total })} accent="#8e0e22" y={3.9} />
+      <Label pos={[0, 0, 0]} title={t("scene.lender")} value={t("scene.lenderVal", { paid: paid.toFixed(1), total })} accent="#8e0e22" y={3.9} />
     </group>
   );
 }
@@ -200,7 +201,7 @@ function Vault({ pos, bond, min, slashed, worst }: { pos: [number, number, numbe
       <mesh ref={liquid} position={[0, 0.3, 0]}><boxGeometry args={[1.38, 1, 1.38]} /><meshStandardMaterial color={low ? "#c8102e" : "#d4a017"} emissive={low ? "#c8102e" : "#d4a017"} emissiveIntensity={0.5} metalness={0.4} roughness={0.3} /></mesh>
       <mesh position={[0, 0.25 + (Math.min(min, cap) / cap) * 1.6, 0]}><boxGeometry args={[1.55, 0.02, 1.55]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1.5} /></mesh>
       <mesh position={[0, 2.05, 0]}><torusGeometry args={[0.45, 0.05, 10, 40]} /><meshStandardMaterial color={TURQ} metalness={0.8} roughness={0.2} emissive={slashed ? CORAL : TURQ} emissiveIntensity={slashed ? 2 : 0.4} /></mesh>
-      <Label pos={pos} title={t("scene.vault")} value={`${t("scene.vaultVal", { bond: bond.toFixed(0), min })}${low ? t("scene.below") : ""}${worst !== undefined ? (bond >= worst ? t("scene.covers", { w: worst }) : t("scene.notCovered", { w: worst })) : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
+      <Label pos={[0, 0, 0]} title={t("scene.vault")} value={`${t("scene.vaultVal", { bond: bond.toFixed(0), min })}${low ? t("scene.below") : ""}${worst !== undefined ? (bond >= worst ? t("scene.covers", { w: worst }) : t("scene.notCovered", { w: worst })) : ""}`} accent={low ? "#c8102e" : "#d4a017"} y={3.2} />
     </group>
   );
 }
@@ -218,7 +219,7 @@ function Farmhouse({ pos, windows, roof, job }: { pos: [number, number, number];
         <mesh position={[0, 1.35, 0]} castShadow><boxGeometry args={[1.1, 0.7, 0.05]} /><meshStandardMaterial color="#f6f3ea" roughness={0.9} /></mesh>
         <mesh position={[0, 1.35, 0.03]}><boxGeometry args={[0.9, 0.5, 0.01]} /><meshStandardMaterial color={job ? (job.status === "held" ? CORAL : TURQ) : "#d9d2c0"} emissive={job ? (job.status === "held" ? CORAL : TURQ) : "#000"} emissiveIntensity={job ? 0.6 : 0} /></mesh>
       </group>
-      <Label pos={pos} title={t("scene.board")} value={job ? t("scene.boardVal", { title: job.title, fee: job.fee, status: status(job.status) }) : t("scene.noJob")} accent="#d4a017" y={3.4} />
+      <Label pos={[0, 0, 0]} title={t("scene.board")} value={job ? t("scene.boardVal", { title: job.title, fee: job.fee, status: status(job.status) }) : t("scene.noJob")} accent="#d4a017" y={3.4} />
     </group>
   );
 }
@@ -235,7 +236,7 @@ function Pad({ pos }: { pos: [number, number, number] }) {
       <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.1, 0.16, 24]} /><meshStandardMaterial color={CORAL} emissive={CORAL} emissiveIntensity={1} side={THREE.DoubleSide} /></mesh>
       <mesh position={[1.6, 0.5, 0]} castShadow><boxGeometry args={[0.3, 1, 0.3]} /><meshStandardMaterial color={INK} roughness={0.5} /></mesh>
       <mesh position={[1.6, 1.05, 0]}><boxGeometry args={[0.2, 0.1, 0.2]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={2} /></mesh>
-      <Label pos={pos} title={t("scene.pad")} value={t("scene.padVal")} accent="#121212" y={1.9} />
+      <Label pos={[0, 0, 0]} title={t("scene.pad")} value={t("scene.padVal")} accent="#121212" y={1.9} />
     </group>
   );
 }
@@ -415,20 +416,7 @@ function Hunter({ pos, paid }: { pos: [number, number, number]; paid: number }) 
   return (
     <group position={pos}>
       <mesh position={[0, 0.5, 0]} castShadow><coneGeometry args={[0.35, 1, 5]} /><meshStandardMaterial color={paid > 0 ? TURQ : "#bdb5a3"} emissive={paid > 0 ? TURQ : "#000"} emissiveIntensity={paid > 0 ? 0.8 : 0} metalness={0.5} roughness={0.4} /></mesh>
-      <Label pos={pos} title={t("scene.hunter")} value={paid > 0 ? t("scene.bounty", { v: paid.toFixed(1) }) : t("scene.watching")} accent={paid > 0 ? "#d4a017" : "#7a7a76"} y={1.7} />
-    </group>
-  );
-}
-
-// Cover pool plinth. Flat cover for each task is bound here, not at the charging pad.
-function CoverPool({ pos, bound }: { pos: [number, number, number]; bound: number }) {
-  const t = useSceneT();
-  return (
-    <group position={pos}>
-      <mesh position={[0, 0.15, 0]} receiveShadow><cylinderGeometry args={[0.8, 0.9, 0.3, 6]} /><meshStandardMaterial color="#e8e2d3" roughness={0.9} /></mesh>
-      <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.28, 16, 16]} /><meshPhysicalMaterial color="#ffffff" transmission={0.8} thickness={0.4} roughness={0.1} transparent opacity={0.7} /></mesh>
-      <mesh position={[0, 0.55, 0]}><sphereGeometry args={[0.14, 12, 12]} /><meshStandardMaterial color={TURQ} emissive={TURQ} emissiveIntensity={bound > 0 ? 2 : 0.3} /></mesh>
-      <Label pos={pos} title={t("scene.cover")} value={bound > 0 ? t("scene.bound", { v: bound.toFixed(0) }) : t("scene.flatCover")} accent="#d4a017" y={1.5} />
+      <Label pos={[0, 0, 0]} title={t("scene.hunter")} value={paid > 0 ? t("scene.bounty", { v: paid.toFixed(1) }) : t("scene.watching")} accent={paid > 0 ? "#d4a017" : "#7a7a76"} y={1.7} />
     </group>
   );
 }
@@ -491,14 +479,12 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
   const boardPos: [number, number, number] = side === "fleet" ? [-6.5, 0, -5] : [3, 0.1, 0];
   const padPos: [number, number, number] = [-5.5, 0, 4.6];
   const hunterPos: [number, number, number] = side === "fleet" ? [5.5, 0, 7.2] : [-3.2, 0, 4.4];
-  const coverPos: [number, number, number] = side === "fleet" ? [-1.2, 0, 7.2] : [3.4, 0, 3.8];
   const railPos: [number, number, number] = [lenderPos[0], 0, lenderPos[2] + 1.2];
   const targets = useMemo(() => {
     const v = (p: [number, number, number], y = 1.2) => new THREE.Vector3(p[0], y, p[2]);
-    return { default: v(lenderPos), instalment: v(lenderPos), title: v(lenderPos), fee_in: v(boardPos), lock: v(boardPos), release: v(boardPos), refund: v(boardPos), bond_fill: v(bondPos), slash: v(bondPos), top_up: v(bondPos), bounty: v(hunterPos, 0.9), cover: v(coverPos, 0.8), energy: v(padPos, 0.6), rail: v(railPos, 0.5) } as Record<string, THREE.Vector3>;
+    return { default: v(lenderPos), instalment: v(lenderPos), title: v(lenderPos), fee_in: v(boardPos), lock: v(boardPos), release: v(boardPos), refund: v(boardPos), bond_fill: v(bondPos), slash: v(bondPos), top_up: v(bondPos), bounty: v(hunterPos, 0.9), energy: v(padPos, 0.6), rail: v(railPos, 0.5) } as Record<string, THREE.Vector3>;
   }, [side]); // eslint-disable-line react-hooks/exhaustive-deps
   const bountyPaid = txs.filter((t) => t.kind === "bounty").reduce((a, t) => a + t.amount, 0);
-  const coverBound = txs.filter((t) => t.kind === "cover").reduce((a, t) => a + t.amount, 0);
   const titled = !!machine?.owned || txs.some((t) => t.kind === "title");
   const activeJob = Object.values(jobs).find((j) => j.status === "locked" || j.status === "running");
   const jobList = Object.values(jobs);
@@ -547,7 +533,6 @@ function World({ side, machine, txs, jobs, breached, live, extra = {} }: { side:
       <Bank pos={lenderPos} paid={m ? m.leaseTotal - m.leaseBalance : 0} total={m?.leaseTotal ?? 1} windows={tex.windows} owned={titled} frozen={!!extra.frozen || m?.status === "frozen"} />
       <Vault pos={bondPos} bond={m?.bond ?? 0} min={m?.bondMin ?? 0} slashed={!!extra.slashed || !!breached} worst={extra.worst} />
       <Hunter pos={hunterPos} paid={bountyPaid} />
-      <CoverPool pos={coverPos} bound={coverBound} />
       <MoneyDots txs={txs} from={origin} to={targets} />
     </>
   );

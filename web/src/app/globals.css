@@ -330,6 +330,13 @@ a.tile:hover, a.card:hover, .hover-lift:hover { transform: translateY(-2px); box
 
 /* Full bleed landing: the fixed navbar floats over the photo, the page has no frame on the home route. */
 body:has(.landing-root) .page-main { padding: 0 !important; }
+/* Pulling past the top of the landing must never show the cream page base above the photo (macOS
+   rubber band). No bounce, and whatever does show behind the page is the photo's own dark.
+   LandingView sets html.on-landing; the build drops html:has() and body:has() rules. */
+html.on-landing { background: #1f1a17; overscroll-behavior-y: none; }
+html.on-landing body { background-color: var(--color-paper); overscroll-behavior-y: none; }
+html.on-landing .page-main { padding: 0; }
+html.on-landing .landing-root { margin: 0; }
 /* Fallback where :has is missing: pull the landing out over main's padding, edge to edge. */
 .landing-root { margin: -4rem -1rem -1.5rem; }
 @media (min-width: 768px) { .landing-root { margin: -4.75rem -1.5rem -1.5rem; } }

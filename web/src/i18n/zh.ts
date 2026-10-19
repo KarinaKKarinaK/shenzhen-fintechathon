@@ -126,6 +126,8 @@ export const zh: Dict = {
     stoppedBy: "被{where}拦截", passedAt: "通过了{where}", noAttacks: "本次运行暂无攻击。",
     chainFeed: "链上动态", jobs: "任务", eventStream: "事件流", evidenceLink: "证据",
     connectionLost: "连接中断：{msg}", yourData: "用你的数据运行",
+    modesAria: "演示的运行方式", modes: { story: "故事", feed: "实时流", data: "你的数据" },
+    modeNotes: { story: "一架无人机，五个时刻，从第一单到拥有自己。", feed: "随机任务不断到来，直到你停止。没有脚本。", data: "用同一套规则运行你自己的任务、飞行日志和消息。" },
   },
   moments: {
     declined: "任务被拒", instalment: "分期款已付", held: "伪造日志被冻结", slash: "凭证明罚没", title: "所有权已转移",

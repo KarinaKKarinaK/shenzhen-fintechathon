@@ -30,8 +30,8 @@ Optional environment in `.env` (see `.env.example`): a model key for written exp
 |---|---|
 | `/` | Landing |
 | `/app` | Dashboard: attack numbers, policy, allowlist, caps |
-| `/app/fleet`, `/app/neighbour` | The live run, five moments, Details toggle |
-| `/app/live` | Live feed of generated jobs, or your own JSON or CSV through the same engine |
+| `/app/fleet`, `/app/neighbour` | The demo, in three modes: Story (five moments), Live feed (generated jobs) and Your data (your own JSON or CSV). Details in four tabs |
+| `/app/live` | Redirects to `/app/fleet?mode=feed` |
 | `/app/evidence` | Attack set at request time, judge console, learned components |
 
 ## Folder map
@@ -85,7 +85,7 @@ src/
     EvidenceView.tsx   evidence page, AttackGrid, JudgeConsole, Learned
     DashboardView.tsx  dashboard
     LandingView.tsx    landing sections
-    LiveView.tsx       live feed and your data tabs
+    YourData.tsx       the Your data mode: drop, paste or pick a sample
     Learned.tsx        learned component cards
     demoToken.ts       capture ?demo= and send the header
     money.ts           yuan formatting

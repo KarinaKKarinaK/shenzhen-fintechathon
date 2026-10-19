@@ -146,9 +146,9 @@ Environment is optional, see `web/.env.example`. Full technical documentation in
 
 ## Try it on your data
 
-The scripted scenarios are one way in. The live page runs the same engine on data you bring.
+The scripted story is one way in. The same demo page has two more modes that run the engine on other data.
 
-- Open `/app/live` on the live site or locally.
+- Open `/app/fleet` on the live site or locally and pick a mode: Story, Live feed or Your data.
 - Live feed: press Start and a new job arrives every few seconds, with the odd injection attempt, until you stop. Watch the gate, the planner, the policy engine and the oracle react in order.
 - Your data: drop a JSON or CSV of jobs (plus an optional flights CSV), paste it, or pick a sample from the dropdown, and run the same engine over it.
 
