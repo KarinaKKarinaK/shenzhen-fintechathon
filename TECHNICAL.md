@@ -270,6 +270,8 @@ What they are not: not trained on live traffic or real drone logs. The classifie
 
 ### 6.4 Measured improvement
 
+`pnpm charts` (`web/scripts/charts.ts`) redraws nine SVG charts in `docs/charts` from the same seeds: the detection curve, the robust z histogram, conformal calibration, lender loss against skip rate, MDP against greedy across balances, the ratchet walk, three credit trajectories, the CUSUM trace and the classifier across thresholds. The README shows them.
+
 `pnpm bench` recomputes every row from the frozen seeds. Nothing in this table is pasted.
 
 | Component | Before | After | Before result | After result |

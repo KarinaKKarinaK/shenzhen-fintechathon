@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="72" y="26" font-size="16" font-weight="600" fill="#1a1a1a">The acceptance ratchet over 60 proposals on a frozen week</text>
+<text x="72" y="44" fill="#8a8a8a">walk seed 99, eval seed 4242, 52 offers over 7 days; a proposal is kept only if profit rises and the reserve rule holds</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#ececec"/>
+<text x="64" y="368" text-anchor="end" fill="#8a8a8a">0</text>
+<line x1="72" x2="736" y1="304" y2="304" stroke="#ececec"/>
+<text x="64" y="308" text-anchor="end" fill="#8a8a8a">220</text>
+<line x1="72" x2="736" y1="244" y2="244" stroke="#ececec"/>
+<text x="64" y="248" text-anchor="end" fill="#8a8a8a">440</text>
+<line x1="72" x2="736" y1="184" y2="184" stroke="#ececec"/>
+<text x="64" y="188" text-anchor="end" fill="#8a8a8a">660</text>
+<line x1="72" x2="736" y1="124" y2="124" stroke="#ececec"/>
+<text x="64" y="128" text-anchor="end" fill="#8a8a8a">880</text>
+<line x1="72" x2="736" y1="64" y2="64" stroke="#ececec"/>
+<text x="64" y="68" text-anchor="end" fill="#8a8a8a">1,100</text>
+<line x1="72" x2="72" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="72" y="382" text-anchor="middle" fill="#8a8a8a">0</text>
+<line x1="182.66666666666666" x2="182.66666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="182.66666666666666" y="382" text-anchor="middle" fill="#8a8a8a">10</text>
+<line x1="293.3333333333333" x2="293.3333333333333" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="293.3333333333333" y="382" text-anchor="middle" fill="#8a8a8a">20</text>
+<line x1="404" x2="404" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="404" y="382" text-anchor="middle" fill="#8a8a8a">30</text>
+<line x1="514.6666666666666" x2="514.6666666666666" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="514.6666666666666" y="382" text-anchor="middle" fill="#8a8a8a">40</text>
+<line x1="625.3333333333334" x2="625.3333333333334" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="625.3333333333334" y="382" text-anchor="middle" fill="#8a8a8a">50</text>
+<line x1="736" x2="736" y1="364" y2="368" stroke="#8a8a8a"/>
+<text x="736" y="382" text-anchor="middle" fill="#8a8a8a">60</text>
+<line x1="72" x2="736" y1="364" y2="364" stroke="#8a8a8a"/>
+<text x="404" y="406" text-anchor="middle" fill="#8a8a8a">proposal</text>
+<text transform="translate(16 214) rotate(-90)" text-anchor="middle" fill="#8a8a8a">profit after instalments, yuan</text>
+<line x1="72" x2="736" y1="296.8545454545455" y2="296.8545454545455" stroke="#b9b9b9" stroke-width="1" stroke-dasharray="4 4"/>
+<polyline fill="none" stroke="#c8102e" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"  points="72.0,296.9 83.1,296.9 94.1,296.9 105.2,296.9 116.3,296.9 127.3,296.9 138.4,237.9 149.5,237.9 160.5,201.3 171.6,201.3 182.7,201.3 193.7,201.3 204.8,201.3 215.9,192.0 226.9,192.0 238.0,192.0 249.1,192.0 260.1,192.0 271.2,153.0 282.3,153.0 293.3,153.0 304.4,153.0 315.5,153.0 326.5,153.0 337.6,153.0 348.7,153.0 359.7,111.5 370.8,111.5 381.9,111.5 392.9,111.5 404.0,111.5 415.1,111.5 426.1,111.5 437.2,111.5 448.3,111.5 459.3,111.5 470.4,111.5 481.5,111.5 492.5,111.5 503.6,111.5 514.7,111.5 525.7,111.5 536.8,111.5 547.9,111.5 558.9,111.5 570.0,111.5 581.1,111.5 592.1,111.5 603.2,111.5 614.3,111.5 625.3,111.5 636.4,111.5 647.5,111.5 658.5,111.5 669.6,111.5 680.7,111.5 691.7,111.5 702.8,111.5 713.9,111.5 724.9,111.5 736.0,111.5"/>
+<circle cx="83.1" cy="296.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="94.1" cy="296.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="105.2" cy="296.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="127.3" cy="296.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="149.5" cy="237.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="171.6" cy="237.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="182.7" cy="201.3" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="193.7" cy="201.3" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="204.8" cy="237.9" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="238.0" cy="201.3" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="293.3" cy="153.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="304.4" cy="162.4" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="315.5" cy="192.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="326.5" cy="153.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="337.6" cy="192.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="348.7" cy="153.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="370.8" cy="120.8" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="381.9" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="404.0" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="415.1" cy="136.6" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="426.1" cy="136.6" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="437.2" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="448.3" cy="120.8" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="481.5" cy="153.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="492.5" cy="130.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="503.6" cy="120.8" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="514.7" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="525.7" cy="130.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="536.8" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="547.9" cy="120.8" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="558.9" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="570.0" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="592.1" cy="136.6" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="603.2" cy="153.0" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="614.3" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="636.4" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="647.5" cy="136.6" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="658.5" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="669.6" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="680.7" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="691.7" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="702.8" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="713.9" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="724.9" cy="130.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="736.0" cy="111.5" r="3" fill="#b9b9b9" stroke="#b9b9b9" stroke-width="1.5"/>
+<circle cx="116.3" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="226.9" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="249.1" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="260.1" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="282.3" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="392.9" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="459.3" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="470.4" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="581.1" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="625.3" cy="364.0" r="3" fill="#ffffff" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="138.4" cy="237.9" r="5" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<circle cx="160.5" cy="201.3" r="5" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<circle cx="215.9" cy="192.0" r="5" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<circle cx="271.2" cy="153.0" r="5" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<circle cx="359.7" cy="111.5" r="5" fill="#d4a017" stroke="#d4a017" stroke-width="1.5"/>
+<rect x="688.4" y="44" width="12" height="12" fill="#d4a017" rx="1"/>
+<text x="705.4" y="55" fill="#1a1a1a">kept</text>
+<rect x="515.5999999999999" y="44" width="12" height="12" fill="#8a8a8a" rx="1"/>
+<text x="532.5999999999999" y="55" fill="#1a1a1a">broke the reserve rule</text>
+<rect x="432.3999999999999" y="44" width="12" height="12" fill="#b9b9b9" rx="1"/>
+<text x="449.3999999999999" y="55" fill="#1a1a1a">rejected</text>
+<rect x="329.9999999999999" y="49" width="12" height="3" fill="#c8102e" rx="1"/>
+<text x="346.9999999999999" y="55" fill="#1a1a1a">best so far</text>
+<rect x="221.19999999999987" y="49" width="12" height="3" fill="#b9b9b9" rx="1"/>
+<text x="238.19999999999987" y="55" fill="#1a1a1a">baseline 246</text>
+<text x="736.0" y="101.5" text-anchor="end" fill="#c8102e" font-weight="600">926 yuan</text>
+</svg>

@@ -186,7 +186,7 @@ function fit(rows: Record<FeatureName, number>[]): Model {
 }
 
 export const MODEL: Model = fit(DATASET.slice(0, FIT_N).map((d) => derive(d.flight)));
-const MODEL_RAW: Model = fit(DATASET.slice(0, FIT_N).map((d) => derive(d.flight, true)));
+export const MODEL_RAW: Model = fit(DATASET.slice(0, FIT_N).map((d) => derive(d.flight, true)));
 
 // The nonconformity score: largest absolute robust z over the features, with each feature's z.
 export function robustZ(flight: Flight, model: Model = MODEL, useRaw = false, features: readonly FeatureName[] = FEATURES): { z: number; zs: Record<FeatureName, number> } {

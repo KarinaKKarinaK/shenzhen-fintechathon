@@ -10,7 +10,8 @@
     "test": "tsx src/engine/selfcheck.ts",
     "evidence": "tsx scripts/evidence.ts",
     "verify": "tsx scripts/verify.ts",
-    "bench": "tsx scripts/bench.ts"
+    "bench": "tsx scripts/bench.ts",
+    "charts": "tsx scripts/charts.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

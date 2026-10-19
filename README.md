@@ -204,7 +204,7 @@ The same run in Chinese:
 
 ## Smart where it counts, and measured
 
-Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. `pnpm bench` recomputes the table; `pnpm test` asserts every number; the Evidence page shows them live. None of them signs, pays or changes a cap: the classifier and the anomaly model can only hold, the planner only orders work, the MDP, ratchet and credit score only move knobs inside the policy band.
+Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. `pnpm bench` recomputes the table, `pnpm charts` redraws the charts below, `pnpm test` asserts every number, and the Evidence page shows them live. None of them signs, pays or changes a cap: the classifier and the anomaly model can only hold, the planner only orders work, the MDP, ratchet and credit score only move knobs inside the policy band.
 
 | Component | Borrowed from | Before | After | Before result | After result |
 |---|---|---|---|---|---|
@@ -220,49 +220,20 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 | Run integrity | Financial ledgers | no log | hash chained event log, `GET /api/replay` | not verifiable | two seeded runs, head 0x68c3abcf, equal; tamper caught at position 7 |
 
 
-Before and after on the same seeds. Lower is better in the first two charts, higher in the last two.
+Every chart below is recomputed from the engine by `pnpm charts` on the same fixed seeds, so the numbers in the table and the pictures cannot drift apart.
 
-```mermaid
-xychart-beta
-  title "Honest flights flagged at full tamper detection (percent)"
-  x-axis ["raw GPS length", "fixed z 4", "Kalman + conformal"]
-  y-axis "false alarm %" 0 --> 15
-  bar [13.8, 0.0, 3.0]
-```
-
-The fixed threshold looks perfect at 0.0% but has no guarantee and breaks on the next flight class. The conformal threshold states 2%, measures 3.0% on held out data, and keeps 100% detection on all five tamper classes.
-
-```mermaid
-xychart-beta
-  title "Lender loss given default, p95, yuan"
-  x-axis ["no bonds", "pilot + vendor bonds"]
-  y-axis "yuan" 0 --> 30000
-  bar [25593, 19739]
-```
-
-```mermaid
-xychart-beta
-  title "Profit on the frozen week, yuan"
-  x-axis ["baseline knobs", "after 60 ratchet steps"]
-  y-axis "yuan" 0 --> 1000
-  bar [246, 926]
-```
-
-```mermaid
-xychart-beta
-  title "Mean season profit after instalments, 200 seeded seasons, yuan"
-  x-axis ["greedy rule", "lease MDP"]
-  y-axis "yuan" 7000 --> 7600
-  bar [7471, 7540]
-```
-
-```mermaid
-xychart-beta
-  title "Pilot credit score as history arrives (Buhlmann)"
-  x-axis ["prior", "1 confirmed", "2 confirmed", "3 confirmed", "then a held log"]
-  y-axis "score" 0.8 --> 1
-  line [0.912, 0.922, 0.930, 0.936, 0.882]
-```
+| | |
+|---|---|
+| ![Tamper detection against false alarms](docs/charts/detection-curve.svg) | ![Robust z, honest against tampered](docs/charts/z-distribution.svg) |
+| The Kalman smoothed track catches every tampered flight before a single honest one is flagged. The raw track length needs 13.8% false alarms to get close. | Honest flights sit under z 2.6, tampered ones spread to 12 and beyond. The conformal line is placed by the calibration set, the fixed line by hand. |
+| ![Conformal calibration](docs/charts/conformal-calibration.svg) | ![Lender loss given default](docs/charts/lender-loss.svg) |
+| Stated false alarm rate against the held out rate at eight targets. The points sit on the diagonal, which is what the conformal guarantee promises. | p95 loss given default as instalment skips rise from 2% to 14% a week. The two bonds take about 6,000 yuan off the lender's tail at every skip rate. |
+| ![MDP against greedy](docs/charts/mdp-vs-greedy.svg) | ![The ratchet walk](docs/charts/ratchet.svg) |
+| The lease MDP beats the greedy rule at every balance, and by more when the lease is heavier and a wrong week costs more. | Sixty proposals on a frozen week. Grey ones did not beat the best so far, hollow ones broke the reserve rule, gold ones were kept. Profit goes from 246 to 926 yuan. |
+| ![Pilot credit score](docs/charts/credit.svg) | ![CUSUM drift monitor](docs/charts/cusum.svg) |
+| Three pilots over thirty jobs. A single held log costs a tier for a while; a pattern of them keeps the pilot in tier B and the instalment share higher. | Five hundred benign risk scores, then attacks. The CUSUM statistic stays near zero through the benign spikes and crosses the alarm line five observations after the shift. |
+| ![Classifier at every threshold](docs/charts/classifier-threshold.svg) | |
+| The message classifier on the held out set across the whole threshold range. The gate labels at 0.5 and holds for the operator at 0.8. | |
 
 ```mermaid
 flowchart LR
@@ -338,6 +309,7 @@ pnpm install
 pnpm dev          # app on localhost:3000
 pnpm test         # 52 attacks blocked, 7 benign pass, learned metrics asserted, replay heads equal, about 10 s
 pnpm bench        # before and after table for the ten components
+pnpm charts       # redraws docs/charts from the engine
 pnpm evidence     # writes a full run and the attack results to evidence/
 pnpm verify       # checks every hash in evidence/ against the chain or the labelled set
 cd ../contracts
