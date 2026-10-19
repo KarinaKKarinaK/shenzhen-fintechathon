@@ -219,6 +219,51 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 | Day planner | Mechanism design | first come | knapsack plus second price tie break | an inflated bid buys priority | a bid inflated to 5 wins at 4.2 and loses 0.7 utility |
 | Run integrity | Financial ledgers | no log | hash chained event log, `GET /api/replay` | not verifiable | two seeded runs, head 0x68c3abcf, equal; tamper caught at position 7 |
 
+
+Before and after on the same seeds. Lower is better in the first two charts, higher in the last two.
+
+```mermaid
+xychart-beta
+  title "Honest flights flagged at full tamper detection (percent)"
+  x-axis ["raw GPS length", "fixed z 4", "Kalman + conformal"]
+  y-axis "false alarm %" 0 --> 15
+  bar [13.8, 0.0, 3.0]
+```
+
+The fixed threshold looks perfect at 0.0% but has no guarantee and breaks on the next flight class. The conformal threshold states 2%, measures 3.0% on held out data, and keeps 100% detection on all five tamper classes.
+
+```mermaid
+xychart-beta
+  title "Lender loss given default, p95, yuan"
+  x-axis ["no bonds", "pilot + vendor bonds"]
+  y-axis "yuan" 0 --> 30000
+  bar [25593, 19739]
+```
+
+```mermaid
+xychart-beta
+  title "Profit on the frozen week, yuan"
+  x-axis ["baseline knobs", "after 60 ratchet steps"]
+  y-axis "yuan" 0 --> 1000
+  bar [246, 926]
+```
+
+```mermaid
+xychart-beta
+  title "Mean season profit after instalments, 200 seeded seasons, yuan"
+  x-axis ["greedy rule", "lease MDP"]
+  y-axis "yuan" 7000 --> 7600
+  bar [7471, 7540]
+```
+
+```mermaid
+xychart-beta
+  title "Pilot credit score as history arrives (Buhlmann)"
+  x-axis ["prior", "1 confirmed", "2 confirmed", "3 confirmed", "then a held log"]
+  y-axis "score" 0.8 --> 1
+  line [0.912, 0.922, 0.930, 0.936, 0.882]
+```
+
 ```mermaid
 flowchart LR
   subgraph Inputs
