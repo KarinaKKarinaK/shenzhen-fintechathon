@@ -15,6 +15,29 @@ export async function GET(req: Request) {
   const name = (url.searchParams.get("scenario") || "fleet") as keyof typeof SCENARIOS;
   const fast = url.searchParams.get("fast") === "1";
   const lang = pickLang(url.searchParams.get("lang"));
+  // Replay: a recorded public run on FISCO BCOS (src/engine/data/replay-fleet.json, captured from this
+  // route), streamed at presentation speed. Every hash in it is a real transaction; the first line says
+  // it is a replay. Used for recordings when the live node is slow.
+  if (url.searchParams.get("replay") === "1" && name === "fleet") {
+    const { default: rec } = await import("@/engine/data/replay-fleet.json");
+    const evs = (rec as { capturedAt: string; events: Record<string, unknown>[] });
+    const enc2 = new TextEncoder();
+    const body = new ReadableStream({
+      async start(controller) {
+        const send = (ev: unknown) => controller.enqueue(enc2.encode(`data: ${JSON.stringify(ev)}\n\n`));
+        send({ t: "narration", text: `Replay of a recorded run on FISCO BCOS (${evs.capturedAt}). Every transaction hash below is real and can be checked on the chain.`, at: Date.now() });
+        for (const ev of evs.events) {
+          await new Promise((r) => setTimeout(r, ev.t === "narration" ? 1800 : ev.t === "chain" ? 200 : 90));
+          if (req.signal.aborted) break;
+          send({ ...ev, at: Date.now() });
+        }
+        end(ip);
+        controller.close();
+      },
+      cancel() { end(ip); },
+    });
+    return new Response(body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive" } });
+  }
   // Real chain mode only for a caller holding the demo token. Everyone else gets the simulation.
   const real = demoAuthorised(req.headers);
   // No token: the real FISCO BCOS chain when the public FISCO mode is on and the node answers.

@@ -220,7 +220,11 @@ export function useRun(scenario: Side, lang: Lang = "en") {
     }
   }, [lang, stop]);
 
-  const start = useCallback((fast = false) => startStream(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}`, { fast }), [scenario, lang, startStream]);
+  // ?replay=1 on the page streams a recorded real run (every hash on chain) at presentation speed.
+  const start = useCallback((fast = false) => {
+    const replay = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("replay") === "1";
+    return startStream(`/api/run?scenario=${scenario}&fast=${fast ? 1 : 0}&lang=${lang}${replay ? "&replay=1" : ""}`, { fast });
+  }, [scenario, lang, startStream]);
 
   // Events returned by POST /api/button land here.
   const append = useCallback((events: LooseEvent[]) => { if (Array.isArray(events) && events.length) dispatch({ t: "append", events }); }, []);
