@@ -14,8 +14,11 @@ import { run } from "./ratchet";
 import { honestLog, plausible } from "./oracle";
 import { fuse } from "./fusion/kalman";
 import { syntheticTrack, rng } from "./ml/plausibility";
-import { newState, rateFor, score as creditScore, update as creditUpdate } from "./credit/score";
+import { FLEET_PRIOR, newState, rateFor, score as creditScore, update as creditUpdate } from "./credit/score";
+import { FATE_MODEL, federatedPd, federatedPrior, parseModel, DEMO_PILOT_PROFILE } from "./credit/federated";
+import { createHash } from "node:crypto";
 import { plan } from "./planner";
+import { fiscoConfig, makeChain, RealChain } from "./chain";
 import { custom } from "./scenarios";
 import { InputError, parseRunInput } from "./schema";
 import { SAMPLES } from "./samples";
@@ -80,6 +83,19 @@ async function main() {
   const cs = creditScore(credit);
   console.log(`credit score: ${ps.map((p) => p.toFixed(3)).join(" > ")} over prior, 3 confirmed, 1 held; now tier ${cs.tier}, credibility ${cs.credibility}, rate ${rateFor(cs, DEFAULT_POLICY.rateBand).rateBps} bps`);
   if (!rose || !fell) { console.error("credit score did not rise on confirmed jobs and fall on a held one", ps); process.exit(1); }
+  // The FATE federated prior: the TS scorer reproduces FATE's own predictions on held out rows,
+  // the model hash matches its canonical JSON, and no model means the flat prior as before.
+  if (!FATE_MODEL) { console.error("fate-model.json missing or malformed"); process.exit(1); }
+  const fm = FATE_MODEL;
+  const fateDiff = Math.max(...fm.checks.map((c) => Math.abs(federatedPd(c.features, fm) - c.fate_pd)));
+  if (!(FATE_MODEL.checks.length >= 5 && fateDiff <= 1e-6)) { console.error("TS scorer does not reproduce FATE predictions within 1e-6", fateDiff); process.exit(1); }
+  const canon = (v: unknown): string => Array.isArray(v) ? `[${v.map(canon).join(",")}]` : v && typeof v === "object" ? `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon((v as Record<string, unknown>)[k])}`).join(",")}}` : JSON.stringify(v);
+  const { sha256: fateSha, sha256_of: _of, ...fateBody } = FATE_MODEL as unknown as Record<string, unknown>;
+  void _of;
+  if (createHash("sha256").update(canon(fateBody)).digest("hex") !== fateSha) { console.error("fate-model.json sha256 does not match its canonical JSON"); process.exit(1); }
+  const flat = federatedPrior(DEMO_PILOT_PROFILE, parseModel(null)), fed = federatedPrior(DEMO_PILOT_PROFILE);
+  if (flat.source !== "flat" || flat.prior !== FLEET_PRIOR || fed.source !== "fate" || fed.pd === null) { console.error("federated prior fallback wrong", { flat, fed }); process.exit(1); }
+  console.log(`fate prior: TS scorer matches FATE ${FATE_MODEL.fate_version} on ${FATE_MODEL.checks.length} held out rows (max diff ${fateDiff.toExponential(1)}), model ${fateSha.slice(0, 12)}..., demo pilot pd ${fed.pd}, start rate ${rateFor(creditScore(newState(fed.prior)), DEFAULT_POLICY.rateBand).rateBps} bps vs flat ${rateFor(creditScore(newState()), DEFAULT_POLICY.rateBand).rateBps} bps`);
   if (!(ratchet.bestProfit >= ratchet.baselineProfit)) { console.error("ratchet went backwards", ratchet); process.exit(1); }
   // Economics: the lease MDP against the greedy rule on the same seeded seasons, the second
   // price auction on its fixed example, the bond stress test.
@@ -159,6 +175,16 @@ async function main() {
   const broken = verifyEntries(tampered);
   if (broken.ok || broken.brokenAt !== 7) { console.error("tampered replay not caught at index 7", broken); process.exit(1); }
   console.log(`replay: two fleet runs end on head ${ha.head.slice(0, 10)}... over ${ha.length} events, tamper caught at ${broken.brokenAt}`);
+
+  // FISCO BCOS target: off unless its RPC, key and IntentLog address are all set.
+  const fiscoVars = { FISCO_RPC_URL: "http://127.0.0.1:8545", FISCO_PRIVATE_KEY: "0x" + "11".repeat(32), FISCO_INTENT_LOG: "0x" + "22".repeat(20) };
+  const saved = { ...process.env };
+  for (const k of ["FISCO_RPC_URL", "FISCO_PRIVATE_KEY", "FISCO_INTENT_LOG", "SURETY_PRIVATE_KEY"]) delete process.env[k];
+  const unset = makeChain({ real: true });
+  process.env = saved;
+  if (fiscoConfig({}) !== null || fiscoConfig({ ...fiscoVars, FISCO_INTENT_LOG: undefined }) !== null || unset instanceof RealChain || !unset.simulated) { console.error("FISCO target is on without its env"); process.exit(1); }
+  if (fiscoConfig(fiscoVars)?.chainId !== 20200) { console.error("FISCO target off with its env set"); process.exit(1); }
+  console.log("fisco: target off when FISCO_RPC_URL, FISCO_PRIVATE_KEY or FISCO_INTENT_LOG is unset, on with all three");
 
   console.log(`ok: ${results.length - failed.length} of ${ATTACKS.length} attacks blocked, gated wallet error rate ${(failed.length / ATTACKS.length * 100).toFixed(0)} percent`);
   console.log(`naive wallet fell to ${naiveFell} of ${ATTACKS.length}, error rate ${(naiveFell / ATTACKS.length * 100).toFixed(0)} percent`);

@@ -1,0 +1,124 @@
+{
+  "kind": "zishi.pilot-default.homo-lr",
+  "fate_version": "2.2.0",
+  "trained_by": "FATE HomoLRClient/HomoLRServer, FedAvg with secure aggregation, standalone multiprocess launcher",
+  "parties": {
+    "lender_a": 300,
+    "lender_b": 300,
+    "lender_c": 150
+  },
+  "seed": 20261020,
+  "features": [
+    {
+      "name": "tenure_years",
+      "transform": "identity",
+      "center": 3.0,
+      "scale": 2.0,
+      "meaning": "years flying as a licensed spray pilot"
+    },
+    {
+      "name": "mu_last_season",
+      "transform": "log1p",
+      "center": 1.8,
+      "scale": 0.8,
+      "meaning": "thousand mu sprayed last season, from platform logs"
+    },
+    {
+      "name": "held_log_rate",
+      "transform": "identity",
+      "center": 0.08,
+      "scale": 0.06,
+      "meaning": "share of the pilot's flight logs held by the plausibility check"
+    },
+    {
+      "name": "slash_count",
+      "transform": "log1p",
+      "center": 0.3,
+      "scale": 0.5,
+      "meaning": "bond slashes on record"
+    },
+    {
+      "name": "down_payment_share",
+      "transform": "identity",
+      "center": 0.25,
+      "scale": 0.08,
+      "meaning": "down payment as a share of the drone price"
+    },
+    {
+      "name": "peak_income_share",
+      "transform": "identity",
+      "center": 0.6,
+      "scale": 0.15,
+      "meaning": "share of yearly fees earned in the two peak months"
+    }
+  ],
+  "coef": [
+    -0.4503166675567627,
+    -0.7373901009559631,
+    0.6574178338050842,
+    0.8436192870140076,
+    -0.18993277847766876,
+    0.8284593224525452
+  ],
+  "intercept": -1.8539412021636963,
+  "output": "pd = sigmoid(intercept + sum(coef[i] * (f_i(x_i) - center_i) / scale_i)), f is identity or log1p",
+  "checks": [
+    {
+      "features": {
+        "tenure_years": 0.32240670206422967,
+        "mu_last_season": 2.095367324182231,
+        "held_log_rate": 0.1167894814775972,
+        "slash_count": 0.0,
+        "down_payment_share": 0.11652265791577393,
+        "peak_income_share": 0.6986460128171521
+      },
+      "fate_pd": 0.5312705039978027
+    },
+    {
+      "features": {
+        "tenure_years": 0.23849179239309226,
+        "mu_last_season": 8.471729185771668,
+        "held_log_rate": 0.04704716366236977,
+        "slash_count": 0.0,
+        "down_payment_share": 0.31016162535912306,
+        "peak_income_share": 0.8016854116406896
+      },
+      "fate_pd": 0.17631195485591888
+    },
+    {
+      "features": {
+        "tenure_years": 0.22299143750441178,
+        "mu_last_season": 5.65143995177257,
+        "held_log_rate": 0.07154636509232722,
+        "slash_count": 0.0,
+        "down_payment_share": 0.23650214742943906,
+        "peak_income_share": 0.7032943280146485
+      },
+      "fate_pd": 0.21209610998630524
+    },
+    {
+      "features": {
+        "tenure_years": 0.4599104610776451,
+        "mu_last_season": 3.5651681015373793,
+        "held_log_rate": 0.05589406136354255,
+        "slash_count": 0.0,
+        "down_payment_share": 0.10535945336041831,
+        "peak_income_share": 0.8348909170815462
+      },
+      "fate_pd": 0.46205034852027893
+    },
+    {
+      "features": {
+        "tenure_years": 1.506334897656292,
+        "mu_last_season": 15.967625555160652,
+        "held_log_rate": 0.2386845343198885,
+        "slash_count": 0.0,
+        "down_payment_share": 0.3391589488475487,
+        "peak_income_share": 0.7281944200174958
+      },
+      "fate_pd": 0.32314690947532654
+    }
+  ],
+  "sha256": "3f321ae68cdfed7e1eb4d01fc6b41b30dc2851d20e51d80df75c8a5343de314f",
+  "sha256_of": "canonical JSON of every other field: sorted keys, no spaces, ASCII, numbers as JavaScript JSON.stringify writes them"
+}

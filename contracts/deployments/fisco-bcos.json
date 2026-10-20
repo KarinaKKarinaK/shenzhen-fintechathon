@@ -1,0 +1,92 @@
+{
+  "chainId": 20200,
+  "network": "FISCO BCOS (local)",
+  "group": "group0",
+  "chain": "chain0",
+  "nodeVersion": "3.16.3",
+  "evmVersion": "paris",
+  "solc": "0.8.26",
+  "rpc": "http://127.0.0.1:8545",
+  "deployer": "0xC9E4C312E90cda14354340DFd7b9569d820C1201",
+  "deployedAt": "2026-10-20T11:16:40Z",
+  "contracts": {
+    "IntentLog": {
+      "address": "0xf86ced0c9738894079ca4fe9b48339b589d91990",
+      "tx": "0xec39c5b3a0ab4091156d17f345de0bf219d290bf7f1fd1bf22eed33cc1975d8f",
+      "gasUsed": 13783,
+      "block": 10
+    },
+    "Bond": {
+      "address": "0x5d946c777ca6eaf1c796cb865c4d0effbe7b8faf",
+      "tx": "0x327a345ffac2f1b2845aa6f58b5d1d89b1f291f97f1d399ffffdeafd1073a90b",
+      "gasUsed": 181346,
+      "block": 11,
+      "args": {
+        "treasury": "0xC9E4C312E90cda14354340DFd7b9569d820C1201",
+        "log": "0xf86ced0c9738894079ca4fe9b48339b589d91990",
+        "startFloor": "200 ether"
+      }
+    },
+    "Lease": {
+      "address": "0xa0cd7e68d4d5f83f5ee55673d4d20844ad3d2591",
+      "tx": "0xf1be5f3e15b07c0da0b86f2abc22e797eee896074e1952ff304018917a22d0db",
+      "gasUsed": 74181,
+      "block": 12
+    },
+    "JobBoard": {
+      "address": "0xe9e8903a9e52f022abdf3c647ff2a669c15e347c",
+      "tx": "0x367d2c7766f224a52dc867ebb2f128f26b142a43a55e90942569133fad364e55",
+      "gasUsed": 142813,
+      "block": 13,
+      "args": {
+        "bond": "0x5d946c777ca6eaf1c796cb865c4d0effbe7b8faf",
+        "lease": "0xa0cd7e68d4d5f83f5ee55673d4d20844ad3d2591",
+        "rail": "0xC9E4C312E90cda14354340DFd7b9569d820C1201"
+      }
+    }
+  },
+  "setBoardTx": "0x1853f785068dccf348974cee174c2fa6ac04dc1e2e000bcbe5626c5188bacfb9",
+  "smoke": [
+    {
+      "function": "IntentLog.commit",
+      "tx": "0xd9bab26138fb4713548bd409ffdb57a035034311efe6d4f6459be9b60dd40249",
+      "block": 15,
+      "gasUsed": 38104,
+      "status": "success"
+    },
+    {
+      "function": "Bond.postVendorBond",
+      "tx": "0x1336cbd9e34c466fd66a2087eb10c5e78cdbcbed601f4df344c4408ece8d4170",
+      "block": 16,
+      "gasUsed": 43057,
+      "status": "success"
+    },
+    {
+      "function": "Bond.register",
+      "tx": "0xd69a2963dd1b059c46bb906b11dd9d2d926dd451a163f5bc10fc161b83b8b42f",
+      "block": 17,
+      "gasUsed": 58261,
+      "status": "success"
+    },
+    {
+      "function": "Lease.open",
+      "tx": "0xad14f779db1cf50d77c0d06183823d41957c81235cab523545139f8815c23b5c",
+      "block": 18,
+      "gasUsed": 112183,
+      "status": "success"
+    }
+  ],
+  "note": "Local single node FISCO BCOS chain in Docker, Web3 JSON-RPC on, reached through script/fisco_rpc_proxy.py. Reproduce with bash contracts/script/fisco.sh. The deployer is a throwaway key made for this chain. FISCO charges no gas price and meters gas differently from Ethereum, so gasUsed is not comparable with Base Sepolia.",
+  "fateModel": {
+    "source": "fate/model.json sha256",
+    "sha256": "0x3f321ae68cdfed7e1eb4d01fc6b41b30dc2851d20e51d80df75c8a5343de314f",
+    "jobId": "0xe83832c97db5735e2627f5e1f29531b7d08a724c2f00f81cad56609ab2dd6b6a",
+    "jobIdPreimage": "fate-model",
+    "tx": "0x536cb4af9efc0b248f1d1dae3ce3c764c86eac3b2612e8458c9f3db1341aefa2",
+    "block": 53,
+    "gasUsed": 38104,
+    "status": "success",
+    "committedAt": 1792495832517,
+    "readBack": true
+  }
+}

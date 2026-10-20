@@ -1,0 +1,111 @@
+{
+  "fate_version": "2.2.0",
+  "python": "3.10.19",
+  "framing": "horizontal (homo): three lenders, same features, different pilots",
+  "algorithm": "FATE HomoLR, FedAvg, secure aggregation, 40 epochs, batch 64, adam lr 0.05, l2 0.001, zero init",
+  "launcher": "fate.arch.launchers.multiprocess_launcher, standalone computing and federation, one process per party plus arbiter",
+  "seed": 20261020,
+  "rows": {
+    "lender_a": 300,
+    "lender_b": 300,
+    "lender_c": 150,
+    "test_held_out": 3000
+  },
+  "default_rate": {
+    "lender_a": 0.22,
+    "lender_b": 0.0867,
+    "lender_c": 0.1,
+    "test_held_out": 0.1337
+  },
+  "metrics_on_held_out": {
+    "local_only_lender_a": {
+      "auc": 0.7286,
+      "f1_at_0.2": 0.3337,
+      "accuracy_at_0.5": 0.8227,
+      "brier": 0.1291,
+      "log_loss": 0.4093
+    },
+    "local_only_lender_b": {
+      "auc": 0.7786,
+      "f1_at_0.2": 0.3966,
+      "accuracy_at_0.5": 0.8667,
+      "brier": 0.1026,
+      "log_loss": 0.3389
+    },
+    "local_only_lender_c": {
+      "auc": 0.7868,
+      "f1_at_0.2": 0.4155,
+      "accuracy_at_0.5": 0.8783,
+      "brier": 0.0967,
+      "log_loss": 0.3269
+    },
+    "fate_federated": {
+      "auc": 0.7819,
+      "f1_at_0.2": 0.3987,
+      "accuracy_at_0.5": 0.872,
+      "brier": 0.0996,
+      "log_loss": 0.3315
+    },
+    "pooled_centralized": {
+      "auc": 0.7823,
+      "f1_at_0.2": 0.4113,
+      "accuracy_at_0.5": 0.8747,
+      "brier": 0.098,
+      "log_loss": 0.3276
+    },
+    "oracle_true_pd": {
+      "auc": 0.8002,
+      "f1_at_0.2": 0.4273,
+      "accuracy_at_0.5": 0.8787,
+      "brier": 0.0938,
+      "log_loss": 0.315
+    }
+  },
+  "federated_model_identical_on_all_lenders": true,
+  "model_sha256": "3f321ae68cdfed7e1eb4d01fc6b41b30dc2851d20e51d80df75c8a5343de314f",
+  "data": "synthetic, generated from a fixed seed; not real pilots or loans",
+  "prior_effect": {
+    "what": "instalment share (bps) the engine recommends for held out new pilots, flat fleet prior vs FATE federated prior, against the share it converges to for that pilot as jobs accrue",
+    "pilots": 3000,
+    "simSeed": 7,
+    "rateBandBps": [
+      2000,
+      4500
+    ],
+    "modelSha256": "3f321ae68cdfed7e1eb4d01fc6b41b30dc2851d20e51d80df75c8a5343de314f",
+    "rateErrorBps": {
+      "after_0_jobs": {
+        "flat_mae": 335.3,
+        "fate_mae": 152.5,
+        "flat_within_100bps": 0.239,
+        "fate_within_100bps": 0.547
+      },
+      "after_5_jobs": {
+        "flat_mae": 367.6,
+        "fate_mae": 301.9,
+        "flat_within_100bps": 0.187,
+        "fate_within_100bps": 0.146
+      },
+      "after_20_jobs": {
+        "flat_mae": 299.4,
+        "fate_mae": 278.5,
+        "flat_within_100bps": 0.207,
+        "fate_within_100bps": 0.212
+      }
+    },
+    "atOnboarding": {
+      "risky_pilots": 596,
+      "risky_mean_underpricing_bps": {
+        "flat": 1038.2,
+        "fate": 254.7
+      },
+      "safe_pilots": 1728,
+      "safe_mean_overpricing_bps": {
+        "flat": 135.2,
+        "fate": 83.3
+      },
+      "note": "risky: pd_true >= 0.2, the lender's exposure when the share is set too low; safe: pd_true < 0.1, what a good new pilot overpays"
+    },
+    "assumptions": "per job miss probability equals the loan level pd_true; held logs at the fleet rate; synthetic pilots"
+  }
+}

@@ -11,6 +11,7 @@ import { driftState } from "@/engine/drift/monitor";
 import { getEconomicsMetrics } from "@/engine/economics";
 import { DEFAULT_POLICY } from "@/engine/policy";
 import { newState, rateFor, score as creditScore, update as creditUpdate, type CreditOutcome } from "@/engine/credit/score";
+import { DEMO_PILOT_PROFILE, federatedPrior } from "@/engine/credit/federated";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,18 @@ function creditMetrics() {
   for (const o of CREDIT_SEQUENCE) { state = creditUpdate(state, o); path.push(creditScore(state).p); }
   const s = creditScore(state);
   const rate = rateFor(s, DEFAULT_POLICY.rateBand);
-  return { sequence: CREDIT_SEQUENCE, path, p: s.p, tier: s.tier, credibility: s.credibility, n: s.n, parts: s.parts, rateBps: rate.rateBps, bandBps: [Math.round(rate.lo * 10000), Math.round(rate.hi * 10000)], prior: state.prior, note: "Buhlmann credibility: a Beta posterior per component, weight on the pilot's own record n / (n + k)" };
+  return { sequence: CREDIT_SEQUENCE, path, p: s.p, tier: s.tier, credibility: s.credibility, n: s.n, parts: s.parts, rateBps: rate.rateBps, bandBps: [Math.round(rate.lo * 10000), Math.round(rate.hi * 10000)], prior: state.prior, note: "Buhlmann credibility: a Beta posterior per component, weight on the pilot's own record n / (n + k)", federated: federatedMetrics(), flatStartRateBps: rateFor(creditScore(newState()), DEFAULT_POLICY.rateBand).rateBps };
+}
+
+// The same sequence from the FATE federated prior for the demo pilot's profile: where a new
+// pilot's score and instalment share start, and where they land, against the flat prior above.
+function federatedMetrics() {
+  const fp = federatedPrior(DEMO_PILOT_PROFILE);
+  let state = newState(fp.prior);
+  const start = creditScore(state);
+  for (const o of CREDIT_SEQUENCE) state = creditUpdate(state, o);
+  const s = creditScore(state);
+  return { source: fp.source, pd: fp.pd, modelSha256: fp.modelSha256, fateVersion: fp.fateVersion, profile: DEMO_PILOT_PROFILE, prior: fp.prior, startP: start.p, startRateBps: rateFor(start, DEFAULT_POLICY.rateBand).rateBps, p: s.p, tier: s.tier, rateBps: rateFor(s, DEFAULT_POLICY.rateBand).rateBps };
 }
 
 export async function GET() {

@@ -71,6 +71,9 @@ export interface ChainTx {
   confirmedAt?: number;
   finalisedAt?: number;
   explorer?: string;
+  network?: "base-sepolia" | "fisco"; // real txs only: which chain holds this hash
+  intentHash?: string; // IntentLog commits: the engine's intent hash that went on chain
+  fiscoHash?: string; // IntentLog commits on Base: the same hash committed on FISCO BCOS
   rule?: string; // on slash txs, the rule the proof broke
   bond?: BondKind; // on slash txs, which bond paid
 }
@@ -164,7 +167,9 @@ export type EngineEvent =
   | { t: "button"; waiting: boolean; what: string; at: number }
   // The pilot's credit score after a job outcome: a Buhlmann credibility estimate from
   // credit/score.ts, with the instalment share it recommends inside the policy's rate band.
-  | { t: "credit"; pilot: string; p: number; credibility: number; n: number; tier: "A" | "B" | "C" | "D"; rateBps: number; outcome: "confirmed" | "held" | "slashed" | "missed"; at: number }
+  // prior says where the score started: the FATE federated prior (credit/federated.ts) with the
+  // pilot's federated default probability and the model's sha256, or the flat fleet prior.
+  | { t: "credit"; pilot: string; p: number; credibility: number; n: number; tier: "A" | "B" | "C" | "D"; rateBps: number; outcome: "confirmed" | "held" | "slashed" | "missed"; prior?: { source: "fate" | "flat"; pd: number | null; instalment: number; modelSha256: string | null; fateVersion: string | null }; at: number }
   | { t: "done"; summary: string; at: number };
 
 export interface Job {

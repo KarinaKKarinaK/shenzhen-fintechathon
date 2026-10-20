@@ -1,5 +1,9 @@
 // Chain adapter. SimChain produces deterministic hashes and is labelled simulated.
 // RealChain anchors each event on Base Sepolia through viem. Same interface.
+// FISCO BCOS (WeBank's consortium chain) is a second target through its Web3 JSON-RPC: with
+// FISCO_RPC_URL, FISCO_PRIVATE_KEY and FISCO_INTENT_LOG set, every intent committed on Base is
+// also committed to the IntentLog on FISCO, the lender's ledger, and the FISCO hash rides on the
+// Base tx. With only FISCO set, a real run uses FISCO as its one chain. Unset, nothing changes.
 // Real mode only runs when the caller proves it holds the demo token, so the funded key
 // cannot be drained by anyone who finds the route.
 //
@@ -7,7 +11,7 @@
 // (in a block) and finalised (two more blocks on top). The scenario emits the same tx at each
 // step so the UI can show the state and its timestamp.
 
-import { keccak256, toHex } from "viem";
+import { defineChain, keccak256, toHex, type Chain as ViemChain } from "viem";
 import { CURRENCY, type ChainTx } from "./types";
 
 export type TxExtra = Partial<Pick<ChainTx, "rule" | "bond">>;
@@ -49,20 +53,47 @@ export class SimChain implements Chain {
 // next step once the contracts in /contracts are deployed and their addresses are in the env.
 // The IntentLog deployed on Base Sepolia (contracts/deployments/base-sepolia.json).
 export const INTENT_LOG = (process.env.ZISHI_INTENT_LOG || "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51") as `0x${string}`;
+const ANCHOR_JOB = keccak256(toHex("anchor"));
 const INTENT_LOG_ABI = [{ type: "function", name: "commit", stateMutability: "nonpayable", inputs: [{ name: "jobId", type: "bytes32" }, { name: "intentHash", type: "bytes32" }], outputs: [] }] as const;
+
+// Where a RealChain sends. Base Sepolia needs two blocks on top to call a tx final; FISCO's PBFT
+// is final as soon as the block commits, takes no gas price and wants legacy transactions.
+export interface Net {
+  name: "base-sepolia" | "fisco";
+  intentLog: `0x${string}`;
+  explorer: (hash: string) => string | undefined;
+  instantFinal: boolean;
+  txOpts: Record<string, unknown>;
+  viemChain: () => Promise<ViemChain>;
+}
+export const BASE_SEPOLIA: Net = { name: "base-sepolia", intentLog: INTENT_LOG, explorer: (h) => `https://sepolia.basescan.org/tx/${h}`, instantFinal: false, txOpts: {}, viemChain: async () => (await import("viem/chains")).baseSepolia };
+
+export interface FiscoConfig { rpc: string; pk: `0x${string}`; intentLog: `0x${string}`; chainId: number }
+// The FISCO target is on only when all three are set and well formed.
+export function fiscoConfig(env: Record<string, string | undefined> = process.env): FiscoConfig | null {
+  const rpc = env.FISCO_RPC_URL, pk = env.FISCO_PRIVATE_KEY, log = env.FISCO_INTENT_LOG;
+  if (!rpc || !pk || !/^0x[0-9a-fA-F]{64}$/.test(pk) || !log || !/^0x[0-9a-fA-F]{40}$/.test(log)) return null;
+  return { rpc, pk: pk as `0x${string}`, intentLog: log as `0x${string}`, chainId: Number(env.FISCO_CHAIN_ID || 20200) };
+}
+export function fiscoNet(cfg: FiscoConfig): Net {
+  return {
+    name: "fisco", intentLog: cfg.intentLog, explorer: () => undefined, instantFinal: true, txOpts: { type: "legacy", gasPrice: BigInt(0) },
+    viemChain: async () => defineChain({ id: cfg.chainId, name: "FISCO BCOS", nativeCurrency: { name: "FISCO", symbol: "FISCO", decimals: 18 }, rpcUrls: { default: { http: [cfg.rpc] } } }),
+  };
+}
 
 export class RealChain implements Chain {
   readonly simulated = false;
   private ready = false;
   private client: unknown;
-  constructor(private pk: `0x${string}`, private rpc: string) {}
+  private seq = 0;
+  constructor(private pk: `0x${string}`, private rpc: string, readonly net: Net = BASE_SEPOLIA, readonly mirror?: RealChain) {}
   private async init() {
     if (this.ready) return;
     const { createWalletClient, http, publicActions } = await import("viem");
     const { privateKeyToAccount } = await import("viem/accounts");
-    const { baseSepolia } = await import("viem/chains");
     const account = privateKeyToAccount(this.pk);
-    this.client = createWalletClient({ account, chain: baseSepolia, transport: http(this.rpc) }).extend(publicActions);
+    this.client = createWalletClient({ account, chain: await this.net.viemChain(), transport: http(this.rpc) }).extend(publicActions);
     this.ready = true;
   }
   // One wallet, many events in quick succession: sends go out one at a time with an explicit
@@ -93,8 +124,14 @@ export class RealChain implements Chain {
     await this.init();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = this.client as any;
-    const data = toHex(JSON.stringify({ kind, label, from, to, amount, currency: CURRENCY, ...extra }));
-    const hash = await this.serial(() => this.withNonce((nonce) => c.sendTransaction({ to: c.account.address, value: BigInt(0), data, nonce })));
+    const body = JSON.stringify({ kind, label, from, to, amount, currency: CURRENCY, ...extra });
+    // FISCO fails a call to an address without code, so a self transfer with calldata cannot carry
+    // the event there. On FISCO the event's digest is committed to the IntentLog under the job id
+    // keccak("anchor") instead: still one real contract call per event, just a hash, not the JSON.
+    const send = this.net.name === "fisco"
+      ? (nonce: number) => c.writeContract({ address: this.net.intentLog, abi: INTENT_LOG_ABI, functionName: "commit", args: [ANCHOR_JOB, keccak256(toHex(`${body}:${++this.seq}:${Date.now()}`))], nonce, ...this.net.txOpts })
+      : (nonce: number) => c.sendTransaction({ to: c.account.address, value: BigInt(0), data: toHex(body), nonce, ...this.net.txOpts });
+    const hash = await this.serial(() => this.withNonce(send));
     return {
       hash,
       label: `anchor: ${label}`,
@@ -107,7 +144,8 @@ export class RealChain implements Chain {
       simulated: false,
       status: "pending",
       sentAt: Date.now(),
-      explorer: `https://sepolia.basescan.org/tx/${hash}`,
+      explorer: this.net.explorer(hash),
+      network: this.net.name,
       ...extra,
     };
   }
@@ -119,18 +157,26 @@ export class RealChain implements Chain {
     await this.init();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = this.client as any;
-    const base = { kind: "log" as const, amount: 0, currency: CURRENCY, from: c.account.address as string, to: INTENT_LOG as string, block: 0, simulated: false, status: "pending" as const };
+    const log = this.net.intentLog;
+    const base = { kind: "log" as const, amount: 0, currency: CURRENCY, from: c.account.address as string, to: log as string, block: 0, simulated: false, status: "pending" as const, intentHash, network: this.net.name };
+    let tx: ChainTx;
     try {
       const args = [keccak256(toHex(jobId)), intentHash as `0x${string}`] as const;
       // Simulate first so a revert (a hash already in the log) costs no gas and names itself.
-      await c.simulateContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args });
-      const hash = await this.serial(() => this.withNonce((nonce) => c.writeContract({ address: INTENT_LOG, abi: INTENT_LOG_ABI, functionName: "commit", args, nonce })));
-      return { ...base, hash, label: `IntentLog.commit: ${label}`, sentAt: Date.now(), explorer: `https://sepolia.basescan.org/tx/${hash}` };
+      await c.simulateContract({ address: log, abi: INTENT_LOG_ABI, functionName: "commit", args });
+      const hash = await this.serial(() => this.withNonce((nonce) => c.writeContract({ address: log, abi: INTENT_LOG_ABI, functionName: "commit", args, nonce, ...this.net.txOpts })));
+      tx = { ...base, hash, label: `IntentLog.commit: ${label}`, sentAt: Date.now(), explorer: this.net.explorer(hash) };
     } catch (e) {
       const msg = String((e as Error).message ?? "");
       const why = msg.includes("already committed") ? "already in the log" : `commit refused (${msg.split("\n")[0].slice(0, 60)})`;
-      return this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0);
+      tx = { ...(await this.send("log", `${label}, ${why}, anchored`, base.from, base.to, 0)), intentHash };
     }
+    // Second ledger: the same hash into FISCO's IntentLog. A FISCO failure never blocks the Base path.
+    if (this.mirror) {
+      try { tx = { ...tx, fiscoHash: (await this.mirror.commit(jobId, intentHash, label)).hash }; }
+      catch { /* recorded as no fiscoHash */ }
+    }
+    return tx;
   }
   async confirm(tx: ChainTx): Promise<ChainTx> {
     if (tx.status !== "pending") return tx;
@@ -143,6 +189,7 @@ export class RealChain implements Chain {
   async finalise(tx: ChainTx): Promise<ChainTx> {
     if (tx.status === "finalised") return tx;
     const confirmed = await this.confirm(tx);
+    if (this.net.instantFinal) return { ...confirmed, status: "finalised", finalisedAt: Date.now() };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = this.client as any;
     await c.waitForTransactionReceipt({ hash: tx.hash, confirmations: 2 });
@@ -187,6 +234,9 @@ export function demoAuthorised(headers: Headers): boolean {
 export function makeChain(opts: { real?: boolean } = {}): Chain {
   const pk = process.env.SURETY_PRIVATE_KEY as `0x${string}` | undefined;
   const rpc = process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";
-  if (opts.real && pk && realChainAvailable()) return new RealChain(pk, rpc);
+  const fisco = fiscoConfig();
+  const mirror = fisco ? new RealChain(fisco.pk, fisco.rpc, fiscoNet(fisco)) : undefined;
+  if (opts.real && pk && realChainAvailable()) return new RealChain(pk, rpc, BASE_SEPOLIA, mirror);
+  if (opts.real && mirror) return mirror; // FISCO only: the consortium ledger is the one chain
   return new SimChain();
 }

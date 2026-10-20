@@ -10,6 +10,7 @@
     "test": "tsx src/engine/selfcheck.ts",
     "evidence": "tsx scripts/evidence.ts",
     "verify": "tsx scripts/verify.ts",
+    "fisco": "tsx scripts/fisco.ts",
     "bench": "tsx scripts/bench.ts",
     "charts": "tsx scripts/charts.ts",
     "report": "tsx scripts/report.ts",

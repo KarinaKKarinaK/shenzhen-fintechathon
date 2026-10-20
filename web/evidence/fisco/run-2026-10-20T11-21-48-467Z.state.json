@@ -1,0 +1,138 @@
+{
+  "ranAt": "2026-10-20T11-21-48-467Z",
+  "real": true,
+  "states": {
+    "fleet": {
+      "initial": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 1260,
+        "reserve": 30,
+        "bond": 350,
+        "bondMin": 2000,
+        "startFloor": 200,
+        "vendorBond": 0,
+        "currency": "CNY",
+        "leaseBalance": 650,
+        "leaseTotal": 55000,
+        "muDone": 13580,
+        "muTotal": 13750,
+        "owned": false,
+        "slashes": 0,
+        "tasksDone": 0,
+        "position": {
+          "x": 0,
+          "y": 1.5,
+          "z": 0
+        },
+        "heading": 0,
+        "status": "idle"
+      },
+      "final": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 2015.2,
+        "reserve": 30,
+        "bond": 524,
+        "bondMin": 2000,
+        "startFloor": 200,
+        "vendorBond": 4800,
+        "currency": "CNY",
+        "leaseBalance": 0,
+        "leaseTotal": 55000,
+        "muDone": 13740,
+        "muTotal": 13750,
+        "owned": true,
+        "slashes": 1,
+        "tasksDone": 2,
+        "position": {
+          "x": 4,
+          "y": 1.5,
+          "z": -2
+        },
+        "heading": 1.5707963267948966,
+        "status": "idle"
+      }
+    },
+    "neighbour": {
+      "initial": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 1260,
+        "reserve": 30,
+        "bond": 350,
+        "bondMin": 2000,
+        "startFloor": 200,
+        "vendorBond": 0,
+        "currency": "CNY",
+        "leaseBalance": 650,
+        "leaseTotal": 55000,
+        "muDone": 13580,
+        "muTotal": 13750,
+        "owned": false,
+        "slashes": 0,
+        "tasksDone": 0,
+        "position": {
+          "x": 0,
+          "y": 1.5,
+          "z": 0
+        },
+        "heading": 0,
+        "status": "idle"
+      },
+      "final": {
+        "id": "drone-01",
+        "name": "Agras unit A7",
+        "kind": "drone",
+        "balance": 2015.2,
+        "reserve": 30,
+        "bond": 524,
+        "bondMin": 2000,
+        "startFloor": 200,
+        "vendorBond": 4800,
+        "currency": "CNY",
+        "leaseBalance": 0,
+        "leaseTotal": 55000,
+        "muDone": 13740,
+        "muTotal": 13750,
+        "owned": true,
+        "slashes": 1,
+        "tasksDone": 2,
+        "position": {
+          "x": 4,
+          "y": 1.5,
+          "z": -2
+        },
+        "heading": 1.5707963267948966,
+        "status": "idle"
+      }
+    }
+  },
+  "proofs": [
+    {
+      "scenario": "fleet",
+      "intentId": "int-010",
+      "intentHash": "0xc175b4f466022e5fc9ffb656ad27aa67742c19846fbe6fc54c581b7331444432",
+      "rule": "PayeeNotAllowlisted",
+      "signer": "0x27D246043607DEbE497D018dc5fcd0D63f8aB103",
+      "signatureOk": true,
+      "slash": 200,
+      "bounty": 0,
+      "submitterAddr": "0xaDB41D8016FbC28bAA123870FBdf507094576b65"
+    },
+    {
+      "scenario": "neighbour",
+      "intentId": "int-025",
+      "intentHash": "0xd2704368eb90213e745504159dff7861c548e2968aa069a7a4e5fd99be033eee",
+      "rule": "PayeeNotAllowlisted",
+      "signer": "0x27D246043607DEbE497D018dc5fcd0D63f8aB103",
+      "signatureOk": true,
+      "slash": 200,
+      "bounty": 0,
+      "submitterAddr": "0xaDB41D8016FbC28bAA123870FBdf507094576b65"
+    }
+  ]
+}

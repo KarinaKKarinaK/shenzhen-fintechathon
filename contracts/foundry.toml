@@ -5,3 +5,13 @@ libs = ["lib"]
 solc = "0.8.26"
 optimizer = true
 optimizer_runs = 200
+
+# FISCO BCOS 3.x runs an older EVM without PUSH0. FOUNDRY_PROFILE=fisco forge build
+[profile.fisco]
+src = "src"
+out = "out-fisco"
+libs = ["lib"]
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+evm_version = "paris"
