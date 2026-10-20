@@ -34,6 +34,80 @@ Entry to the 2026 Shenzhen International FinTech Competition, International Trac
 
 **Built on WeBank's stack.** The same four contracts run on **FISCO BCOS**, WeBank's consortium chain, as the licensed lender's ledger, and every intent is committed there with the same hash as on public Base Sepolia. Three lenders train the pilot credit model together in **FATE** without sharing a single repayment record, and that model's fingerprint is pinned on FISCO. [How it works](#built-on-webanks-stack-fisco-bcos-and-fate), [FISCO evidence](docs/FISCO_EVIDENCE.md), [FATE experiment](fate/README.md).
 
+## 1. Project Overview
+
+- **Track:** International AI Track, Topic F: Agent Wallet (theme: AI as a Financial Participant)
+- **Team name:** Zishi (Karina Kalicka-Molin, Joshua Khoo, Julian D Mundelein)
+- **Project name:** Zishi 自食其力
+- **One-line summary:** an AI wallet that lets an agricultural drone on hire purchase repay its licensed lessor from verified work, slashed only by cryptographic proof, owning itself at zero, with every money decision made in code and settled on chain.
+
+## 2. System Architecture
+
+The agent reads a job offer (a free model through OpenRouter, checked by a rules reader), plans the day, signs an EIP-712 intent and commits its hash to the IntentLog. The policy engine checks 21 rule lines; only then does money move, through the deployed contracts on FISCO BCOS (JobBoard, Lease, BondV2, IntentLogV2) or as IntentLog commits and anchors on Base Sepolia. The flight log oracle can hold a fee; a party can slash a bond by proof. Details and the full diagrams: [Architecture](#architecture), [TECHNICAL.md](TECHNICAL.md), [technical document](docs/pdf/Zishi_Technical_Document.pdf).
+
+```mermaid
+flowchart LR
+  OFFER[farmer's job offer] --> READ[reader: free model + rules check]
+  READ --> PLAN[planner and economics]
+  PLAN --> SIGN[EIP-712 signed intent]
+  SIGN --> LOG[IntentLog commit]
+  SIGN --> POLICY[policy engine, 21 rules]
+  POLICY -->|allow| SETTLE[settlement with recovery]
+  SETTLE --> FISCO[(FISCO BCOS: JobBoard, Lease, BondV2, IntentLogV2)]
+  SETTLE --> BASE[(Base Sepolia: IntentLog, anchors)]
+  FLIGHT[flight log] --> ORACLE[oracle: Kalman + conformal] -->|hold| SETTLE
+  PROOF[party with a signed intent] --> SLASH[Bond.slashByProof] --> FISCO
+  ASK[pilot asks why] --> DIALOGUE[ask the agent: explain, clarify, correct]
+```
+
+## 3. Environment and Dependencies
+
+- **Operating system:** macOS (Apple silicon, development) or Linux (Ubuntu in CI); Docker for the FISCO BCOS node.
+- **Runtime versions:** Node.js 22, pnpm 10, Next.js 16.4, Foundry (forge 1.x, solc 0.8.26), Python 3.10 for FATE, FISCO BCOS 3.16.3.
+- **Main dependencies:** viem 2 (chains), ai 7 with @ai-sdk/openai-compatible (free models on OpenRouter), zod 4, React 19, three.js; forge-std; pyfate 2.2.0. Full list with licences: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- **Environment variables:** all optional, documented in [`web/.env.example`](web/.env.example): `OPENROUTER_API_KEY` (free models only), `SURETY_PRIVATE_KEY` and `BASE_SEPOLIA_RPC` (Base Sepolia real mode), `DEMO_TOKEN`, `FISCO_RPC_URL`, `FISCO_PRIVATE_KEY`, `FISCO_INTENT_LOG`, `ZISHI_PUBLIC_FISCO`. Never commit real secrets: `.env*` files are gitignored, and gitleaks finds 0 leaks in the history ([docs/SECURITY_SCAN.md](docs/SECURITY_SCAN.md)).
+
+## 4. Installation and Execution
+
+```
+git clone https://github.com/KarinaKKarinaK/shenzhen-fintechathon && cd shenzhen-fintechathon/web
+pnpm install
+pnpm dev                              # http://localhost:3000, simulated chain and template text with no env set
+# optional: a FISCO BCOS chain with the contracts deployed (Docker)
+bash ../contracts/script/fisco.sh
+FISCO_RPC_URL=http://127.0.0.1:8545 FISCO_PRIVATE_KEY=$(cat ../contracts/.fisco/deployer.key) pnpm settle   # one engine run settled on the contracts
+```
+
+Open `/app/fleet` and press Start. Live deployment: https://zishi-fintechathon.vercel.app (public runs on FISCO BCOS; Base Sepolia real mode with the demo token from the submission form).
+
+## 5. Testing
+
+| Command | What it checks | Expected result |
+|---|---|---|
+| `cd contracts && forge test` | Bond, JobBoard, IntentLog, Lease, the 15 contract layer attacks, V2 | 84 of 84 pass (also with `FOUNDRY_PROFILE=fisco`) |
+| `cd web && pnpm test` | 52 attacks and 7 benign messages, policy, oracle fail safe, dialogue, recovery states, keys, replay | 52 of 52 blocked, 7 of 7 pass, every check ok |
+| `pnpm lint`, `npx tsc --noEmit -p .` | Code quality, types | 0 errors |
+| `pnpm verify:all` | Re-fetches every transaction the repository claims on Base Sepolia and FISCO BCOS | 353 of 353 verified |
+| `pnpm realflights` | The oracle on 92 real public PX4 flights | Out of domain: calibration needed, reported honestly |
+| `bash web/scripts/security-scan.sh` | Slither, pnpm audit, gitleaks | 0 open findings of medium or higher |
+
+Known limitations: spraying telemetry and the actors are synthetic; the FISCO node is ours, reached through a tunnel; Base Sepolia still runs the v1 contracts; free models are slow, so many explanations are labelled template text. See [What is real, what is simulated](#what-is-real-what-is-simulated).
+
+## 6. Repository and Deployment
+
+- **GitHub repository:** https://github.com/KarinaKKarinaK/shenzhen-fintechathon (release [v1.0.0](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/releases/tag/v1.0.0) carries every submission document)
+- **Live demo:** https://zishi-fintechathon.vercel.app
+- **Deployment instructions:** the app deploys to Vercel from `web/` (`vercel deploy --prod`), env vars as in section 3. Contracts: `forge script script/Deploy.s.sol --rpc-url <rpc> --private-key <key> --broadcast` (Base Sepolia, addresses in `contracts/deployments/base-sepolia.json`); FISCO BCOS with `bash contracts/script/fisco.sh`, V2 with `bash contracts/script/fisco_v2.sh`.
+
+## 7. Security Notes
+
+- **Permission tiers:** L0 read, L1 draft (the model, no key, no payee or amount), L2 engine allow (the machine key through 21 rule lines), L3 operator (the physical button, behind the demo token).
+- **Confirmation for sensitive operations:** every action is an EIP-712 signed intent with replay protection; fees release only on the farmer's confirmation on chain, with a 24 hour hold and flag; slashing needs a signed intent in the log and a rule the contract checks; failed calls are retried or compensated by contract (refund).
+- **Data handling:** only hashes, addresses and demo amounts on chain; no personal data stored; PIPL Article 24 explanation on request through the ask the agent panel.
+- **Known risks:** actor keys are software keys in one deployment; one FISCO node through a key protected tunnel; Base Sepolia keeps the v1 IntentLog; synthetic data. Full list with mitigations: [SELF_ASSESSMENT.md](SELF_ASSESSMENT.md) and [docs/Zishi_Security_Self_Assessment.docx](docs/Zishi_Security_Self_Assessment.docx).
+
+---
+
 ## Try it in two minutes
 
 | Step | Where | What you see |
