@@ -13,7 +13,7 @@ export type PlausMetrics = {
 export type RatchetStep = { step?: number; proposal?: unknown; profit?: number | null; kept?: boolean };
 export type RatchetRun = { steps?: RatchetStep[]; best?: unknown; baselineProfit?: number | null; bestProfit?: number | null };
 export type ConformalMetrics = { threshold?: number; targetFalseAlarm?: number; achievedFalseAlarm?: number; coverage?: number; calibrationN?: number };
-export type CreditMetrics = { path?: number[]; p?: number; tier?: string; credibility?: number; n?: number; parts?: { confirm?: number; instalment?: number; clean?: number }; rateBps?: number; bandBps?: [number, number]; prior?: { strength?: number } };
+export type CreditMetrics = { path?: number[]; p?: number; tier?: string; credibility?: number; n?: number; parts?: { confirm?: number; instalment?: number; clean?: number }; rateBps?: number; bandBps?: [number, number]; prior?: { strength?: number }; federated?: { source?: string; pd?: number | null; modelSha256?: string | null; fateVersion?: string | null; startRateBps?: number }; flatStartRateBps?: number };
 export type StressMetrics = { seasons?: number; defaultProbability?: number; pilotBondBelowMinAfterReaching?: number; expectedVendorDrawdown?: number; lgdWithoutBonds?: { mean?: number; p95?: number }; lgdWithBonds?: { mean?: number; p95?: number }; bondCover?: number };
 export type Metrics = {
   gate?: GateMetrics; plausibility?: PlausMetrics; conformal?: ConformalMetrics; credit?: CreditMetrics; economics?: { stress?: StressMetrics };
@@ -174,6 +174,7 @@ function CreditCard({ c, quiet }: { c?: CreditMetrics; quiet: string }) {
           <div className="text-[11px] text-muted">{L.creditSeq}</div>
           <Bars rows={[[L.creditConfirm, c.parts?.confirm], [L.creditInstalment, c.parts?.instalment], [L.creditClean, c.parts?.clean]]} />
           <div className="mt-2 text-[11px] text-muted">{t("learned.creditNote", { k: c.prior?.strength ?? "?" })}</div>
+          {c.federated?.source === "fate" && fin(c.federated.pd) ? <div className="mt-1 text-[11px] text-ink-2">{t("learned.creditFate", { v: c.federated.fateVersion ?? "?", pd: c.federated.pd.toFixed(3), bps: c.federated.startRateBps ?? "?", flat: c.flatStartRateBps ?? "?", sha: (c.federated.modelSha256 ?? "").slice(0, 12) })}</div> : null}
         </>
       ) : <Quiet text={quiet} />}
     </Card>

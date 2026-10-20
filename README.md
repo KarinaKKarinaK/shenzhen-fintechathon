@@ -9,6 +9,7 @@
 <p align="center">
   <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Contracts on Base Sepolia" src="https://img.shields.io/badge/contracts-Base%20Sepolia%2C%20verified-1a1a1a">
+  <img alt="WeBank stack" src="https://img.shields.io/badge/WeBank%20stack-FISCO%20BCOS%20%2B%20FATE-c8102e">
   <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-44%20tests-d4a017">
   <img alt="Attack set" src="https://img.shields.io/badge/attacks-52%20of%2052%20blocked-1a1a1a">
   <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-d4a017">
@@ -20,6 +21,7 @@
   <a href="docs/JUDGES_GUIDE.md">Judges' guide</a> &nbsp;|&nbsp;
   <a href="docs/pdf/Zishi_Technical_Document.pdf">Technical document</a> &nbsp;|&nbsp;
   <a href="docs/EXECUTION_EVIDENCE.md">On chain evidence</a> &nbsp;|&nbsp;
+  <a href="#built-on-webanks-stack-fisco-bcos-and-fate">WeBank stack</a> &nbsp;|&nbsp;
   <a href="SELF_ASSESSMENT.md">Security</a>
 </p>
 
@@ -76,6 +78,8 @@ Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and
 | **44** Foundry tests | Three fuzzed over amounts, nonces and payees, 256 runs each |
 | **52 of 52** attacks blocked | 7 of 7 benign messages pass; a naive wallet falls to 51 of 52 |
 | **21** policy rule lines | Over 7 intent kinds and 4 trust tiers, checked on every signed intent |
+| **30 of 30** intents on FISCO BCOS | Every hash read back from the FISCO IntentLog equals the engine's; 15 match Base Sepolia one for one |
+| **0.729 to 0.782** AUC | A lender's credit model alone, then trained with two other lenders in FATE, no raw records shared |
 | **40 of 40** transactions confirmed | One real run, every receipt fetched back from the chain; 15 were IntentLog contract calls |
 | **100%** tamper detection | On five tamper classes, 500 held out flights, at 3.0% false alarm |
 | **13.8% to 0.0%** | False alarms on honest flights at full detection, after Kalman smoothing |
@@ -241,6 +245,46 @@ The vendor bond pays for agent rules with a fixed penalty and a daily cap; on a 
 
 Solidity 0.8.26, Foundry, source verified on Sourcify. Bond and JobBoard were redeployed after the collusion fix; addresses and deploy transactions are in [`contracts/deployments/base-sepolia.json`](contracts/deployments/base-sepolia.json). In real mode the engine calls IntentLog for every intent and anchors every money event on the same chain; Bond, JobBoard and Lease rules run in TypeScript mirrors with the same numbers.
 
+## Built on WeBank's stack: FISCO BCOS and FATE
+
+A licensed lender will not run its book on a public chain, and no lender will hand its repayment records to a rival. So Zishi runs on both of WeBank's open source pillars, and each one does a job in the product.
+
+```mermaid
+flowchart LR
+  subgraph FATE[FATE 2.2, three lenders]
+    A[Lender A data] --> AG[Secure aggregation, FedAvg]
+    B[Lender B data] --> AG
+    C[Lender C data] --> AG
+  end
+  AG --> M[Pilot credit model]
+  M -->|coefficients| E[Engine: credit prior, rate band]
+  M -->|sha256| IL2
+  E -->|EIP-712 intent hash| IL1[IntentLog on Base Sepolia, public]
+  E -->|same hash| IL2[IntentLog on FISCO BCOS, the lender's consortium chain]
+```
+
+**FISCO BCOS, the lender's ledger.** The four contracts are deployed on a FISCO BCOS 3.16 chain, compiled with the same solc 0.8.26 source and `evm_version` paris through the `fisco` Foundry profile. The engine has a FISCO target: set `FISCO_RPC_URL`, `FISCO_PRIVATE_KEY` and `FISCO_INTENT_LOG` and every intent is committed to IntentLog on FISCO, next to Base Sepolia when both are set. One full run of the fleet and neighbour scenarios sent 78 transactions to FISCO, all with a successful receipt. Its 30 IntentLog commits were read back from the contract and equal the engine's intent hashes, and 15 of them are the same hashes as in the Base Sepolia run. Same contract, same hash format, two ledgers: the public one for anyone to check, the consortium one for the lender and its regulator. Receipts in [`docs/FISCO_EVIDENCE.md`](docs/FISCO_EVIDENCE.md), addresses in [`contracts/deployments/fisco-bcos.json`](contracts/deployments/fisco-bcos.json).
+
+**FATE, credit across lenders.** A new pilot has no history, so the rate band starts from a guess. Three lenders train one pilot credit model with FATE 2.2 homo logistic regression and FATE's secure aggregation; each lender's rows stay in its own process. On a held out set of 3,000 synthetic pilots:
+
+| Model | AUC | F1 |
+|---|---|---|
+| Lender A alone | 0.729 | 0.334 |
+| FATE federated | 0.782 | 0.399 |
+| All data pooled, the upper bound | 0.782 | 0.411 |
+
+The federated model now sets each pilot's starting credit score in the engine. For a pilot with no jobs yet, the error in the instalment share falls from 335 to 153 basis points against a flat start, and risky pilots are underpriced by 255 instead of 1,038 basis points. `pnpm test` checks that the TypeScript scorer reproduces FATE's own predictions on held out rows within 1e-6. Details in [`fate/README.md`](fate/README.md).
+
+**The model on chain.** The sha256 of the exported FATE model is committed to the FISCO IntentLog, so a lender or regulator can prove which model priced each pilot. The Evidence page shows the prior, the FATE version and the model hash.
+
+Scope, stated plainly: the FISCO chain is a single node we run in Docker, so judges reproduce it with one script rather than click a public explorer; Base Sepolia stays the public proof. FISCO reports block time in milliseconds, so the JobBoard time windows need a unit fix before money flows through JobBoard there; today the engine uses the FISCO IntentLog. FATE trains offline on seeded synthetic data and the live app reads its exported coefficients.
+
+```bash
+bash contracts/script/fisco.sh   # FISCO BCOS node in Docker, deploy the four contracts, smoke calls
+cd web && pnpm fisco             # full run on FISCO, receipts and hashes read back into docs/FISCO_EVIDENCE.md
+./fate/run.sh                    # FATE training across three lenders, model export, prior study
+```
+
 ## Smart where it counts, and measured
 
 Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. None of them signs, pays or changes a cap.
@@ -324,6 +368,8 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 | Layer | Status |
 |---|---|
 | Contracts | Deployed and source verified on Base Sepolia, 44 Foundry tests. The engine calls IntentLog; Bond, JobBoard and Lease rules run in mirrors, their calls are next |
+| FISCO BCOS | Four contracts on a local FISCO BCOS 3.16 node; the engine commits every intent there when its env is set. Reproducible with one script |
+| FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
 | Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |
 | Model | Scripted explanations unless an AI gateway key is set. Decisions never depend on it |
@@ -339,6 +385,8 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 | [TECHNICAL.md](TECHNICAL.md) | The long form: sixteen sections, every algorithm with its file |
 | [SELF_ASSESSMENT.md](SELF_ASSESSMENT.md) | Security self assessment: risks, what is built, what production does |
 | [Execution evidence](docs/EXECUTION_EVIDENCE.md) | One real run, every receipt fetched back from Base Sepolia |
+| [FISCO evidence](docs/FISCO_EVIDENCE.md) | A full run on FISCO BCOS, every receipt and IntentLog hash read back |
+| [FATE experiment](fate/README.md) | Federated pilot credit across three lenders, metrics and the prior study |
 | [Red team](docs/RED_TEAM.md) | 52 attacks, 7 benign messages, the naive baseline |
 | [Evaluation](docs/EVALUATION.md) | Held out results of the ten components, raw values in `docs/results/` |
 | [API](docs/API.md), [Glossary](docs/GLOSSARY.md), [Incident response](docs/INCIDENT_RESPONSE.md), [Roadmap](docs/ROADMAP.md) | Reference |

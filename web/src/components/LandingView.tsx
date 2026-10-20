@@ -78,6 +78,16 @@ export function LandingView({ attackN }: { attackN: number }) {
           </div>
         </section>
 
+        <section className="pb-20">
+          <span className="rule-gold mb-4" /><h2 className="h-section">{L.webankTitle}</h2>
+          <p className="mt-4 max-w-[70ch] text-lg text-ink-2">{L.webankSub}</p>
+          <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {L.webank.map(([name, kicker, body, cta, href]) => (
+              <li key={name} className="card flex flex-col p-6"><span className="text-sm text-gold-text">{kicker}</span><h3 className="mt-1 text-xl font-semibold">{name}</h3><p className="mt-2 flex-1 text-sm text-ink-2">{body}</p><a href={href} target="_blank" rel="noreferrer" className="link mt-4 inline-block">{cta}</a></li>
+            ))}
+          </ul>
+        </section>
+
         <section className="band mb-20 p-8 md:p-10">
           <p className="statement max-w-[24ch]">{L.proofTitle}</p>
           <p className="mt-4 max-w-[60ch] text-lg text-white/85">{t("landing.proofBody", { n: attackN })}</p>
