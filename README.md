@@ -267,7 +267,7 @@ The vendor bond pays for agent rules with a fixed penalty and a daily cap; on a 
 | JobBoard | [`0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952`](https://sepolia.basescan.org/address/0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952) | 1,517,852 | Fee locks, start needs bond cover, release on the farmer's confirmation, 24 hour hold |
 | Lease | [`0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2`](https://sepolia.basescan.org/address/0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2) | 800,050 | Hire purchase, instalment per released fee, freeze, title at zero |
 
-Solidity 0.8.26, Foundry, source verified on Sourcify. Bond and JobBoard were redeployed after the collusion fix; addresses and deploy transactions are in [`contracts/deployments/base-sepolia.json`](contracts/deployments/base-sepolia.json). In real mode the engine calls IntentLog for every intent and anchors every money event on the same chain; Bond, JobBoard and Lease rules run in TypeScript mirrors with the same numbers.
+Solidity 0.8.26, Foundry, source verified on Sourcify. Bond and JobBoard were redeployed after the collusion fix; addresses and deploy transactions are in [`contracts/deployments/base-sepolia.json`](contracts/deployments/base-sepolia.json). In Base Sepolia real mode the engine calls IntentLog for every intent and anchors every money event on the same chain; Bond, JobBoard and Lease rules run in TypeScript mirrors with the same numbers.
 
 One full job also runs against the deployed contracts themselves, value moving at every step: fee locked in JobBoard, confirmed and split, the instalment paid to the lender through Lease, a rogue intent committed and slashed by proof from the vendor bond, the title moved to the pilot at zero. Nine contract calls, all successful, in [`docs/EXECUTION_EVIDENCE.md`](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts), reproducible with `bash contracts/script/fulljob.sh base` (or `fisco`).
 
@@ -407,7 +407,7 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 | FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; the public demo runs on it through a tunnel while the node is up |
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
-| Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |
+| Chain | Public runs on the real FISCO BCOS chain (each job's money settled on the deployed contracts), labelled simulation when the node is down. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |
 | Model | Free models on OpenRouter only (ids ending in `:free`, enforced in `model.ts`), live in the public app: explanations, message reading, the ask the agent replies. Up to 10 calls a minute, then labelled template text. Every number is checked against the facts. Decisions never depend on it |
 | Learned components | Trained on seeded synthetic data, labelled as such. Held out metrics asserted in CI |
 | Telemetry and actors | Signed by demo keys. Production: the drone's secure element and the farmer's app |

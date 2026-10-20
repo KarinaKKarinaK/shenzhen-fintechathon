@@ -34,7 +34,7 @@ Pilot bond, earned from fees, slashed for the pilot's own cheating. Vendor bond,
 
 ## 8. One loop, two ledgers
 
-26 of 26 contract calls on FISCO BCOS from one engine fleet run: the lender paid 650 yuan through Lease, the vendor bond 5,000 to 4,800 by proof, the lease at 0, the title to the pilot (`web/evidence/fisco/settled-run-*.json`). 9 of 9 contract calls in one full job on the deployed contracts on Base Sepolia, with real value. 267 of 267 receipts re-fetched by `pnpm verify:all`. Four contracts source verified on Sourcify; 15 of 15 intents sent to both chains in the same step with the same hash.
+16 contract calls (plus 10 funding transfers, 26 of 26 successful) on FISCO BCOS from one engine fleet run: the lender paid 650 yuan through Lease, the vendor bond 5,000 to 4,800 by proof, the lease at 0, the title to the pilot (`web/evidence/fisco/settled-run-*.json`). 9 of 9 contract calls in one full job on the deployed contracts on Base Sepolia, with real value. 329 of 329 receipts re-fetched by `pnpm verify:all`. Four contracts source verified on Sourcify; 15 of 15 intents sent to both chains in the same step with the same hash.
 
 ## 9. Built on WeBank's stack
 
