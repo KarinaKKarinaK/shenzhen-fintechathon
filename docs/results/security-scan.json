@@ -1,0 +1,504 @@
+{
+  "generated": "2026-10-20T13:46:13Z",
+  "tools": [
+    "slither 0.11.6",
+    "solc 0.8.26 (forge Version: 1.8.5)",
+    "pnpm 10.27.0",
+    "gitleaks 8.30.1"
+  ],
+  "slither": {
+    "scope": "contracts/src (V1: Bond, IntentLog, JobBoard, Lease; V2: BondV2, IntentLogV2); lib, test and script excluded",
+    "total": 42,
+    "by_severity": {
+      "High": 2,
+      "Medium": 5,
+      "Low": 21,
+      "Informational": 14
+    },
+    "by_verdict": {
+      "false positive": 6,
+      "accepted": 36
+    },
+    "true_issues_medium_or_higher_in_v2": 0,
+    "findings": [
+      {
+        "severity": "High",
+        "confidence": "Medium",
+        "check": "arbitrary-send-eth",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L175",
+        "summary": "JobBoard._pay(address,uint256) (src/JobBoard.sol#175) sends eth to arbitrary user",
+        "verdict": "false positive",
+        "reason": "Recipients are the rail (fixed in the constructor) and the job's agent (fixed when the job is posted). The caller cannot choose them."
+      },
+      {
+        "severity": "High",
+        "confidence": "Medium",
+        "check": "reentrancy-eth",
+        "contracts": "V1",
+        "location": "contracts/src/Lease.sol#L60-L74",
+        "summary": "Reentrancy in Lease.pay(uint256) (src/Lease.sol#60-74):",
+        "verdict": "accepted",
+        "reason": "V1 Lease.pay. The balance is cut before the call to the lender, and the title step is guarded by the `owned` flag, so a re-entering lender can only pay more into its own lease. No funds can be taken. Mitigation: lenders are known parties set when the lease is created; Lease is not redeployed, so the fix is operational."
+      },
+      {
+        "severity": "Medium",
+        "confidence": "High",
+        "check": "incorrect-equality",
+        "contracts": "V1",
+        "location": "contracts/src/IntentLog.sol#L29-L33",
+        "summary": "IntentLog.commit(bytes32,bytes32) (src/IntentLog.sol#29-33) uses a dangerous strict equality:",
+        "verdict": "false positive",
+        "reason": "`at == 0` checks that an intent was not committed yet. No balance or timing value is compared."
+      },
+      {
+        "severity": "Medium",
+        "confidence": "Medium",
+        "check": "uninitialized-local",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L96",
+        "summary": "JobBoard.confirm(uint256).instalment (src/JobBoard.sol#96) is a local variable never initialized",
+        "verdict": "false positive",
+        "reason": "Zero is the intended default: shadow jobs pay no instalment and no bond top up."
+      },
+      {
+        "severity": "Medium",
+        "confidence": "Medium",
+        "check": "uninitialized-local",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L97",
+        "summary": "JobBoard.confirm(uint256).toBond (src/JobBoard.sol#97) is a local variable never initialized",
+        "verdict": "false positive",
+        "reason": "Zero is the intended default: shadow jobs pay no instalment and no bond top up."
+      },
+      {
+        "severity": "Medium",
+        "confidence": "Medium",
+        "check": "unused-return",
+        "contracts": "V2",
+        "location": "contracts/src/v2/IntentLogV2.sol#L58-L67",
+        "summary": "IntentLogV2.commit(bytes32,bytes32) (src/v2/IntentLogV2.sol#58-67) ignores return value by (None,jobAgent,None,None,None,None,None,None,None) = board.jobs(uint256(jobId)) (src/v2/IntentLogV2.sol#60)",
+        "verdict": "false positive",
+        "reason": "Tuple destructuring of the board's `jobs()` getter. Only the agent and status fields are needed; the others are skipped on purpose."
+      },
+      {
+        "severity": "Medium",
+        "confidence": "Medium",
+        "check": "unused-return",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L248-L251",
+        "summary": "BondV2._ranJob(IBonded.Intent) (src/v2/BondV2.sol#248-251) ignores return value by (None,jobAgent,None,None,None,None,None,None,status) = board.jobs(uint256(i.jobId)) (src/v2/BondV2.sol#249)",
+        "verdict": "false positive",
+        "reason": "Tuple destructuring of the board's `jobs()` getter. Only the agent and status fields are needed; the others are skipped on purpose."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "missing-zero-check",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L59",
+        "summary": "JobBoard.constructor(IBonded,ILease,address)._rail (src/JobBoard.sol#59) lacks a zero-check on :",
+        "verdict": "accepted",
+        "reason": "Constructor arguments set once by the deployer. Deployed values are checked against the deployment files and the source verified contracts."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "missing-zero-check",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L76",
+        "summary": "Bond.constructor(address,IIntentLog,uint256)._treasury (src/Bond.sol#76) lacks a zero-check on :",
+        "verdict": "accepted",
+        "reason": "Constructor arguments set once by the deployer. Deployed values are checked against the deployment files and the source verified contracts."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-benign",
+        "contracts": "V1",
+        "location": "contracts/src/Lease.sol#L60-L74",
+        "summary": "Reentrancy in Lease.pay(uint256) (src/Lease.sol#60-74):",
+        "verdict": "accepted",
+        "reason": "State is written before the external call. Only the lease's own title step runs after it and it is idempotent."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L189-L225",
+        "summary": "Reentrancy in Bond.slashByProof(IBonded.Intent,bytes,uint8) (src/Bond.sol#189-225):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L140-L149",
+        "summary": "Reentrancy in JobBoard.cancel(uint256) (src/JobBoard.sol#140-149):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L120-L128",
+        "summary": "Reentrancy in JobBoard.flag(uint256) (src/JobBoard.sol#120-128):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L130-L136",
+        "summary": "Reentrancy in JobBoard.releaseHold(uint256) (src/JobBoard.sol#130-136):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L88-L117",
+        "summary": "Reentrancy in JobBoard.confirm(uint256) (src/JobBoard.sol#88-117):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V1",
+        "location": "contracts/src/Lease.sol#L60-L74",
+        "summary": "Reentrancy in Lease.pay(uint256) (src/Lease.sol#60-74):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L130-L136",
+        "summary": "JobBoard.releaseHold(uint256) (src/JobBoard.sol#130-136) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/IntentLog.sol#L29-L33",
+        "summary": "IntentLog.commit(bytes32,bytes32) (src/IntentLog.sol#29-33) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L140-L149",
+        "summary": "JobBoard.cancel(uint256) (src/JobBoard.sol#140-149) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L123-L140",
+        "summary": "Bond.register(address,address,address,uint256,uint256,uint256,address[],bytes) (src/Bond.sol#123-140) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L189-L225",
+        "summary": "Bond.slashByProof(IBonded.Intent,bytes,uint8) (src/Bond.sol#189-225) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L120-L128",
+        "summary": "JobBoard.flag(uint256) (src/JobBoard.sol#120-128) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L74-L83",
+        "summary": "JobBoard.start(uint256) (src/JobBoard.sol#74-83) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "missing-zero-check",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L82",
+        "summary": "BondV2.constructor(address,IIntentLogV2,uint256)._treasury (src/v2/BondV2.sol#82) lacks a zero-check on :",
+        "verdict": "accepted",
+        "reason": "Constructor arguments set once by the deployer. Deployed values are checked against the deployment files and the source verified contracts."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "reentrancy-events",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L205-L241",
+        "summary": "Reentrancy in BondV2.slashByProof(IBonded.Intent,bytes,uint8) (src/v2/BondV2.sol#205-241):",
+        "verdict": "accepted",
+        "reason": "Checks, effects, then interactions: all state is updated before the transfer, only the event is emitted after. Event order on re-entry is cosmetic."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L205-L241",
+        "summary": "BondV2.slashByProof(IBonded.Intent,bytes,uint8) (src/v2/BondV2.sol#205-241) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V2",
+        "location": "contracts/src/v2/IntentLogV2.sol#L58-L67",
+        "summary": "IntentLogV2.commit(bytes32,bytes32) (src/v2/IntentLogV2.sol#58-67) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Low",
+        "confidence": "Medium",
+        "check": "timestamp",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L129-L146",
+        "summary": "BondV2.register(address,address,address,uint256,uint256,uint256,address[],bytes) (src/v2/BondV2.sol#129-146) uses timestamp for comparisons",
+        "verdict": "accepted",
+        "reason": "Windows are minutes to days (hold period, daily slash cap, start floor). A few seconds of validator drift does not change the outcome."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "assembly",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L243-L256",
+        "summary": "Bond._recover(bytes32,bytes) (src/Bond.sol#243-256) uses assembly",
+        "verdict": "accepted",
+        "reason": "Reads r, s, v from calldata for ecrecover. Length is checked to be 65, high s is rejected (no malleability) and the zero address is rejected."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "low-level-calls",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L189-L225",
+        "summary": "Low level call in Bond.slashByProof(IBonded.Intent,bytes,uint8) (src/Bond.sol#189-225):",
+        "verdict": "accepted",
+        "reason": "Plain value transfer with the success flag checked and a revert on failure."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "low-level-calls",
+        "contracts": "V1",
+        "location": "contracts/src/Lease.sol#L60-L74",
+        "summary": "Low level call in Lease.pay(uint256) (src/Lease.sol#60-74):",
+        "verdict": "accepted",
+        "reason": "Plain value transfer with the success flag checked and a revert on failure."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "low-level-calls",
+        "contracts": "V1",
+        "location": "contracts/src/JobBoard.sol#L175",
+        "summary": "Low level call in JobBoard._pay(address,uint256) (src/JobBoard.sol#175):",
+        "verdict": "accepted",
+        "reason": "Plain value transfer with the success flag checked and a revert on failure."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "naming-convention",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L97-L99",
+        "summary": "Function Bond.DOMAIN_SEPARATOR() (src/Bond.sol#97-99) is not in mixedCase",
+        "verdict": "accepted",
+        "reason": "`DOMAIN_SEPARATOR` is the EIP-712 standard name; leading underscore on parameters is a style choice."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "naming-convention",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L84",
+        "summary": "Parameter Bond.setBoard(IJobBoardView)._board (src/Bond.sol#84) is not in mixedCase",
+        "verdict": "accepted",
+        "reason": "`DOMAIN_SEPARATOR` is the EIP-712 standard name; leading underscore on parameters is a style choice."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "unindexed-event-address",
+        "contracts": "V1",
+        "location": "contracts/src/Bond.sol#L73",
+        "summary": "Event Bond.BoardSet(address) (src/Bond.sol#73) has address parameters but no indexed parameters",
+        "verdict": "accepted",
+        "reason": "`BoardSet` fires once per deployment; indexing it adds nothing."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "assembly",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L269-L282",
+        "summary": "BondV2._recover(bytes32,bytes) (src/v2/BondV2.sol#269-282) uses assembly",
+        "verdict": "accepted",
+        "reason": "Reads r, s, v from calldata for ecrecover. Length is checked to be 65, high s is rejected (no malleability) and the zero address is rejected."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "low-level-calls",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L205-L241",
+        "summary": "Low level call in BondV2.slashByProof(IBonded.Intent,bytes,uint8) (src/v2/BondV2.sol#205-241):",
+        "verdict": "accepted",
+        "reason": "Plain value transfer with the success flag checked and a revert on failure."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "naming-convention",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L90",
+        "summary": "Parameter BondV2.setBoard(IJobBoardViewV2)._board (src/v2/BondV2.sol#90) is not in mixedCase",
+        "verdict": "accepted",
+        "reason": "`DOMAIN_SEPARATOR` is the EIP-712 standard name; leading underscore on parameters is a style choice."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "naming-convention",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L103-L105",
+        "summary": "Function BondV2.DOMAIN_SEPARATOR() (src/v2/BondV2.sol#103-105) is not in mixedCase",
+        "verdict": "accepted",
+        "reason": "`DOMAIN_SEPARATOR` is the EIP-712 standard name; leading underscore on parameters is a style choice."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "naming-convention",
+        "contracts": "V2",
+        "location": "contracts/src/v2/IntentLogV2.sol#L49",
+        "summary": "Parameter IntentLogV2.setBoard(IJobRecord)._board (src/v2/IntentLogV2.sol#49) is not in mixedCase",
+        "verdict": "accepted",
+        "reason": "`DOMAIN_SEPARATOR` is the EIP-712 standard name; leading underscore on parameters is a style choice."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "unindexed-event-address",
+        "contracts": "V2",
+        "location": "contracts/src/v2/IntentLogV2.sol#L45",
+        "summary": "Event IntentLogV2.BoardSet(address) (src/v2/IntentLogV2.sol#45) has address parameters but no indexed parameters",
+        "verdict": "accepted",
+        "reason": "`BoardSet` fires once per deployment; indexing it adds nothing."
+      },
+      {
+        "severity": "Informational",
+        "confidence": "High",
+        "check": "unindexed-event-address",
+        "contracts": "V2",
+        "location": "contracts/src/v2/BondV2.sol#L79",
+        "summary": "Event BondV2.BoardSet(address) (src/v2/BondV2.sol#79) has address parameters but no indexed parameters",
+        "verdict": "accepted",
+        "reason": "`BoardSet` fires once per deployment; indexing it adds nothing."
+      }
+    ]
+  },
+  "dependencies": {
+    "prod": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "dependencies": 190,
+      "advisories": []
+    },
+    "full": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 1,
+        "critical": 0
+      },
+      "dependencies": 552,
+      "advisories": [
+        {
+          "package": "braces",
+          "severity": "high",
+          "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+          "vulnerable": "<=3.0.3",
+          "patched": "<0.0.0",
+          "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+          "paths": [
+            ".>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces"
+          ],
+          "status": "accepted",
+          "reason": "Dev only, reached through eslint-config-next (lint). No patched version is published (patched range is empty). Input is our own lint globs, not user data, and it is not in the deployed app."
+        }
+      ]
+    },
+    "fixed": [
+      {
+        "package": "playwright",
+        "from": "1.48.2",
+        "to": "1.56.1",
+        "advisory": "GHSA-7mvr-c777-76hp (high): browser download without TLS check. Dev only (screenshot script)."
+      },
+      {
+        "package": "tsx",
+        "from": "4.19.2",
+        "to": "4.20.6",
+        "advisory": "Pulls esbuild 0.25.x, closing GHSA-67mh-4wv8-2f99 (moderate): dev server readable cross origin."
+      }
+    ]
+  },
+  "secrets": {
+    "commits_scanned": 128,
+    "findings": 0,
+    "items": []
+  },
+  "contract_tests": "forge test: 84 of 84 pass (default profile and FOUNDRY_PROFILE=fisco)"
+}

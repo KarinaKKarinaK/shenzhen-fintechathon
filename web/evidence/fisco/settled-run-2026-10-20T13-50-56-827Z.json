@@ -1,0 +1,349 @@
+{
+  "network": "FISCO BCOS (local)",
+  "ranAt": "2026-10-20T13:50:56.828Z",
+  "seconds": 232,
+  "script": "pnpm settle (web/scripts/settle-run.ts), one fleet run through the engine loop",
+  "contracts": {
+    "intentLog": "0x9555c12c2789e44868070d0d877f9baadabe4f54",
+    "bond": "0xe3f2011697301e15e4cf829b0aeb189fab754029",
+    "lease": "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601",
+    "board": "0x20dc56e80b73f6066208a9d8197748f861579d37"
+  },
+  "roles": {
+    "vendor": "0x00795Ecea555dbc7CfA7De70Cf7F0353093F7F1D",
+    "agent": "0x01F88cd0F455B22005b675e7969356a25E0Dc089",
+    "lender": "0xA08605eA36282FE07f3FB9921b88203b41D9AAd3",
+    "farmer": "0x6159aca083E99680b5d70f5733550825F5d154B7",
+    "verifier": "0x998736Ee8b9B4B280061ed698704bB79Ea429B6B",
+    "pilot": "0x6D85368D62c68f87C7C73086c054751632f64db7"
+  },
+  "unit": "1 yuan = 1e9 wei",
+  "contractEventsInFeed": 28,
+  "anchorsInFeed": 18,
+  "rows": [
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund vendor",
+      "from": "deployer",
+      "valueWei": "5001000000000",
+      "tx": "0x730e4c26ec937868dbbe5ec8a10e42e377b343248b74d1f5a76b4d198bf90750",
+      "block": 350,
+      "status": "success",
+      "valueOnChainWei": "5001000000000",
+      "to": "0x00795Ecea555dbc7CfA7De70Cf7F0353093F7F1D"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund agent",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x08dea156e1f591976c3511ceb89f79ff200d1e97bcaf93df522915b0dbd1caa1",
+      "block": 351,
+      "status": "success",
+      "valueOnChainWei": "1000000000",
+      "to": "0x01F88cd0F455B22005b675e7969356a25E0Dc089"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund lender",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0xadaf362f19242851e67c6c577e8e0eb61fbd980fd3fc45b40a92a6f66a2aa87c",
+      "block": 352,
+      "status": "success",
+      "valueOnChainWei": "1000000000",
+      "to": "0xA08605eA36282FE07f3FB9921b88203b41D9AAd3"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund farmer",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x6c75734e47703c1ac7acbc26f14251a0e4b715588f6f0113e5cb323422ebe48d",
+      "block": 353,
+      "status": "success",
+      "valueOnChainWei": "1000000000",
+      "to": "0x6159aca083E99680b5d70f5733550825F5d154B7"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund verifier",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x75406b667184ec0392d0b545882def1a148663c060199b8a5e286af36eef259a",
+      "block": 354,
+      "status": "success",
+      "valueOnChainWei": "1000000000",
+      "to": "0x998736Ee8b9B4B280061ed698704bB79Ea429B6B"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund pilot",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x2c7e0ebd5fdd72181a3ff461bff53e540ca0092edac484590ed1443478b367b0",
+      "block": 355,
+      "status": "success",
+      "valueOnChainWei": "1000000000",
+      "to": "0x6D85368D62c68f87C7C73086c054751632f64db7"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.postVendorBond 5000 yuan (penalty 200, daily cap 1000)",
+      "from": "vendor",
+      "valueWei": "5000000000000",
+      "tx": "0x4fa1fe6ba62647e95d3779c279a1240b80a8f37c3d29d9816516c19748949061",
+      "block": 356,
+      "status": "success",
+      "valueOnChainWei": "5000000000000",
+      "to": "0xe3f2011697301e15e4cf829B0AeB189FAb754029"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.register agent (operator pilot, allowlist lender)",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x0ea83a6b58a4951a71b3439aaab82cbf25b17215f98366e0ffc892a2ed69c1d0",
+      "block": 357,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0xe3f2011697301e15e4cf829B0AeB189FAb754029"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open 650 yuan at 40 percent of each fee",
+      "from": "lender",
+      "valueWei": "0",
+      "tx": "0xdac40ca8d38ee768e0553eb238ad8f82f6ffb05469ea2f7f8b45887d0f93b251",
+      "block": 358,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x9C46a913abaF37CAcd67F01F6F3b3e70F7b66601"
+    },
+    {
+      "moment": "job job-202 posted",
+      "call": "fund farmer",
+      "from": "deployer",
+      "valueWei": "61000000000",
+      "tx": "0x75a2af4a54d37b70f6ea96a626bee39733e8b028c77e77160a6ec0164e8fc228",
+      "block": 359,
+      "status": "success",
+      "valueOnChainWei": "61000000000",
+      "to": "0x6159aca083E99680b5d70f5733550825F5d154B7"
+    },
+    {
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post job-202 fee 60 yuan locked",
+      "from": "farmer",
+      "valueWei": "60000000000",
+      "tx": "0x8290fe7f0606a82a44da4e45f69dc1ccf2e10d32f585527b0f2f5e9425221e8d",
+      "block": 360,
+      "status": "success",
+      "valueOnChainWei": "60000000000",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-203 posted",
+      "call": "fund farmer",
+      "from": "deployer",
+      "valueWei": "1501000000000",
+      "tx": "0x2c42e7f6ebc955fd6b50102f41d46c803571361afa7ec98ca4b1eaf0566eb849",
+      "block": 362,
+      "status": "success",
+      "valueOnChainWei": "1501000000000",
+      "to": "0x6159aca083E99680b5d70f5733550825F5d154B7"
+    },
+    {
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post job-203 fee 1500 yuan locked",
+      "from": "farmer",
+      "valueWei": "1500000000000",
+      "tx": "0x52d096bc2447a4724adc5f5d0e90980cd7616eaa44b25a814c1e742119bf77e2",
+      "block": 363,
+      "status": "success",
+      "valueOnChainWei": "1500000000000",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-203 started",
+      "call": "JobBoard.start job-203",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x9a3de560fb42eaf606b65c366c8968476068b5565c4b594155fd621b080ca616",
+      "block": 365,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0x00b238d18dde985a67f1ca8f8905f7c47f21c873fccf1a9ddab100f710f1c858",
+      "block": 367,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-204 posted",
+      "call": "fund farmer",
+      "from": "deployer",
+      "valueWei": "251000000000",
+      "tx": "0x3977d2be8ac5f85e8e6913a4c45812fc7ede1f46c698e3d843ef3197c5e702a7",
+      "block": 369,
+      "status": "success",
+      "valueOnChainWei": "251000000000",
+      "to": "0x6159aca083E99680b5d70f5733550825F5d154B7"
+    },
+    {
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post job-204 fee 250 yuan locked",
+      "from": "farmer",
+      "valueWei": "250000000000",
+      "tx": "0x88d910ab7b18863bd06aa6fef7ed8efbabbe9331b2f2c029b43ee1fb92cd3670",
+      "block": 370,
+      "status": "success",
+      "valueOnChainWei": "250000000000",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-204 started",
+      "call": "JobBoard.start job-204",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x8e0af1d67fb9119240e2dbf930288f89c815762b891480529e8bfb5190984fe3",
+      "block": 371,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLog.commit rogue intent 0xb6922a51 for job-203",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x5a3417870f46e04f4758dc4725abfae8a81e57f621298903e5907366a4f0753a",
+      "block": 374,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x9555c12C2789e44868070D0d877F9BAadAbe4F54"
+    },
+    {
+      "moment": "rogue intent on job-203 proven",
+      "call": "Bond.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury",
+      "from": "lender",
+      "valueWei": "0",
+      "tx": "0x7c45ed8475744947092cc10ea29a67dd0804ee5e044ec3ea934280264d34cfc4",
+      "block": 375,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0xe3f2011697301e15e4cf829B0AeB189FAb754029"
+    },
+    {
+      "moment": "job job-201 posted",
+      "call": "fund farmer",
+      "from": "deployer",
+      "valueWei": "241000000000",
+      "tx": "0x72adf65e60c1f63ffd0900bcb4e6f7c903972f11f3058c38a91e18145a28dc75",
+      "block": 376,
+      "status": "success",
+      "valueOnChainWei": "241000000000",
+      "to": "0x6159aca083E99680b5d70f5733550825F5d154B7"
+    },
+    {
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post job-201 fee 240 yuan locked",
+      "from": "farmer",
+      "valueWei": "240000000000",
+      "tx": "0xe8a76e841dda7eae5b3de3447b62c78276d35ab149ad4e3671db4e962ba92cdc",
+      "block": 377,
+      "status": "success",
+      "valueOnChainWei": "240000000000",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 started",
+      "call": "JobBoard.start job-201",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xe585feb799618566b38b56ac3f39fa437e40ad4489976dac2462ae3e67999392",
+      "block": 379,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0xe6767e521b4dc04e5b2380ed68e9d752a846fdeebc7c34d5f3e1cfbef637b719",
+      "block": 381,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "hold job-203 released",
+      "call": "JobBoard.releaseHold job-203",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x9aca2251c6706e71aef1862ef6925a55aed2b71b586797d70848f836825a67a0",
+      "block": 383,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "hold job-201 released",
+      "call": "JobBoard.releaseHold job-201",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x8d65df330815922f0820b6cc40986121456dd74c91f13f7bc6098635edbe1f37",
+      "block": 384,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    }
+  ],
+  "checks": [
+    {
+      "check": "lender received from the run (wei)",
+      "value": "650000000000",
+      "detail": "instalments through Lease.pay on 2 confirms: 650000000000, final Lease.pay by the pilot: 0",
+      "ok": true
+    },
+    {
+      "check": "vendor bond decreased by the penalty (wei)",
+      "value": "200000000000",
+      "detail": "posted 5000000000000, now 4800000000000",
+      "ok": true
+    },
+    {
+      "check": "lease balance at the end (wei)",
+      "value": "0",
+      "ok": true
+    },
+    {
+      "check": "title owner is the pilot",
+      "value": "0x6D85368D62c68f87C7C73086c054751632f64db7",
+      "detail": "pilot 0x6D85368D62c68f87C7C73086c054751632f64db7",
+      "ok": true
+    },
+    {
+      "check": "every contract call succeeded",
+      "value": "26 of 26",
+      "ok": true
+    }
+  ],
+  "narrations": [
+    "On FISCO the fee for job-202 stays locked in JobBoard (declined by the policy engine, no confirm). JobBoard.cancel refunds the farmer once the ten minute window ends.",
+    "On FISCO the fee for job-204 stays locked in JobBoard (flight log held, no confirm). The job was started, so only the verifier's confirm releases it.",
+    "On FISCO Lease 6 balance is 0 wei and titleOf is the pilot.",
+    "On FISCO the hold of 199950000000 wei for job-203 stays in JobBoard until 2026-10-20T13:50:38.125Z, then the agent calls releaseHold.",
+    "On FISCO the hold of 31992000000 wei for job-201 stays in JobBoard until 2026-10-20T13:50:51.114Z, then the agent calls releaseHold."
+  ],
+  "note": "Each row is a real FISCO transaction sent by the engine's Session during the fleet run, receipt fetched back. Money moments (vendor bond, job post, confirm with the fee split, rogue intent proof, final lease payment) are contract calls; intents are still committed to the IntentLog and the charging payment is still an anchor. Fund rows are plain transfers from the deployer to the fresh role keys."
+}

@@ -77,6 +77,8 @@ export interface Reading extends Understood {
   source: "model" | "rules";
   confidence: number; // 0 to 1: the model's own estimate, or for the rules the share of fields it could read
   droppedAddress: boolean;
+  mu: number; // area in mu, 0 when not read
+  rules?: Reading; // the rules reader's own result, kept beside a model reading so code can compare
 }
 
 // Intent understanding. Reads a message into fields the engine can check against the listing.
@@ -105,14 +107,39 @@ export async function understand(text: string): Promise<Reading> {
   // The rules are sure of a field when a pattern matched it; the share of matched fields is the confidence.
   const found = [fee > 0, !!win, !!fence, mu !== null || imperative || offersWork].filter(Boolean).length;
   const confidence = Math.round((0.2 + 0.8 * found / 4) * 100) / 100;
-  const rules: Reading = { task, window: win ? win[0].trim() : "", fee, geofence, payeeName, action: imperative ? "pay" : offersWork ? "accept" : "none", source: "rules", confidence, droppedAddress };
+  const rules: Reading = { task, window: win ? win[0].trim() : "", fee, geofence, payeeName, action: imperative ? "pay" : offersWork ? "accept" : "none", source: "rules", confidence, droppedAddress, mu: mu ? Number(mu[1]) : 0 };
 
   const m = await modelUnderstand(clean, names);
   if (!m) return rules;
   const okName = m.payeeName && names.includes(m.payeeName) ? m.payeeName : null;
   const feeOk = Number.isFinite(m.fee) && m.fee > 0 ? m.fee : rules.fee;
   const c = Number.isFinite(m.confidence) ? Math.min(1, Math.max(0, Math.round(m.confidence * 100) / 100)) : confidence;
-  return { task: m.task || rules.task, window: m.window || rules.window, fee: feeOk, geofence: m.field || rules.geofence, payeeName: okName, action: m.action, source: "model", confidence: c, droppedAddress };
+  return { task: m.task || rules.task, window: m.window || rules.window, fee: feeOk, geofence: m.field || rules.geofence, payeeName: okName, action: m.action, source: "model", confidence: c, droppedAddress, mu: Number.isFinite(m.mu) && m.mu > 0 ? m.mu : 0, rules };
+}
+
+// Code checks a reading against the signed listing (fee, mu, field, window) and, for a model
+// reading, against the rules reader. A reading code does not accept is replaced by the rules
+// reading when that one passes, otherwise by the signed facts. The reading never names a payee
+// or an amount that moves money: settlement still uses the signed fee and the policy engine.
+export interface Checked { reading: Reading; readBy: "model" | "rules"; accepted: boolean; used: "model" | "rules" | "listing"; mismatch: string[]; fee: number; mu: number }
+export function checkReading(r: Reading, signed: { fee: number; mu: number; geofence: string; window: string }): Checked {
+  const near = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.01, b * 0.1);
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const test = (x: Reading) => {
+    const bad: string[] = [];
+    if (x.action !== "accept") bad.push(`action ${x.action}`);
+    if (!near(x.fee, signed.fee)) bad.push(`fee ${x.fee} vs listing ${signed.fee}`);
+    if (x.mu > 0 && !near(x.mu, signed.mu)) bad.push(`mu ${x.mu} vs listing ${signed.mu}`);
+    if (x.geofence && !norm(signed.geofence).includes(norm(x.geofence))) bad.push(`field ${x.geofence} vs listing ${signed.geofence}`);
+    if (x.window && signed.window && !norm(x.window).includes(norm(signed.window))) bad.push(`window ${x.window} vs listing ${signed.window}`);
+    if (x.source === "model" && x.rules && x.rules.fee > 0 && !near(x.fee, x.rules.fee)) bad.push(`fee ${x.fee} vs rules reader ${x.rules.fee}`);
+    return bad;
+  };
+  const mismatch = test(r);
+  if (!mismatch.length) return { reading: r, readBy: r.source, accepted: true, used: r.source, mismatch, fee: r.fee, mu: r.mu || signed.mu };
+  const fb = r.source === "model" && r.rules && !test(r.rules).length ? r.rules : null;
+  if (fb) return { reading: fb, readBy: r.source, accepted: false, used: "rules", mismatch, fee: fb.fee, mu: fb.mu || signed.mu };
+  return { reading: r, readBy: r.source, accepted: false, used: "listing", mismatch, fee: signed.fee, mu: signed.mu };
 }
 
 export function addressOf(actor: Actor): string {

@@ -10,6 +10,9 @@ import { fleet, neighbour } from "../src/engine/scenarios";
 import { transcript } from "../src/engine/model";
 import { fiscoConfig, realChainAvailable } from "../src/engine/chain";
 import type { ChainTx, EngineEvent, MachineState } from "../src/engine/types";
+import { KEY_MODE } from "../src/engine/keys";
+// Evidence must be reproducible across processes, so it needs the deterministic demo keys.
+if (KEY_MODE !== "deterministic-demo") { console.error("set ZISHI_DETERMINISTIC_KEYS=1 (pnpm evidence does) so the run can be reproduced and verified"); process.exit(1); }
 
 export interface EvidenceRow { claim: string; kind: ChainTx["kind"]; amount: number; from: string; to: string; hash: string; block: number; simulated: boolean; explorer: string | null; scenario: string; network?: string; intentHash?: string; fiscoHash?: string }
 export interface ProofRow { scenario: string; intentId: string; intentHash: string; rule: string; signer: string; signatureOk: boolean; slash: number; bounty: number; submitterAddr: string }

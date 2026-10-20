@@ -7,15 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx src/engine/selfcheck.ts",
-    "evidence": "tsx scripts/evidence.ts",
-    "verify": "tsx scripts/verify.ts",
-    "verify:all": "tsx scripts/verify-all.ts",
-    "fisco": "tsx scripts/fisco.ts",
+    "test": "ZISHI_DETERMINISTIC_KEYS=1 tsx src/engine/selfcheck.ts",
+    "evidence": "ZISHI_DETERMINISTIC_KEYS=1 tsx scripts/evidence.ts",
+    "verify": "ZISHI_DETERMINISTIC_KEYS=1 tsx scripts/verify.ts",
+    "verify:all": "ZISHI_DETERMINISTIC_KEYS=1 tsx scripts/verify-all.ts",
+    "fisco": "ZISHI_DETERMINISTIC_KEYS=1 tsx scripts/fisco.ts",
     "bench": "tsx scripts/bench.ts",
+    "realflights": "tsx scripts/realflights.ts",
     "charts": "tsx scripts/charts.ts",
     "report": "tsx scripts/report.ts",
-    "shots": "tsx scripts/shots.ts"
+    "shots": "tsx scripts/shots.ts",
+    "settle": "tsx scripts/settle-run.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "3.0.74",
@@ -40,9 +42,9 @@
     "@types/three": "^0.186.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
-    "playwright": "1.48.2",
+    "playwright": "1.56.1",
     "tailwindcss": "^4",
-    "tsx": "4.19.2",
+    "tsx": "4.20.6",
     "typescript": "^5"
   },
   "packageManager": "pnpm@10.27.0"

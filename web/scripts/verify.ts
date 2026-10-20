@@ -10,6 +10,9 @@ import { baseSepolia } from "viem/chains";
 import { ADDR } from "../src/engine/keys";
 import type { EvidenceRow } from "./evidence";
 import type { MachineState } from "../src/engine/types";
+import { KEY_MODE } from "../src/engine/keys";
+// The recorded run was signed with the deterministic demo keys; random keys would not match.
+if (KEY_MODE !== "deterministic-demo") { console.error("set ZISHI_DETERMINISTIC_KEYS=1 (pnpm verify does) to check a recorded run"); process.exit(1); }
 
 const COMMIT_ABI = parseAbi(["function commit(bytes32 jobId, bytes32 intentHash)"]);
 const round = (n: number) => Math.round(n * 100) / 100;

@@ -5,7 +5,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { runAll, runBenign, ATTACKS, scriptedGate } from "./attacks";
 import { POST as buttonPOST } from "../app/api/button/route";
-import { DEMO_KEYS_PUBLIC } from "./keys";
+import { ADDR as KEY_ADDR, KEY_MODE, buildKeys, deriveDemoKey, publicKeyInfo, type KeyedActor } from "./keys";
+import { execFileSync } from "node:child_process";
+import { privateKeyToAccount } from "viem/accounts";
 import { PolicyEngine, DEFAULT_POLICY, DEMO } from "./policy";
 import { SLASH_RULES } from "./contracts";
 import { sign, economics } from "./agents";
@@ -199,7 +201,27 @@ async function main() {
   if (savedToken === undefined) delete process.env.DEMO_TOKEN; else process.env.DEMO_TOKEN = savedToken;
   if (noEnv.status !== 401 || noHeader.status !== 401 || wrong.status !== 401 || right.status === 401) { console.error("button route auth unexpected", noEnv.status, noHeader.status, wrong.status, right.status); process.exit(1); }
   console.log(`button: 401 with no DEMO_TOKEN set, no header, wrong token; with the token it passes auth (status ${right.status})`);
-  if (!DEMO_KEYS_PUBLIC) { console.error("demo keys flag missing"); process.exit(1); }
+  // Actor keys: random per process by default, the public label derivation only behind the flag.
+  {
+    const actors = Object.keys(KEY_ADDR) as KeyedActor[];
+    const derived = Object.fromEntries(actors.map((a) => [a, privateKeyToAccount(deriveDemoKey(a)).address]));
+    const r1 = buildKeys("random-per-process"), r2 = buildKeys("random-per-process");
+    const det = buildKeys("deterministic-demo");
+    const randomOk = actors.every((a) => r1[a].address !== r2[a].address && r1[a].address !== derived[a] && r2[a].address !== derived[a]);
+    const detOk = actors.every((a) => det[a].address === derived[a]);
+    // Two fresh module instances in separate processes, without the flag: random mode, different addresses.
+    const tsx = path.join(process.cwd(), "node_modules", ".bin", "tsx");
+    const probe = () => {
+      const env = { ...process.env }; delete env.ZISHI_DETERMINISTIC_KEYS;
+      return JSON.parse(execFileSync(tsx, ["-e", 'import { publicKeyInfo } from "./src/engine/keys"; console.log(JSON.stringify(publicKeyInfo()))'], { env, encoding: "utf8" }).trim().split("\n").pop()!) as ReturnType<typeof publicKeyInfo>;
+    };
+    const p1 = probe(), p2 = probe();
+    const procOk = p1.mode === "random-per-process" && p2.mode === "random-per-process" && actors.every((a) => p1.addresses[a] !== p2.addresses[a] && p1.addresses[a] !== derived[a]);
+    const info = publicKeyInfo();
+    const noSecret = !JSON.stringify(info).match(/0x[0-9a-fA-F]{64}/);
+    if (!randomOk || !detOk || !procOk || !noSecret || KEY_MODE !== "deterministic-demo") { console.error("actor key modes unexpected", { randomOk, detOk, procOk, noSecret, KEY_MODE }); process.exit(1); }
+    console.log(`keys: default is random per process (two processes, ${actors.length} actors, all addresses differ and none equal the public label keys); ZISHI_DETERMINISTIC_KEYS=1 reproduces the label keys; public info has no private key`);
+  }
 
   // FISCO BCOS target: off unless its RPC, key and IntentLog address are all set.
   const fiscoVars = { FISCO_RPC_URL: "http://127.0.0.1:8545", FISCO_PRIVATE_KEY: "0x" + "11".repeat(32), FISCO_INTENT_LOG: "0x" + "22".repeat(20) };
@@ -247,3 +269,28 @@ async function askCheck() {
   console.log(`ask: job-202 margin ${eco.margin} below ${eco.reserveRule}, break even ${be} yuan per mu accepted at margin ${beEco.margin}, 3.5 declined, lowering the reserve refused, off topic redirected`);
 }
 askCheck().catch((e) => { console.error(e); process.exit(1); });
+
+// Recovery state machine of settle.ts with a mocked sender, no network: a network error retries and
+// recovers, a revert goes straight to compensation, and retries that run out end in gave_up.
+async function recoveryCheck() {
+  const { withRecovery, classify } = await import("./settle");
+  const fail = (msg: string, v?: unknown) => { console.error(`recovery: ${msg}`, v ?? ""); process.exit(1); };
+  const sleep = async () => {};
+  const run = async (attempt: (n: number) => Promise<{ hash: string; ok: boolean; block: number }>, compensate = false) => {
+    const states: string[] = [];
+    const r = await withRecovery("JobBoard.confirm", attempt, (s) => { states.push(s); }, { sleep });
+    if (compensate && (r.outcome === "reverted" || r.outcome === "gave_up")) states.push("compensated");
+    return { r, seq: states.join(">") };
+  };
+  const a = await run(async (n) => { if (n === 0) throw new Error("fetch failed: network error"); return { hash: "0xabc", ok: true, block: 1 }; });
+  if (a.r.outcome !== "recovered" || a.seq !== "sent>failed>retry>sent>recovered") fail("retry then success", a);
+  const b = await run(async () => ({ hash: "0xdef", ok: false, block: 2 }), true);
+  if (b.r.outcome !== "reverted" || b.r.attempts !== 1 || b.seq !== "sent>failed>compensated") fail("revert then compensation", b);
+  const b2 = await run(async () => { throw new Error("execution reverted: not locked"); }, true);
+  if (b2.r.outcome !== "reverted" || b2.seq !== "sent>failed>compensated") fail("thrown revert must not retry", b2);
+  const c = await run(async () => { throw new Error("request timed out"); });
+  if (c.r.outcome !== "gave_up" || c.r.attempts !== 3 || c.seq !== "sent>failed>retry>sent>failed>retry>sent>failed>gave_up") fail("retries exhausted", c);
+  if (classify(new Error("nonce too low")) !== "retry" || classify(new Error("execution reverted")) !== "revert") fail("classify");
+  console.log(`recovery: retry then success (${a.seq}), revert then compensation (${b.seq}), retries exhausted (${c.seq})`);
+}
+recoveryCheck().catch((e) => { console.error(e); process.exit(1); });

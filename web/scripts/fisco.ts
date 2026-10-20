@@ -11,6 +11,9 @@ import { createPublicClient, decodeFunctionData, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { INTENT_LOG } from "../src/engine/chain";
 import type { EvidenceRow } from "./evidence";
+import { KEY_MODE } from "../src/engine/keys";
+// Equal intent hashes with the Base capture need the deterministic demo keys.
+if (KEY_MODE !== "deterministic-demo") { console.error("set ZISHI_DETERMINISTIC_KEYS=1 (pnpm fisco does) so intent hashes match the Base capture"); process.exit(1); }
 
 const ROOT = join(__dirname, "..", "..");
 const RPC = process.env.FISCO_RPC_URL || "http://127.0.0.1:8545";
@@ -152,6 +155,25 @@ async function main() {
     console.log(`full job on FISCO: ${ok} of ${calls.length} contract calls succeeded`);
   }
 
+  // The engine's own run settling on the deployed contracts (pnpm settle), latest with a summary.
+  const sdir = join(process.cwd(), "evidence", "fisco");
+  const settledFiles = readdirSync(sdir).filter((x) => /^settled-run-.*Z-summary\.json$/.test(x)).sort();
+  const settleMd: string[] = [];
+  if (settledFiles.length) {
+    const sf = settledFiles[settledFiles.length - 1];
+    const sum = JSON.parse(readFileSync(join(sdir, sf), "utf8")) as { offers: number; offersReadByModel: number; readingsAcceptedByCode: number; freeModels: string[] };
+    const rec = JSON.parse(readFileSync(join(sdir, sf.replace("-summary", "")), "utf8")) as { rows: { moment: string; call: string; from: string; valueWei: string; tx: string; block: number }[]; checks: { check: string; value: string; ok: boolean }[] };
+    let ok = 0;
+    const rowsS: string[] = [];
+    for (const x of rec.rows) {
+      const r = await fisco.getTransactionReceipt({ hash: x.tx as `0x${string}` });
+      if (r.status === "success") ok += 1; else bad += 1;
+      rowsS.push(`| ${x.moment} | ${x.call} | ${x.from} | ${x.valueWei === "0" ? "0" : `${x.valueWei} wei`} | \`${x.tx.slice(0, 12)}…\` | ${Number(r.blockNumber)} | ${r.status} |`);
+    }
+    settleMd.push("## 8. The engine settles on the contracts", "", `\`pnpm settle\` runs the fleet scenario on FISCO with the engine's money events settled by the deployed contracts in the same loop: fresh role keys per run, each job's fee locked in JobBoard, confirmed and split by the contract, instalments through Lease.pay, the rogue intent slashed by proof from the vendor bond, the title moved to the pilot. A free model (${sum.freeModels.slice(0, 2).join(", ")}) read the job offers: ${sum.offersReadByModel} of ${sum.offers} offers read by the model, ${sum.readingsAcceptedByCode} readings accepted by code against the signed listing. ${ok} of ${rec.rows.length} transactions fetched again now with status success.`, "", "| Moment | Call | From | Value | Transaction | Block | Status |", "|---|---|---|---|---|---|---|", ...rowsS, "", "Checks:", "", ...rec.checks.map((c) => `- ${c.check}: ${c.value} (${c.ok ? "ok" : "FAILED"})`), "");
+    console.log(`engine settled run: ${ok} of ${rec.rows.length}`);
+  }
+
   const md = [
     "# FISCO BCOS evidence",
     "",
@@ -190,7 +212,9 @@ async function main() {
     ...fate,
     ...dual.map((l) => l.replace("## 4. One real run", `## ${fate.length ? 5 : 4}. One real run`)),
     ...fjMd,
-    `## ${4 + (dual.length ? 1 : 0) + (fate.length ? 1 : 0) + (fjMd.length ? 1 : 0)}. Reproduce`,
+    ...(settleMd.length ? ["## 7. V2: the front running fix", "", "See `contracts/deployments/fisco-v2.json`: IntentLogV2 accepts a commit only from the job's agent; a stranger's commit reverted, the agent's commit and the slash succeeded, and a never committed intent on a running job was still slashed.", ""] : []),
+    ...settleMd,
+    `## ${settleMd.length ? 9 : 4 + (dual.length ? 1 : 0) + (fate.length ? 1 : 0) + (fjMd.length ? 1 : 0)}. Reproduce`,
     "",
     "```",
     "bash contracts/script/fisco.sh     # node in Docker, deploy, smoke, FATE model hash, contracts/deployments/fisco-bcos.json",

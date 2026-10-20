@@ -249,6 +249,20 @@ export async function publicFisco(): Promise<boolean> {
   return up;
 }
 
+// Audit trail on the consortium ledger: at the end of a run the hash chained event log's head is
+// committed to the FISCO IntentLog under the job id keccak("audit:<runId>"), so a lender or regulator
+// can later prove the run's record was not edited (GET /api/replay recomputes the chain to that head).
+export async function anchorAuditHead(runId: string, head: string): Promise<{ hash: string } | null> {
+  const cfg = fiscoConfig();
+  if (!cfg || !/^0x[0-9a-fA-F]{64}$/.test(head)) return null;
+  try {
+    const tx = await new RealChain(cfg.pk, cfg.rpc, fiscoNet(cfg)).commit(`audit:${runId}`, head, `audit head ${runId}`);
+    return { hash: tx.hash };
+  } catch {
+    return null;
+  }
+}
+
 export function makeChain(opts: { real?: boolean; fiscoOnly?: boolean } = {}): Chain {
   const pk = process.env.SURETY_PRIVATE_KEY as `0x${string}` | undefined;
   const rpc = process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";

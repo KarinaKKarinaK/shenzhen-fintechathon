@@ -1,5 +1,5 @@
 import { SCENARIOS } from "@/engine/scenarios";
-import { demoAuthorised, publicFisco } from "@/engine/chain";
+import { anchorAuditHead, demoAuthorised, publicFisco } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 import { append, chainHead, newRunId } from "@/engine/replay/log";
@@ -29,7 +29,9 @@ export async function GET(req: Request) {
           append(runId, ev);
           controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
         }
-        controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "chain_head", runId, ...chainHead(runId), at: Date.now() })}\n\n`));
+        const ch = chainHead(runId);
+        const audit = real || fiscoOnly ? await anchorAuditHead(runId, ch.head) : null;
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "chain_head", runId, ...ch, auditTx: audit?.hash ?? null, at: Date.now() })}\n\n`));
       } catch (e) {
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "narration", text: tr(lang, "run.stopped", { msg: (e as Error).message }), at: Date.now() })}\n\n`));
       } finally {

@@ -1,10 +1,9 @@
 "use client";
 import { demoHeaders } from "./demoToken";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Intent, MachineState, PolicyDecision, Job, Side } from "@/engine/types";
 import { DEFAULT_POLICY, DEMO, short } from "@/engine/policy";
-import { ADDR } from "@/engine/keys";
 import { ruleLabel } from "@/engine/i18n";
 import type { Gate, Understood, MessageEv, PlanItem, PlanMeta, Solvency, Telemetry, Proof, LooseEvent, TxView, LogEv, MachineView } from "./useRun";
 import { timeOf, yuan } from "./money";
@@ -215,16 +214,31 @@ export function PolicyCard({ decisions, intents }: { decisions: PolicyDecision[]
   );
 }
 
-// Known addresses to a role word: the demo keys first, then the allowlist. Anything else stays a short hash.
-const ROLE_OF: Record<string, string> = Object.fromEntries([
-  ...Object.entries(ADDR).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k === "operator" ? "pilot" : k]),
-  ...Object.entries(DEFAULT_POLICY.allowlist).map(([k, a]) => [a.toLowerCase(), k === "requester" ? "farmer" : k]),
-]);
+// Known addresses to a role word: the allowlist here, plus the actor addresses from /api/keys
+// (the server's keys are random per instance, so the client asks for the public addresses).
+const roleWord = (k: string) => (k === "requester" ? "farmer" : k === "operator" ? "pilot" : k);
+const ALLOW_ROLES: Record<string, string> = Object.fromEntries(
+  Object.entries(DEFAULT_POLICY.allowlist).map(([k, a]) => [a.toLowerCase(), roleWord(k)]),
+);
+let actorRoles: Promise<Record<string, string>> | null = null;
+function useRoleOf(): Record<string, string> {
+  const [roles, setRoles] = useState<Record<string, string>>(ALLOW_ROLES);
+  useEffect(() => {
+    actorRoles ??= fetch("/api/keys").then((r) => r.json()).then((j: { addresses?: Record<string, string> }) =>
+      Object.fromEntries(Object.entries(j.addresses ?? {}).map(([k, a]) => [a.toLowerCase(), roleWord(k)])),
+    ).catch(() => ({}));
+    let live = true;
+    actorRoles.then((m) => { if (live) setRoles({ ...m, ...ALLOW_ROLES }); });
+    return () => { live = false; };
+  }, []);
+  return roles;
+}
 
 // A receipt for a slash. Every fact is read from the signed intent and the contracts' records.
 export function ProofCard({ proof, log }: { proof?: Proof; log?: LogEv }) {
   const { d, t, lang } = useLang();
   const [addrs, setAddrs] = useState(false);
+  const ROLE_OF = useRoleOf();
   const P = d.panels;
   if (!proof) return <div className="text-sm text-muted">{P.proofNone}</div>;
   const roles = P.roles as Record<string, string>;

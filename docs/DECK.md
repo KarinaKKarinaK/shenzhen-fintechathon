@@ -1,75 +1,57 @@
 # Zishi 自食其力, software that lets machines pay for themselves
 
-Deck text, ten slides, under ten minutes. One idea per slide. Amounts in yuan.
+Pitch deck text, twelve slides, under ten minutes. The slides are `docs/Zishi_Pitch_Deck.pptx` (speaker notes inside) and `docs/pdf/Zishi_Pitch_Deck.pdf`, both built by `python web/scripts/deck.py`. Amounts in yuan.
 
 ## 1. Title
 
-Zishi 自食其力. Software that lets machines pay for themselves.
+Zishi 自食其力. A wallet for a drone on hire purchase. The AI participates, the money rules live in code. 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F: AI as a Financial Participant. Built on WeBank's FISCO BCOS and FATE.
 
-A wallet for an agricultural drone on hire purchase. 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F. Built on WeBank's FISCO BCOS and FATE.
-
-Live: zishi-fintechathon.vercel.app
+Live demo: zishi-fintechathon.vercel.app
 
 ## 2. The pilot
 
-Over 200,000 agricultural drone pilots in China. A drone costs about 55,000 yuan. Spraying pays 3 to 15 yuan per mu.
+More than 200,000 agricultural drone pilots in China. A spraying drone costs about 55,000 yuan and earns 3 to 15 yuan per mu. A pilot with nothing to pledge cannot get a loan, because the lender cannot see the work. The drone sits in a showroom. The field waits.
 
-A pilot with nothing to pledge cannot get a loan. The drone sits in a showroom. The field waits.
+## 3. The machine is the borrower
 
-## 3. What Zishi does
+Earn: the drone earns per mu sprayed; the farmer locks the fee first and confirms the work. Repay: each fee splits by rule, an instalment inside a 20 to 45 percent band, a rail fee, a bond top up, the rest to the pilot. Own: at zero the title moves on chain to the person who flew it.
 
-The drone earns per mu sprayed, confirmed by the farmer who pays.
+## 4. One drone, five moments
 
-Each fee repays the lender, fills a bond and leaves the rest to the pilot.
+A job declined on economics, an instalment paid, a faked flight log held, a slash by proof, the title transferred. Every step is a signed event on the screen. Press Start on the Fleet page.
 
-At zero the title moves on chain. The drone belongs to the person who flew it.
+## 5. Ask the agent why
 
-## 4. One task, seven steps
+The pilot asks why a job was declined. The agent answers from the engine's numbers: a 60 yuan fee leaves 22.8 yuan, the reserve rule needs 30, the break even is 3.7 yuan per mu. Asked to lower the reserve, it says no: that needs the operator key and the lender. The model only words the answer, free models only, template text without a key. The person affected can ask why (PIPL Article 24).
 
-Plan, lock, check, work, confirm, repay, own. Every step is an event, and every event is on the screen.
+## 6. The model drafts, code decides the payment
 
-Live demo, five moments in three minutes: a job declined on economics, an instalment paid, a faked flight log held, a slash by proof, the title transferred.
+Four tiers on every signed intent: L0 read and L1 draft for the model, L2 pay inside caps and allowlists for the machine key, L3 the operator's physical button. 21 policy rule lines. 52 of 52 attacks blocked, 7 of 7 benign messages pass, a naive wallet falls to 51 of 52. The classifier alone holds 13 of 52; the rules and the policy do the rest.
 
-## 5. Money decisions are made in code, never by the model
+## 7. Two bonds, slashed only by proof
 
-Four permission tiers. The model reads and drafts. The machine key pays inside caps and allowlists. The operator's physical button holds the top.
+Pilot bond, earned from fees, slashed for the pilot's own cheating. Vendor bond, 5,000 yuan posted by us, slashed for the agent's mistakes. The pilot never pays for the AI. A slash needs a signed intent in the on chain log that breaks a rule the contract can check against its own records. Only a party of the job can submit. No trusted judge.
 
-21 rule lines in the policy engine, checked on every signed intent. Every number comes from a tool, never from message text.
+## 8. One loop, two ledgers
 
-## 6. Two bonds, slashed only by proof
+26 of 26 contract calls on FISCO BCOS from one engine fleet run: the lender paid 650 yuan through Lease, the vendor bond 5,000 to 4,800 by proof, the lease at 0, the title to the pilot (`web/evidence/fisco/settled-run-*.json`). 9 of 9 contract calls in one full job on the deployed contracts on Base Sepolia, with real value. 267 of 267 receipts re-fetched by `pnpm verify:all`. Four contracts source verified on Sourcify; 15 of 15 intents sent to both chains in the same step with the same hash.
 
-Pilot bond, earned from fees, slashed for the pilot's own cheating.
+## 9. Built on WeBank's stack
 
-Vendor bond, 5,000 yuan posted by us, slashed for the agent's mistakes. The pilot never pays for the AI.
+FISCO BCOS 3.16.3 runs the same four contracts as the lender's ledger; 30 of 30 intent hashes read back equal the engine's; the agent bound IntentLogV2 fixes front running. FATE 2.2: three lenders train one credit model with no raw records shared, AUC 0.729 alone to 0.782 federated, the same as pooling; a new pilot's rate error drops from 335 to 153 basis points. The FATE model's sha256 is committed to the FISCO IntentLog.
 
-A slash needs a signed intent in the log that breaks a rule the contract can check against its own records. Only a party of the job can submit. No trusted judge.
+## 10. Security and compliance
 
-## 7. Holds under attack
+Actor keys random per server instance, in memory; the model process holds none. IntentLogV2 accepts a commit only from the job's agent (on FISCO; the Base Sepolia v1 is still open). 84 Foundry tests, 15 contract layer attacks among them. 0 open findings of medium or higher (Slither with 42 triaged, pnpm audit, gitleaks). PIPL Article 24 and hashes only on chain; NFRA, a licensed leasing company is the lessor; PBoC, fees settle through licensed rails or e-CNY; CAAC, a licensed pilot and a real name registered drone.
 
-52 attack cases, 52 blocked. 7 benign farmer messages, 7 passed. A naive wallet falls to 51 of 52.
+## 11. Measured, not asserted
 
-Try your own on the Evidence page. The live wallet never moves.
+72 of 72 tampered flights held (95% interval 94.9 to 100%). Oracle false alarm 3.0%, 13 of 428 (1.8 to 5.1%). Classifier accuracy 93.1% on 87 held out messages, precision 100% (26 of 26), recall 81.3% (64.7 to 91.1%). Lender p95 loss 25,593 to 19,739 yuan with the two bonds. Track feature false alarms 13.8% to 0.0% after Kalman smoothing. Fixed seeds, synthetic data labelled as such. None of these components can sign, pay or move a cap.
 
-## 8. Smart where it counts, and measured
+## 12. Honest about what is real, and next
 
-Ten components from other fields, each with a fixed seed and a held out set: a Kalman filter on the GPS track, a conformal threshold, a Buhlmann credit score, a lease MDP, a second price planner, a Monte Carlo bond stress test, a CUSUM drift monitor, a hash chained log, a message classifier, a strategy ratchet.
+Real today: contracts deployed and verified on Base Sepolia, full jobs with value on Base and FISCO, real FATE training, free models live in the public app. Still simulated: in the public engine Bond, JobBoard and Lease run in TypeScript mirrors; FISCO is one local node in Docker; telemetry is synthetic and signed by demo keys.
 
-False alarms on honest flights at full detection: 13.8 percent down to zero. Lender loss at the 95th percentile: 25,593 yuan down to 19,739. None of them can sign, pay or move a cap.
+Next: one licensed lessor pilot with ten drones, real flight logs through the same oracle, a FISCO BCOS node run by the lessor, a secure element on each drone. Then any machine with verifiable paid work: delivery drones, robot arms, robotaxis.
 
-Pilot credit is learned across three lenders with WeBank's FATE 2.2, no raw records shared. The lender with new pilots goes from AUC 0.729 alone to 0.782 federated, the same as pooling all the data. A new pilot's average rate error drops from 335 to 153 basis points. The model's fingerprint is committed on FISCO BCOS.
-
-## 9. Honest about what is real
-
-Four contracts deployed and source verified on Base Sepolia, 84 Foundry tests, the 15 contract layer attacks among them. One full job ran against the deployed contracts with value moving: fee locked, confirmed, instalment paid to the lender, the vendor bond slashed by proof, the title moved to the pilot at zero. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
-
-The same four contracts run on FISCO BCOS 3.16.3, WeBank's consortium chain, as the lender's ledger. A full run committed 30 intents there and every hash read back matches the engine's; in one real run each intent went to Base Sepolia and FISCO in the same step with the same hash. Value moves on FISCO too: a vendor bond held, a job fee locked and refunded. The FISCO node runs in Docker from one script.
-
-Bond, JobBoard and Lease rules run in TypeScript mirrors of the deployed contracts today. Telemetry is synthetic and signed by demo keys; a secure element on the drone in production. A licensed lessor in a sandbox, not a bank.
-
-## 10. The agricultural drone is the first
-
-The same rail works for any machine that does paid work someone can verify: delivery drones per drop, robot arms per part, robotaxis per trip.
-
-Next: one lessor pilot with ten drones, real flight logs through the same oracle, a FISCO BCOS node run by the lessor instead of our own.
-
-Repo: github.com/KarinaKKarinaK/shenzhen-fintechathon
+Live demo: zishi-fintechathon.vercel.app. Repo: github.com/KarinaKKarinaK/shenzhen-fintechathon. Licence PolyForm Noncommercial 1.0.0; the deployed contracts stay MIT.

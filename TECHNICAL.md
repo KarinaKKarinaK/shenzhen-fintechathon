@@ -85,7 +85,7 @@ flowchart LR
 | Mirrors | `contracts.ts` | TypeScript copies of the four contracts with the same rules and numbers, so the demo runs with no chain |
 | Oracle | `oracle.ts`, `ml/plausibility.ts` | Checks a flight log by geometry and by a robust z anomaly model |
 | Ratchet | `ratchet.ts` | Hill climbing over the acceptance strategy against a frozen week |
-| Keys | `keys.ts` | One secp256k1 key per actor, derived from a public label (demo only, anyone can derive it). EIP-712 domain `Zishi` v1, chain 84532 |
+| Keys | `keys.ts` | One secp256k1 key per actor, generated from a secure random source per server instance and held in memory (fixed labels only with `ZISHI_DETERMINISTIC_KEYS=1` for tests and replays). EIP-712 domain `Zishi` v1, chain 84532 |
 | Chain | `chain.ts` | `SimChain` or `RealChain` behind one `Chain` interface |
 | Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 84 tests, deployed on Base Sepolia |
 

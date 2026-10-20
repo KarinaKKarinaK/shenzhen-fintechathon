@@ -10,6 +10,7 @@ import { hasKey } from "@/engine/model";
 import { driftState } from "@/engine/drift/monitor";
 import { getEconomicsMetrics } from "@/engine/economics";
 import { DEFAULT_POLICY } from "@/engine/policy";
+import { publicKeyInfo } from "@/engine/keys";
 import { newState, rateFor, score as creditScore, update as creditUpdate, type CreditOutcome } from "@/engine/credit/score";
 import { DEMO_PILOT_PROFILE, federatedPrior } from "@/engine/credit/federated";
 
@@ -53,6 +54,7 @@ export async function GET() {
     drift: driftState(),
     chain: (await realChainFunded()).funded ? "real" : "sim",
     model: hasKey() ? "real" : "scripted",
+    keys: publicKeyInfo(),
     computedAt: new Date().toISOString(),
     note: "held out: every metric is measured on data split off by a fixed seed before training, never on the training rows; drift state is live, its evalDelay is from seeded synthetic scores",
   }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });

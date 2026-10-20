@@ -18,6 +18,7 @@
 
 <p align="center">
   <b><a href="https://zishi-fintechathon.vercel.app">Open the live demo</a></b> &nbsp;|&nbsp;
+  <a href="SUBMISSION.md">Submission index</a> &nbsp;|&nbsp;
   <a href="docs/JUDGES_GUIDE.md">Judges' guide</a> &nbsp;|&nbsp;
   <a href="docs/pdf/Zishi_Technical_Document.pdf">Technical document</a> &nbsp;|&nbsp;
   <a href="docs/EXECUTION_EVIDENCE.md">On chain evidence</a> &nbsp;|&nbsp;
@@ -90,7 +91,11 @@ Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and
 | | |
 |---|---|
 | **4** contracts on Base Sepolia | Source verified on Sourcify, exact match |
-| **267 of 267** receipts re-verified | `pnpm verify:all` re-fetches every transaction this repository claims, on Base Sepolia and FISCO BCOS, and decodes 46 intent hashes from calldata ([`docs/results/receipts.json`](docs/results/receipts.json)) |
+| **329 of 329** receipts re-verified | `pnpm verify:all` re-fetches every transaction this repository claims, on Base Sepolia and FISCO BCOS, including the engine settled runs and the recovery drills, and decodes 46 intent hashes from calldata ([`docs/results/receipts.json`](docs/results/receipts.json)) |
+| **5** model written explanations in a recorded real run | `web/evidence/real-run-2026-10-20T21.sse`: free models on OpenRouter wrote and passed the number check on 5 explanations, the rest is labelled template text under the free rate cap; every one of its 39 receipts re-verified ([section 2b](docs/EXECUTION_EVIDENCE.md#2b-a-second-real-run-free-model-and-fisco-mirror-on)) |
+| **0** open security findings of medium or higher | Slither over every contract (42 findings triaged), `pnpm audit` 0 in production dependencies, gitleaks 0 leaks across the git history ([`docs/SECURITY_SCAN.md`](docs/SECURITY_SCAN.md)) |
+| **26 of 26** contract calls from the engine itself | `pnpm settle`: the engine's own fleet run on FISCO BCOS settles every money event on the deployed contracts in the same loop (fee locked, confirmed and split, instalments through Lease.pay, slash by proof, title to the pilot); a free model read all 5 job offers and code accepted all 5 readings against the signed listings ([`docs/FISCO_EVIDENCE.md`](docs/FISCO_EVIDENCE.md#8-the-engine-settles-on-the-contracts)) |
+| **2 of 2** recovery drills passed | A contract call that fails is retried with a fresh nonce, a reverted start is compensated by `JobBoard.cancel`, and the farmer gets the whole fee back, visibly in the feed; drilled on FISCO with `ZISHI_FAULT=confirm-once` and `start-revert` (`web/evidence/fisco/recovery-*.json`) |
 | **9 of 9** contract calls in one full job | Fee locked in JobBoard, confirmed, instalment paid to the lender through Lease, vendor bond slashed by proof, title moved to the pilot at zero; real value, every receipt on Base Sepolia, and the same job on FISCO BCOS |
 | **84** Foundry tests | The 15 contract layer attacks ported to Solidity, 9 Lease tests, 16 for the agent bound IntentLogV2, three fuzzed over amounts, nonces and payees |
 | **52 of 52** attacks blocked | By the full pipeline (gate, policy engine, contracts); 7 of 7 benign messages pass. The classifier alone, never trained on these texts, holds 13 of 52: the rules and the policy do the rest |
@@ -300,7 +305,7 @@ The federated model now sets each pilot's starting credit score in the engine. F
 
 **The model on chain.** The sha256 of the exported FATE model is committed to the FISCO IntentLog, so a lender or regulator can check which model set a new pilot's starting rate. The Evidence page shows the prior, the FATE version and the model hash.
 
-Scope, stated plainly: the FISCO chain is a single node we run in Docker, so judges reproduce it with one script rather than click a public explorer; Base Sepolia stays the public proof. FISCO reports block time in milliseconds, so JobBoard's start and hold windows would need a unit fix before live jobs run through it there; today the engine uses the FISCO IntentLog, and the smoke job uses an already closed window. The live Vercel app cannot reach a laptop node, so the public demo shows FISCO through this evidence, not live. FATE trains offline on seeded synthetic data and the live app reads its exported coefficients.
+Scope, stated plainly: the FISCO chain is a single node we run in Docker, so judges reproduce it with one script rather than click a public explorer; Base Sepolia stays the public proof. FISCO reports block time in milliseconds; the settlement adapter converts job windows and holds accordingly. The public app reaches our node through a tunnel, so the live demo runs on FISCO while the node is up and falls back to the labelled simulation when it is not. FATE trains offline on seeded synthetic data and the live app reads its exported coefficients.
 
 ```bash
 bash contracts/script/fisco.sh   # FISCO BCOS node in Docker, deploy, smoke calls with value, FATE model hash on chain
@@ -328,6 +333,8 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 | Drift detection | Manufacturing process control, CUSUM | none | CUSUM on classifier risk and deny rate | never | alarm 6 observations after the shift, 0 false alarms in 600 |
 | Day planner | Mechanism design | first come | knapsack plus second price tie break | an inflated bid buys priority | a bid inflated to 5 wins at 4.2 and loses 0.7 utility |
 | Run integrity | Financial ledgers | no log | hash chained event log, `GET /api/replay` | not verifiable | two seeded runs, head 0x68c3abcf, equal; tamper caught at position 7 |
+
+**On real flights, stated plainly.** The oracle was calibrated on synthetic spraying flights. Run on 92 real public PX4 mission flights it holds all 92, because their battery use and altitude spread differ from spraying physics; recalibrated on a held out split of those real flights it reaches 7.1% false alarm (2 of 28) at 81.4% detection. A false alarm only holds a fee for review; it never slashes. Real spraying logs per airframe are the next calibration step ([`docs/results/realflights.json`](docs/results/realflights.json), `pnpm realflights`).
 
 **Which of these decide, which only watch.** Deciding: the conformal threshold and the Kalman smoothed track decide whether a flight log is held and the fee stays locked; the planner decides which jobs are flown or declined; the classifier can add a hold, never a pass. Monitoring only: the Buhlmann credit score shows the share it would set (the paid instalment still uses the demo rate), CUSUM drift feeds the metrics page, and the MDP and the ratchet are offline studies. A missing or out of range sensor channel holds the log; it is never filled in.
 
@@ -396,8 +403,8 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 
 | Layer | Status |
 |---|---|
-| Contracts | Deployed and source verified on Base Sepolia, 84 Foundry tests including the 15 contract layer attacks. One full job ran against the deployed contracts with value moving ([evidence](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts)). Inside the live engine only IntentLog is called; Bond, JobBoard and Lease rules run in mirrors there |
-| FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; not reachable from the public demo |
+| Contracts | Deployed and source verified on Base Sepolia, 84 Foundry tests including the 15 contract layer attacks. One full job ran against the deployed contracts with value moving ([evidence](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts)). On FISCO the engine itself settles every money event on the deployed contracts (26 of 26 calls in the recorded run); on Base Sepolia the live engine calls IntentLog and anchors money events, to keep the funded test wallet alive |
+| FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; the public demo runs on it through a tunnel while the node is up |
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
 | Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |

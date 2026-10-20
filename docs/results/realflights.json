@@ -1,0 +1,1285 @@
+{
+  "source": "PX4 Flight Review public logs (https://review.px4.io), listed in the public database https://review.px4.io/dbinfo, downloaded 2026-10-20",
+  "licence": "Public logs on PX4 Flight Review are uploaded with the option \"Make this log publicly available under CC-BY PX4 license\" (upload page, review.px4.io/upload). Attribution: the PX4 Flight Review uploaders of the log ids listed here.",
+  "selection": "From the public database: multirotor (Quadrotor, Hexarotor, Octorotor), not SITL, 300 to 2400 s long, AUTO_MISSION over half the flight, no error labels; shuffled with seed 20261020, first 110 downloaded (files over 40 MB skipped). Kept: longest AUTO_MISSION segment at least 120 s with GPS fix 3D, battery remaining and local altitude. No thresholds were chosen with these flights.",
+  "flights": 92,
+  "swathM": 3,
+  "honestClaim": "claimed mu = raw GPS track length times the 3 m swath (the engine's default): what a flight app summing the fixes reports for the flight",
+  "engineAsIs": {
+    "threshold": 2.597,
+    "falseAlarm": {
+      "rate": 1,
+      "lo": 0.96,
+      "hi": 1,
+      "k": 92,
+      "n": 92
+    },
+    "falseAlarmText": "100.0% (95% CI 96.0 to 100.0, 92 of 92)",
+    "falseAlarmReasons": {
+      "battery per mu": 92,
+      "altitude variance": 92,
+      "area ratio": 2,
+      "speed": 5,
+      "gps innovation": 1,
+      "teleport jump": 1
+    },
+    "detection": {
+      "rate": 1,
+      "lo": 0.992,
+      "hi": 1,
+      "k": 460,
+      "n": 460
+    },
+    "detectionText": "100.0% (95% CI 99.2 to 100.0, 460 of 460)",
+    "byTamper": {
+      "inflated_mu": {
+        "rate": 1,
+        "lo": 0.96,
+        "hi": 1,
+        "k": 92,
+        "n": 92
+      },
+      "replayed_track": {
+        "rate": 1,
+        "lo": 0.96,
+        "hi": 1,
+        "k": 92,
+        "n": 92
+      },
+      "impossible_speed": {
+        "rate": 1,
+        "lo": 0.96,
+        "hi": 1,
+        "k": 92,
+        "n": 92
+      },
+      "battery_too_low": {
+        "rate": 1,
+        "lo": 0.96,
+        "hi": 1,
+        "k": 92,
+        "n": 92
+      },
+      "teleport_jump": {
+        "rate": 1,
+        "lo": 0.96,
+        "hi": 1,
+        "k": 92,
+        "n": 92
+      }
+    }
+  },
+  "featureMedians": {
+    "area ratio": {
+      "real": 1.001,
+      "synthetic": 0.936
+    },
+    "speed": {
+      "real": 4.223,
+      "synthetic": 5.554
+    },
+    "battery per mu": {
+      "real": 2.43,
+      "synthetic": 0.546
+    },
+    "altitude variance": {
+      "real": 22.166,
+      "synthetic": 0.255
+    },
+    "gps innovation": {
+      "real": 0.85,
+      "synthetic": 4.655
+    }
+  },
+  "recalibrated": {
+    "method": "robust z (MAD floored at 1 percent of the median) fitted on 28 real flights, conformal threshold on 36 others (targets 0.02 and 0.1), rates on the remaining 28 only; split by a hash of the log id",
+    "maxAbsZOnCalibrationByFeature": {
+      "area ratio": 9793.2,
+      "speed": 9.4,
+      "battery per mu": 63.3,
+      "altitude variance": 3.1,
+      "gps innovation": 8.8
+    },
+    "model": {
+      "area ratio": {
+        "median": 1.0006876254661288,
+        "mad": 0.010006876254661288
+      },
+      "speed": {
+        "median": 4.37722291690349,
+        "mad": 0.4638799952740411
+      },
+      "battery per mu": {
+        "median": 2.6093667026397385,
+        "mad": 1.523842799016983
+      },
+      "altitude variance": {
+        "median": 28.8684,
+        "mad": 17.46717777
+      },
+      "gps innovation": {
+        "median": 0.8300000000000001,
+        "mad": 0.17049899999999982
+      }
+    },
+    "atEngineTarget": {
+      "targetFalseAlarm": 0.02,
+      "threshold": 9793.197,
+      "calibrationN": 36,
+      "rank": 36,
+      "falseAlarm": {
+        "rate": 0.036,
+        "lo": 0.006,
+        "hi": 0.177,
+        "k": 1,
+        "n": 28
+      },
+      "falseAlarmText": "3.6% (95% CI 0.6 to 17.7, 1 of 28)",
+      "falseAlarmDrivers": {
+        "area ratio": 1,
+        "gps innovation": 1
+      },
+      "detection": {
+        "rate": 0.421,
+        "lo": 0.343,
+        "hi": 0.504,
+        "k": 59,
+        "n": 140
+      },
+      "detectionText": "42.1% (95% CI 34.3 to 50.4, 59 of 140)",
+      "byTamper": {
+        "inflated_mu": {
+          "rate": 0.036,
+          "lo": 0.006,
+          "hi": 0.177,
+          "k": 1,
+          "n": 28
+        },
+        "replayed_track": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        },
+        "impossible_speed": {
+          "rate": 0.036,
+          "lo": 0.006,
+          "hi": 0.177,
+          "k": 1,
+          "n": 28
+        },
+        "battery_too_low": {
+          "rate": 0.036,
+          "lo": 0.006,
+          "hi": 0.177,
+          "k": 1,
+          "n": 28
+        },
+        "teleport_jump": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        }
+      }
+    },
+    "atTenPercent": {
+      "targetFalseAlarm": 0.1,
+      "threshold": 8.553,
+      "calibrationN": 36,
+      "rank": 34,
+      "falseAlarm": {
+        "rate": 0.071,
+        "lo": 0.02,
+        "hi": 0.226,
+        "k": 2,
+        "n": 28
+      },
+      "falseAlarmText": "7.1% (95% CI 2.0 to 22.6, 2 of 28)",
+      "falseAlarmDrivers": {
+        "area ratio": 1,
+        "gps innovation": 1,
+        "altitude variance": 1
+      },
+      "detection": {
+        "rate": 0.814,
+        "lo": 0.742,
+        "hi": 0.87,
+        "k": 114,
+        "n": 140
+      },
+      "detectionText": "81.4% (95% CI 74.2 to 87.0, 114 of 140)",
+      "byTamper": {
+        "inflated_mu": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        },
+        "replayed_track": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        },
+        "impossible_speed": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        },
+        "battery_too_low": {
+          "rate": 0.071,
+          "lo": 0.02,
+          "hi": 0.226,
+          "k": 2,
+          "n": 28
+        },
+        "teleport_jump": {
+          "rate": 1,
+          "lo": 0.879,
+          "hi": 1,
+          "k": 28,
+          "n": 28
+        }
+      }
+    },
+    "engineAsIsOnSameTestFlights": {
+      "falseAlarm": {
+        "rate": 1,
+        "lo": 0.879,
+        "hi": 1,
+        "k": 28,
+        "n": 28
+      }
+    }
+  },
+  "perFlight": [
+    {
+      "logId": "029452d5-8aa1-4a97-8335-fc6c13c0d5c9",
+      "ok": false,
+      "z": 1659.4,
+      "reasons": [
+        "battery per mu z +158.5",
+        "altitude variance z +1659.4"
+      ],
+      "areaMu": 5.21,
+      "seconds": 302
+    },
+    {
+      "logId": "02be8a2d-699c-46f3-8a3b-bbb3e4791808",
+      "ok": false,
+      "z": 930.8,
+      "reasons": [
+        "battery per mu z +13.1",
+        "altitude variance z +930.8"
+      ],
+      "areaMu": 6.54,
+      "seconds": 306
+    },
+    {
+      "logId": "03defa72-105c-4a65-964f-2e8104e1429a",
+      "ok": false,
+      "z": 348,
+      "reasons": [
+        "battery per mu z +65",
+        "altitude variance z +348"
+      ],
+      "areaMu": 7.68,
+      "seconds": 369
+    },
+    {
+      "logId": "0a518245-9527-4dfe-ba1f-421c8b019fdb",
+      "ok": false,
+      "z": 463,
+      "reasons": [
+        "battery per mu z -3.6",
+        "altitude variance z +463"
+      ],
+      "areaMu": 7.67,
+      "seconds": 369
+    },
+    {
+      "logId": "0ad6dafd-e4bc-4eb9-be11-ee3d0fecab22",
+      "ok": false,
+      "z": 453.3,
+      "reasons": [
+        "battery per mu z +57.2",
+        "altitude variance z +453.3"
+      ],
+      "areaMu": 7.68,
+      "seconds": 378
+    },
+    {
+      "logId": "0d9d2bc5-6f39-45ea-929a-144c31ea03c6",
+      "ok": false,
+      "z": 1713.9,
+      "reasons": [
+        "battery per mu z +98.4",
+        "altitude variance z +1713.9"
+      ],
+      "areaMu": 5.66,
+      "seconds": 325
+    },
+    {
+      "logId": "107d0ad8-9e3c-47b1-be0b-6a5b290a369e",
+      "ok": false,
+      "z": 12.8,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z -5.9"
+      ],
+      "areaMu": 7.02,
+      "seconds": 251
+    },
+    {
+      "logId": "15f4cec9-fcf1-40a9-bfe4-4d02cb8a159d",
+      "ok": false,
+      "z": 860.8,
+      "reasons": [
+        "battery per mu z +43.1",
+        "altitude variance z +860.8"
+      ],
+      "areaMu": 5.74,
+      "seconds": 304
+    },
+    {
+      "logId": "17eed900-27e3-45bf-aaa9-7c8330d5cfe4",
+      "ok": false,
+      "z": 1380.9,
+      "reasons": [
+        "battery per mu z +42",
+        "altitude variance z +1380.9"
+      ],
+      "areaMu": 5.66,
+      "seconds": 321.8
+    },
+    {
+      "logId": "17f86201-2b36-4cad-bedd-4be560e6314f",
+      "ok": false,
+      "z": 94.1,
+      "reasons": [
+        "battery per mu z +94.1",
+        "altitude variance z +92.4"
+      ],
+      "areaMu": 7.02,
+      "seconds": 406
+    },
+    {
+      "logId": "1844271a-140e-41d5-a57c-54fa21e2f530",
+      "ok": false,
+      "z": 403.7,
+      "reasons": [
+        "battery per mu z +24.5",
+        "altitude variance z +403.7"
+      ],
+      "areaMu": 7.68,
+      "seconds": 387
+    },
+    {
+      "logId": "18a7b61a-6a45-498b-b040-e4a7734eb41a",
+      "ok": false,
+      "z": 423.2,
+      "reasons": [
+        "battery per mu z +6.3",
+        "altitude variance z +423.2"
+      ],
+      "areaMu": 7.67,
+      "seconds": 372
+    },
+    {
+      "logId": "20692d46-fc8e-4a25-85b5-48932f9f2d0d",
+      "ok": false,
+      "z": 90.3,
+      "reasons": [
+        "battery per mu z +90.3",
+        "altitude variance z +64.5"
+      ],
+      "areaMu": 6.06,
+      "seconds": 307
+    },
+    {
+      "logId": "226f6560-2f16-4b46-924c-7188304d362a",
+      "ok": false,
+      "z": 274.2,
+      "reasons": [
+        "battery per mu z +35.5",
+        "altitude variance z +274.2"
+      ],
+      "areaMu": 8.35,
+      "seconds": 457
+    },
+    {
+      "logId": "23bc16a1-2f75-49e7-8e23-3dcfc1cb64cf",
+      "ok": false,
+      "z": 5119.8,
+      "reasons": [
+        "battery per mu z +61.1",
+        "altitude variance z +5119.8"
+      ],
+      "areaMu": 5.51,
+      "seconds": 329.7
+    },
+    {
+      "logId": "23c31c4a-f651-46c3-98fc-8d9328ac23e7",
+      "ok": false,
+      "z": 4345585.8,
+      "reasons": [
+        "area ratio z +4345585.8",
+        "speed z -3",
+        "battery per mu z -12.8",
+        "altitude variance z +665.4",
+        "gps innovation z +579137.4",
+        "teleport jump"
+      ],
+      "areaMu": 1.65,
+      "seconds": 204
+    },
+    {
+      "logId": "26d3694d-2b64-4d00-8f01-290cad65f900",
+      "ok": false,
+      "z": 2007,
+      "reasons": [
+        "battery per mu z +64.5",
+        "altitude variance z +2007"
+      ],
+      "areaMu": 5.07,
+      "seconds": 278
+    },
+    {
+      "logId": "2a262c2e-e5ab-4e61-9108-edd2963c9834",
+      "ok": false,
+      "z": 1862.1,
+      "reasons": [
+        "battery per mu z +43.1",
+        "altitude variance z +1862.1"
+      ],
+      "areaMu": 5.68,
+      "seconds": 340
+    },
+    {
+      "logId": "2c62f214-f3cc-4715-a49e-6e5fd5592915",
+      "ok": false,
+      "z": 218.6,
+      "reasons": [
+        "battery per mu z -12.7",
+        "altitude variance z +218.6"
+      ],
+      "areaMu": 4.9,
+      "seconds": 234
+    },
+    {
+      "logId": "2fe67fd4-8b0b-4958-af50-0918b61027b3",
+      "ok": false,
+      "z": 837.9,
+      "reasons": [
+        "battery per mu z +30.8",
+        "altitude variance z +837.9"
+      ],
+      "areaMu": 5.76,
+      "seconds": 305
+    },
+    {
+      "logId": "30294121-785c-400d-bea8-6b6174116dd7",
+      "ok": false,
+      "z": 1620.9,
+      "reasons": [
+        "battery per mu z +61.1",
+        "altitude variance z +1620.9"
+      ],
+      "areaMu": 6.06,
+      "seconds": 346
+    },
+    {
+      "logId": "317e2542-0eaf-49b1-a90e-933dbb790022",
+      "ok": false,
+      "z": 93.3,
+      "reasons": [
+        "battery per mu z +38.9",
+        "altitude variance z +93.3"
+      ],
+      "areaMu": 8.65,
+      "seconds": 268
+    },
+    {
+      "logId": "32166c95-13cd-4afa-be01-269fa13d3a7e",
+      "ok": false,
+      "z": 214.1,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z +214.1"
+      ],
+      "areaMu": 7.13,
+      "seconds": 338.8
+    },
+    {
+      "logId": "3216a30f-bc44-4f4d-9cda-11979cd814d9",
+      "ok": false,
+      "z": 1301.6,
+      "reasons": [
+        "speed z +3.5",
+        "battery per mu z -12.8",
+        "altitude variance z +1301.6"
+      ],
+      "areaMu": 14.47,
+      "seconds": 327
+    },
+    {
+      "logId": "3c2445bc-2624-48c0-be49-8e4e3ac801fc",
+      "ok": false,
+      "z": 1937.8,
+      "reasons": [
+        "speed z -3.5",
+        "battery per mu z +288.6",
+        "altitude variance z +1937.8"
+      ],
+      "areaMu": 2.15,
+      "seconds": 387.5
+    },
+    {
+      "logId": "3f58536c-5c41-4308-b6b4-7e0ce8bde629",
+      "ok": false,
+      "z": 59.6,
+      "reasons": [
+        "battery per mu z +59.6",
+        "altitude variance z +20.9"
+      ],
+      "areaMu": 4.23,
+      "seconds": 215
+    },
+    {
+      "logId": "41682751-669b-4b82-b87c-43170e6a1444",
+      "ok": false,
+      "z": 1475.9,
+      "reasons": [
+        "battery per mu z +98",
+        "altitude variance z +1475.9"
+      ],
+      "areaMu": 5.07,
+      "seconds": 287.8
+    },
+    {
+      "logId": "4237b094-9b49-4bba-9802-d3e591edd81a",
+      "ok": false,
+      "z": 40.1,
+      "reasons": [
+        "battery per mu z +40.1",
+        "altitude variance z +3.7"
+      ],
+      "areaMu": 5.06,
+      "seconds": 271
+    },
+    {
+      "logId": "43db6276-f89f-484a-bfb2-4a2b3570c0a9",
+      "ok": false,
+      "z": 1235.6,
+      "reasons": [
+        "battery per mu z +18.1",
+        "altitude variance z +1235.6"
+      ],
+      "areaMu": 4.52,
+      "seconds": 223
+    },
+    {
+      "logId": "47090aab-c0c2-4025-861a-97a0c72964d3",
+      "ok": false,
+      "z": 337.9,
+      "reasons": [
+        "battery per mu z +88.1",
+        "altitude variance z +337.9"
+      ],
+      "areaMu": 7.74,
+      "seconds": 395.8
+    },
+    {
+      "logId": "4c3df747-e8d8-4d30-9ec7-1d0413ed2927",
+      "ok": false,
+      "z": 1209.8,
+      "reasons": [
+        "battery per mu z +124.2",
+        "altitude variance z +1209.8"
+      ],
+      "areaMu": 5.4,
+      "seconds": 291
+    },
+    {
+      "logId": "5154020a-3208-40d7-b8b9-2b391fa2fdfe",
+      "ok": false,
+      "z": 325.7,
+      "reasons": [
+        "speed z +3.1",
+        "battery per mu z -12.8",
+        "altitude variance z +325.7"
+      ],
+      "areaMu": 25.3,
+      "seconds": 595
+    },
+    {
+      "logId": "51733db9-d35b-462d-857d-69606e9d85ed",
+      "ok": false,
+      "z": 837.1,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z +837.1"
+      ],
+      "areaMu": 4.06,
+      "seconds": 249
+    },
+    {
+      "logId": "54c3c6b9-8e0f-4279-8761-ce41918d3ebb",
+      "ok": false,
+      "z": 216.6,
+      "reasons": [
+        "battery per mu z +90.5",
+        "altitude variance z +216.6"
+      ],
+      "areaMu": 7.63,
+      "seconds": 384
+    },
+    {
+      "logId": "553deb94-2cd3-437c-bc6f-c909cb246c9d",
+      "ok": false,
+      "z": 668.1,
+      "reasons": [
+        "battery per mu z +64.6",
+        "altitude variance z +668.1"
+      ],
+      "areaMu": 6.1,
+      "seconds": 374
+    },
+    {
+      "logId": "583f8c1e-ea4e-4edc-b398-b9d7adde016a",
+      "ok": false,
+      "z": 419.1,
+      "reasons": [
+        "battery per mu z +110.2",
+        "altitude variance z +419.1"
+      ],
+      "areaMu": 4.92,
+      "seconds": 269
+    },
+    {
+      "logId": "5968a717-c4f2-4051-a390-918397eb300f",
+      "ok": false,
+      "z": 1211.8,
+      "reasons": [
+        "battery per mu z +133.5",
+        "altitude variance z +1211.8"
+      ],
+      "areaMu": 5.43,
+      "seconds": 292
+    },
+    {
+      "logId": "5f447748-4fc7-4687-b6ad-bcc3464695a6",
+      "ok": false,
+      "z": 234.6,
+      "reasons": [
+        "battery per mu z +50.7",
+        "altitude variance z +234.6"
+      ],
+      "areaMu": 8.56,
+      "seconds": 425
+    },
+    {
+      "logId": "6171ddb5-8d9c-425a-8015-776ac9871c19",
+      "ok": false,
+      "z": 426.5,
+      "reasons": [
+        "battery per mu z +23.9",
+        "altitude variance z +426.5"
+      ],
+      "areaMu": 7.66,
+      "seconds": 370
+    },
+    {
+      "logId": "6721a6cd-4e89-4f9f-a09d-a0689ceb7574",
+      "ok": false,
+      "z": 3475.8,
+      "reasons": [
+        "area ratio z +3475.8",
+        "speed z -4.5",
+        "battery per mu z +2305.4",
+        "altitude variance z +63"
+      ],
+      "areaMu": 0,
+      "seconds": 448
+    },
+    {
+      "logId": "690c5eb9-e7a5-462c-9699-a2324232746f",
+      "ok": false,
+      "z": 390.5,
+      "reasons": [
+        "battery per mu z +18.9",
+        "altitude variance z +390.5"
+      ],
+      "areaMu": 7.65,
+      "seconds": 382
+    },
+    {
+      "logId": "69c100ce-68f5-4b3f-9932-7e23d2211ec9",
+      "ok": false,
+      "z": 571.1,
+      "reasons": [
+        "battery per mu z +163.8",
+        "altitude variance z +571.1"
+      ],
+      "areaMu": 6.33,
+      "seconds": 384
+    },
+    {
+      "logId": "69e3188a-8747-4357-8e2c-0ce97414374a",
+      "ok": false,
+      "z": 1049.9,
+      "reasons": [
+        "battery per mu z +34.3",
+        "altitude variance z +1049.9"
+      ],
+      "areaMu": 6.21,
+      "seconds": 410
+    },
+    {
+      "logId": "6afc92ef-2482-41c9-be81-1131051936aa",
+      "ok": false,
+      "z": 1035,
+      "reasons": [
+        "battery per mu z +143.3",
+        "altitude variance z +1035"
+      ],
+      "areaMu": 5.72,
+      "seconds": 368
+    },
+    {
+      "logId": "6cdfd169-4e87-4c37-9b6e-7b1da2eb6712",
+      "ok": false,
+      "z": 1000.3,
+      "reasons": [
+        "battery per mu z +45.1",
+        "altitude variance z +1000.3"
+      ],
+      "areaMu": 6.97,
+      "seconds": 451
+    },
+    {
+      "logId": "6f4c3582-275e-46a0-bf61-ffd174896816",
+      "ok": false,
+      "z": 40.3,
+      "reasons": [
+        "battery per mu z +40.3",
+        "altitude variance z -5.1"
+      ],
+      "areaMu": 3.83,
+      "seconds": 186
+    },
+    {
+      "logId": "6fd7eb72-3414-46c6-bb8a-791c023b51f0",
+      "ok": false,
+      "z": 486.2,
+      "reasons": [
+        "battery per mu z +25.5",
+        "altitude variance z +486.2"
+      ],
+      "areaMu": 7.13,
+      "seconds": 337.8
+    },
+    {
+      "logId": "71b624ed-e816-464a-9727-9d083e94cb4e",
+      "ok": false,
+      "z": 431.5,
+      "reasons": [
+        "battery per mu z +21.4",
+        "altitude variance z +431.5"
+      ],
+      "areaMu": 7.41,
+      "seconds": 356
+    },
+    {
+      "logId": "750649fe-140e-428b-8b55-1092c8bff9df",
+      "ok": false,
+      "z": 411.1,
+      "reasons": [
+        "battery per mu z +53.4",
+        "altitude variance z +411.1"
+      ],
+      "areaMu": 7.71,
+      "seconds": 400
+    },
+    {
+      "logId": "76f76496-b68f-4185-a50b-b6b420d59363",
+      "ok": false,
+      "z": 896.7,
+      "reasons": [
+        "battery per mu z +23",
+        "altitude variance z +896.7"
+      ],
+      "areaMu": 3.11,
+      "seconds": 238
+    },
+    {
+      "logId": "7a333e3b-d800-4c85-b5fd-94dd9630ac9f",
+      "ok": false,
+      "z": 87.7,
+      "reasons": [
+        "battery per mu z +87.7",
+        "altitude variance z +2.7"
+      ],
+      "areaMu": 5.34,
+      "seconds": 284
+    },
+    {
+      "logId": "7ca7f855-9e75-4437-8c06-eb3f9495e6d8",
+      "ok": false,
+      "z": 1799.3,
+      "reasons": [
+        "battery per mu z +48.3",
+        "altitude variance z +1799.3"
+      ],
+      "areaMu": 6.09,
+      "seconds": 385
+    },
+    {
+      "logId": "7e9df7c4-0fcc-419b-8b17-8035a0517fc6",
+      "ok": false,
+      "z": 817.5,
+      "reasons": [
+        "battery per mu z +83.1",
+        "altitude variance z +817.5"
+      ],
+      "areaMu": 3.61,
+      "seconds": 223
+    },
+    {
+      "logId": "7eefa780-8f63-4282-a80f-52cdb7bcdd2a",
+      "ok": false,
+      "z": 389.4,
+      "reasons": [
+        "battery per mu z +41.6",
+        "altitude variance z +389.4"
+      ],
+      "areaMu": 7.7,
+      "seconds": 389.8
+    },
+    {
+      "logId": "7f207665-0766-4c17-80ae-9435cd2ce611",
+      "ok": false,
+      "z": 13622.6,
+      "reasons": [
+        "battery per mu z +15.6",
+        "altitude variance z +13622.6"
+      ],
+      "areaMu": 17.99,
+      "seconds": 497.4
+    },
+    {
+      "logId": "82c29bd2-8ee2-46c9-810b-0b2e643a9351",
+      "ok": false,
+      "z": 397.7,
+      "reasons": [
+        "battery per mu z +29.8",
+        "altitude variance z +397.7"
+      ],
+      "areaMu": 5.3,
+      "seconds": 271
+    },
+    {
+      "logId": "843ee367-a1cf-45dd-9076-8002f4f5a4a0",
+      "ok": false,
+      "z": 413.1,
+      "reasons": [
+        "battery per mu z +72.5",
+        "altitude variance z +413.1"
+      ],
+      "areaMu": 7.67,
+      "seconds": 384
+    },
+    {
+      "logId": "847778b3-6d81-4286-a3e2-d9344773f1e4",
+      "ok": false,
+      "z": 389.3,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z +389.3"
+      ],
+      "areaMu": 22.35,
+      "seconds": 614
+    },
+    {
+      "logId": "86f004aa-2aab-4d7c-a00b-ae9dda9d9968",
+      "ok": false,
+      "z": 377.2,
+      "reasons": [
+        "battery per mu z +19.1",
+        "altitude variance z +377.2"
+      ],
+      "areaMu": 7.71,
+      "seconds": 442
+    },
+    {
+      "logId": "89c657b6-40c5-4736-8c7d-5eaaa534f7a5",
+      "ok": false,
+      "z": 632.7,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z +632.7"
+      ],
+      "areaMu": 9,
+      "seconds": 463
+    },
+    {
+      "logId": "901f1bb5-0487-4370-924f-ea767a2e5cff",
+      "ok": false,
+      "z": 252.9,
+      "reasons": [
+        "battery per mu z +24.4",
+        "altitude variance z +252.9"
+      ],
+      "areaMu": 8.17,
+      "seconds": 421
+    },
+    {
+      "logId": "9519af52-f5a1-4491-ba4e-ead05119072f",
+      "ok": false,
+      "z": 1577.6,
+      "reasons": [
+        "battery per mu z +85.4",
+        "altitude variance z +1577.6"
+      ],
+      "areaMu": 6.04,
+      "seconds": 335
+    },
+    {
+      "logId": "974cf795-e8d0-4333-af85-2f72ad694322",
+      "ok": false,
+      "z": 1206.9,
+      "reasons": [
+        "battery per mu z +59.5",
+        "altitude variance z +1206.9"
+      ],
+      "areaMu": 5.27,
+      "seconds": 341
+    },
+    {
+      "logId": "98e8fe3f-3d95-47f9-bacb-db7693d15ee9",
+      "ok": false,
+      "z": 961.1,
+      "reasons": [
+        "battery per mu z +80.4",
+        "altitude variance z +961.1"
+      ],
+      "areaMu": 5.03,
+      "seconds": 269
+    },
+    {
+      "logId": "9b4585da-b179-4bcd-87c7-38c5392c38ca",
+      "ok": false,
+      "z": 12.8,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z -5.8"
+      ],
+      "areaMu": 7.02,
+      "seconds": 260.9
+    },
+    {
+      "logId": "9e381a47-454b-42b8-9d40-73937828d90d",
+      "ok": false,
+      "z": 1084.4,
+      "reasons": [
+        "battery per mu z -2.9",
+        "altitude variance z +1084.4"
+      ],
+      "areaMu": 3.87,
+      "seconds": 211
+    },
+    {
+      "logId": "a64c924e-e86c-41c9-b74a-904f68bf37be",
+      "ok": false,
+      "z": 250.3,
+      "reasons": [
+        "battery per mu z +39",
+        "altitude variance z +250.3"
+      ],
+      "areaMu": 6.82,
+      "seconds": 326
+    },
+    {
+      "logId": "ad46fcc5-eb34-45d8-87cb-923e312930a8",
+      "ok": false,
+      "z": 12.8,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z -5.7"
+      ],
+      "areaMu": 7.04,
+      "seconds": 290
+    },
+    {
+      "logId": "b428fd88-b5f8-4ddd-bc38-cbad46dde75e",
+      "ok": false,
+      "z": 228.3,
+      "reasons": [
+        "battery per mu z -11.6",
+        "altitude variance z +228.3"
+      ],
+      "areaMu": 7.62,
+      "seconds": 409
+    },
+    {
+      "logId": "b5c1a5b4-7488-422a-bb76-401e7739c0f9",
+      "ok": false,
+      "z": 250.2,
+      "reasons": [
+        "battery per mu z +48.3",
+        "altitude variance z +250.2"
+      ],
+      "areaMu": 6.7,
+      "seconds": 327
+    },
+    {
+      "logId": "b5f75590-b5b4-44f3-9815-ab156798645a",
+      "ok": false,
+      "z": 658.3,
+      "reasons": [
+        "battery per mu z -12.8",
+        "altitude variance z +658.3"
+      ],
+      "areaMu": 13.56,
+      "seconds": 361.4
+    },
+    {
+      "logId": "b66c1c67-0cc3-4e99-a6c9-d2f36fa93677",
+      "ok": false,
+      "z": 242.6,
+      "reasons": [
+        "battery per mu z -4.9",
+        "altitude variance z +242.6"
+      ],
+      "areaMu": 6.59,
+      "seconds": 318
+    },
+    {
+      "logId": "b7369d94-958e-4942-b5c3-7392095cea91",
+      "ok": false,
+      "z": 564.3,
+      "reasons": [
+        "battery per mu z +117.9",
+        "altitude variance z +564.3"
+      ],
+      "areaMu": 6.46,
+      "seconds": 384
+    },
+    {
+      "logId": "c01decc8-453a-4ac5-a8fd-b04e1787017a",
+      "ok": false,
+      "z": 886.3,
+      "reasons": [
+        "battery per mu z +69.6",
+        "altitude variance z +886.3"
+      ],
+      "areaMu": 5.68,
+      "seconds": 285
+    },
+    {
+      "logId": "c34b6748-4232-4341-9ab6-fe0f13f5a518",
+      "ok": false,
+      "z": 157.7,
+      "reasons": [
+        "battery per mu z +49.7",
+        "altitude variance z +157.7"
+      ],
+      "areaMu": 8.34,
+      "seconds": 523
+    },
+    {
+      "logId": "c38a569e-46f9-484a-84e4-0f8b995a2e12",
+      "ok": false,
+      "z": 287.1,
+      "reasons": [
+        "battery per mu z +42.1",
+        "altitude variance z +287.1"
+      ],
+      "areaMu": 7.54,
+      "seconds": 367.9
+    },
+    {
+      "logId": "c5487712-72e5-4359-8f8d-217342895c71",
+      "ok": false,
+      "z": 488.3,
+      "reasons": [
+        "battery per mu z +97",
+        "altitude variance z +488.3"
+      ],
+      "areaMu": 4.91,
+      "seconds": 230
+    },
+    {
+      "logId": "c7b36b72-db32-435c-b4c4-aac64bbce010",
+      "ok": false,
+      "z": 801.8,
+      "reasons": [
+        "battery per mu z +155.5",
+        "altitude variance z +801.8"
+      ],
+      "areaMu": 4.18,
+      "seconds": 230
+    },
+    {
+      "logId": "cef12c8b-c646-4a39-b93c-b1ee309dff88",
+      "ok": false,
+      "z": 1035.8,
+      "reasons": [
+        "battery per mu z +7.2",
+        "altitude variance z +1035.8"
+      ],
+      "areaMu": 5.39,
+      "seconds": 258
+    },
+    {
+      "logId": "d37bd464-4dc6-43de-8d16-b5faa9cfbe94",
+      "ok": false,
+      "z": 1264.3,
+      "reasons": [
+        "battery per mu z +128.1",
+        "altitude variance z +1264.3"
+      ],
+      "areaMu": 4.22,
+      "seconds": 238
+    },
+    {
+      "logId": "dbb8da1c-8f3f-4e56-91a3-ee9ed80b6585",
+      "ok": false,
+      "z": 64.6,
+      "reasons": [
+        "battery per mu z +64.6",
+        "altitude variance z -5.8"
+      ],
+      "areaMu": 3.63,
+      "seconds": 203
+    },
+    {
+      "logId": "dbd2cdb7-90c4-48a3-84b9-41701fd6750c",
+      "ok": false,
+      "z": 47.6,
+      "reasons": [
+        "battery per mu z +32",
+        "altitude variance z +47.6"
+      ],
+      "areaMu": 5.54,
+      "seconds": 307
+    },
+    {
+      "logId": "dd4877e2-abf8-4f54-976b-2f171aa84edf",
+      "ok": false,
+      "z": 434.1,
+      "reasons": [
+        "battery per mu z +38",
+        "altitude variance z +434.1"
+      ],
+      "areaMu": 8.45,
+      "seconds": 398.5
+    },
+    {
+      "logId": "df42e79c-3872-438f-a6a4-f895c8d37d32",
+      "ok": false,
+      "z": 530.9,
+      "reasons": [
+        "battery per mu z +6.1",
+        "altitude variance z +530.9"
+      ],
+      "areaMu": 6.44,
+      "seconds": 303
+    },
+    {
+      "logId": "eb3ff7ed-5eeb-4fbb-8744-8f19d4f01a67",
+      "ok": false,
+      "z": 1032.2,
+      "reasons": [
+        "battery per mu z +60.2",
+        "altitude variance z +1032.2"
+      ],
+      "areaMu": 4.43,
+      "seconds": 243
+    },
+    {
+      "logId": "f385de6f-33be-490d-968a-1fcfa8bf9477",
+      "ok": false,
+      "z": 890.3,
+      "reasons": [
+        "battery per mu z +151.7",
+        "altitude variance z +890.3"
+      ],
+      "areaMu": 5.13,
+      "seconds": 290
+    },
+    {
+      "logId": "f49d66ea-ecf2-4dab-b596-56e05dfb9e5a",
+      "ok": false,
+      "z": 895.5,
+      "reasons": [
+        "battery per mu z +81.6",
+        "altitude variance z +895.5"
+      ],
+      "areaMu": 6.24,
+      "seconds": 419.8
+    },
+    {
+      "logId": "f4b55911-53cd-414c-887c-210914b983f6",
+      "ok": false,
+      "z": 750.9,
+      "reasons": [
+        "battery per mu z +67",
+        "altitude variance z +750.9"
+      ],
+      "areaMu": 6.08,
+      "seconds": 318
+    },
+    {
+      "logId": "f9191020-86b1-4e2a-bb64-db4b932d4cc2",
+      "ok": false,
+      "z": 930.6,
+      "reasons": [
+        "battery per mu z +31.1",
+        "altitude variance z +930.6"
+      ],
+      "areaMu": 5.15,
+      "seconds": 262
+    },
+    {
+      "logId": "f9cc9386-f430-489a-84fc-ab84c53c98e4",
+      "ok": false,
+      "z": 1289.6,
+      "reasons": [
+        "battery per mu z +140.2",
+        "altitude variance z +1289.6"
+      ],
+      "areaMu": 6.14,
+      "seconds": 348
+    },
+    {
+      "logId": "fae31bb5-cb5f-422b-9f49-9cffa229c909",
+      "ok": false,
+      "z": 227.5,
+      "reasons": [
+        "battery per mu z +83",
+        "altitude variance z +227.5"
+      ],
+      "areaMu": 8.28,
+      "seconds": 424
+    },
+    {
+      "logId": "fd5ba62c-f576-4b0d-aeb6-95bc55b5a54b",
+      "ok": false,
+      "z": 698.3,
+      "reasons": [
+        "battery per mu z +124.5",
+        "altitude variance z +698.3"
+      ],
+      "areaMu": 5.6,
+      "seconds": 338
+    }
+  ]
+}

@@ -172,7 +172,7 @@ export const en = {
     contractsTitle: "Contracts",
     contracts: ["Holds the two bonds. Slashes only on a signed intent that breaks a rule, checked against its own records.", "Keeps the hash of every intent, per job, before the policy engine decides, so a blocked attempt cannot vanish.", "Locks the farmer's fee, releases it on confirmation, holds part of it for 24 hours if flagged.", "Takes an instalment from each fee and moves the title to the pilot when the balance reaches zero."],
     contractsStatus: "All four are deployed on Base Sepolia, source verified on Sourcify, and tested in CI.",
-    contractsGap: "Known gaps: inside the live engine only IntentLog is called, the other rules run in mirrors of these contracts; IntentLog.commit can be front run (planned fix: commits bound to the job's agent); the title is recorded on chain, not yet as a transferable token.",
+    contractsGap: "Known gaps: on Base Sepolia the live engine calls IntentLog and anchors money events (on FISCO it settles them on the contracts); IntentLog.commit can be front run (planned fix: commits bound to the job's agent); the title is recorded on chain, not yet as a transferable token.",
     fullJobTitle: "One full job on the deployed contracts",
     fullJobNote: "Every step a real call to the deployed contracts on Base Sepolia, value moving where the contract moves it: the vendor bond posted, the fee locked, confirmed and split (instalment to the lender through Lease), a rogue intent committed and slashed by proof from the vendor bond, the last payment moving the title to the pilot.",
     fullJobFisco: "The same job ran on FISCO BCOS, WeBank's consortium chain. Receipts in docs/FISCO_EVIDENCE.md and contracts/deployments/fisco-fulljob.json.",
@@ -276,6 +276,11 @@ export const en = {
     title: "Ask the agent", sub: "About the declined job {title}", open: "Why was this job declined?", you: "Pilot", agent: "Agent",
     template: "Template, no model", model: "Model wording, numbers from code", ratePh: "Rate in yuan per mu, e.g. 3.6", textPh: "Or type a question", send: "Send", propose: "Check rate",
     thinking: "Checking the numbers", failed: "Could not reach the agent: {msg}", decision: { accept: "Accept", decline: "Decline", refused: "Refused" }, reset: "Start over",
+  },
+  keyMode: {
+    random: "Actor keys: random per server instance. Each actor's signing key is generated from a secure random source when the server starts, kept only in memory and never sent to the browser. Only the addresses are public.",
+    deterministic: "Actor keys: deterministic demo keys, derived from public labels. This mode is only for tests and evidence reproduction.",
+    addresses: "Actor addresses",
   },
 };
 

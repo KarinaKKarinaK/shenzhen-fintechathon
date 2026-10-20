@@ -1,33 +1,57 @@
-// Fixed demo keys, one per actor. Derived from a label so they are stable across runs and
-// obviously not real funds. The policy engine and the bond contract verify against ADDR.
+// One signing key per actor. The policy engine and the bond contract verify against ADDR.
 //
-// DEMO ONLY. These private keys are keccak256 of public strings ("zishi-demo-key-operator" and
-// so on), so anyone who reads this file can derive them and sign as any actor. They prove the
-// signing and verification path, not who signed. Never fund these addresses and never use
-// them outside the demo. The derivation stays fixed on purpose: replay determinism and the
-// equal intent hashes on Base Sepolia and FISCO BCOS depend on it. A real deployment would
-// hold each actor's key in its own signer (an HSM or a wallet) and register those addresses.
+// Default mode, "random-per-process": each actor's private key comes from a CSPRNG
+// (viem generatePrivateKey, which uses crypto.getRandomValues) once when this module loads.
+// The keys live only in this process's memory. They are never logged, never returned by any
+// API and never sent to the client, and nobody can derive them from public data. Only the
+// addresses are public (see GET /api/keys). A new server instance gets new keys.
+//
+// Opt in mode, "deterministic-demo": with ZISHI_DETERMINISTIC_KEYS=1 each key is keccak256 of
+// the public label "zishi-demo-key-<actor>". Anyone can derive these, so they are for tests,
+// replay checks and evidence reproduction only (pnpm test, evidence, verify, verify:all and
+// fisco set the flag), where two runs must give the same signatures and the same intent hashes
+// on Base Sepolia and FISCO BCOS. Never use this mode on a public deployment.
 // Intents are signed under the Zishi EIP-712 domain so the same digest can be checked on chain.
 
 import { hashTypedData, keccak256, recoverTypedDataAddress, toHex, type TypedDataDefinition } from "viem";
-import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import type { Actor, Intent } from "./types";
 
 export type KeyedActor = "machine" | "operator" | "requester" | "lender" | "hunter" | "vendor" | "oracle";
+export type KeyMode = "random-per-process" | "deterministic-demo";
 
 const LABELS: KeyedActor[] = ["machine", "operator", "requester", "lender", "hunter", "vendor", "oracle"];
 
-// Flag the UI and docs can cite: the keys below are public and demo only.
-export const DEMO_KEYS_PUBLIC = true as const;
-export const DEMO_KEYS_NOTE = "Demo keys only: each actor's private key is keccak256 of a public label (zishi-demo-key-<actor>), so anyone can derive it. They show the signing path, not identity. Never fund them.";
+// The public label derivation. Only used when the opt in flag is set, and by the selfcheck to
+// prove the default keys are not these.
+export function deriveDemoKey(a: KeyedActor): `0x${string}` {
+  return keccak256(toHex(`zishi-demo-key-${a}`));
+}
 
-export const KEYS: Record<KeyedActor, PrivateKeyAccount> = Object.fromEntries(
-  LABELS.map((a) => [a, privateKeyToAccount(keccak256(toHex(`zishi-demo-key-${a}`)))]),
-) as Record<KeyedActor, PrivateKeyAccount>;
+export function buildKeys(mode: KeyMode): Record<KeyedActor, PrivateKeyAccount> {
+  return Object.fromEntries(
+    LABELS.map((a) => [a, privateKeyToAccount(mode === "deterministic-demo" ? deriveDemoKey(a) : generatePrivateKey())]),
+  ) as Record<KeyedActor, PrivateKeyAccount>;
+}
+
+export const KEY_MODE: KeyMode =
+  typeof process !== "undefined" && process.env?.ZISHI_DETERMINISTIC_KEYS === "1" ? "deterministic-demo" : "random-per-process";
+
+export const KEY_NOTE: Record<KeyMode, string> = {
+  "random-per-process": "Actor keys are random per server instance: generated from a CSPRNG at start, held only in memory, never logged or sent to the client. Only the addresses are public.",
+  "deterministic-demo": "Deterministic demo keys (ZISHI_DETERMINISTIC_KEYS=1): each key is keccak256 of a public label, so anyone can derive it. Tests and evidence reproduction only.",
+};
+
+export const KEYS: Record<KeyedActor, PrivateKeyAccount> = buildKeys(KEY_MODE);
 
 export const ADDR: Record<KeyedActor, string> = Object.fromEntries(
   LABELS.map((a) => [a, KEYS[a].address]),
 ) as Record<KeyedActor, string>;
+
+// The public view: mode and addresses, never a key.
+export function publicKeyInfo() {
+  return { mode: KEY_MODE, note: KEY_NOTE[KEY_MODE], addresses: { ...ADDR } };
+}
 
 export function isKeyed(a: Actor): a is KeyedActor {
   return (LABELS as string[]).includes(a);

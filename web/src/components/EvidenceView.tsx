@@ -1,5 +1,5 @@
 "use client";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { JudgeConsole } from "./JudgeConsole";
 import { LastRun, useAttackSet } from "./EvidenceLab";
 import { AttackGrid, naiveFell, type AttackResult } from "./AttackGrid";
@@ -82,6 +82,7 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
             {E.contracts.map((what, i) => <li key={CONTRACT_NAMES[i]} className="flex flex-wrap gap-x-3 gap-y-1 py-2"><span className="mono w-20 shrink-0 text-red">{CONTRACT_NAMES[i]}</span><span className="min-w-0 flex-1 text-ink-2">{what}</span><a className="link shrink-0 text-xs" href={`https://sepolia.basescan.org/address/${DEPLOYED[CONTRACT_NAMES[i]]}`} target="_blank" rel="noreferrer">{E.onBasescan}</a></li>)}
           </ul>
           <p className="mt-2 text-xs text-muted">{E.contractsGap}</p>
+          <KeyModeNote />
         </Row>
         <Row title={E.fullJobTitle}>
           <p className="mb-3 text-xs text-muted">{E.fullJobNote}</p>
@@ -96,6 +97,20 @@ export function EvidenceView({ results: initial, benign: benign0, chainReal, mod
           <ul className="mt-3 flex flex-col gap-1 text-xs">{API_LINES.map(([m, p], i) => <li key={p} className="flex flex-wrap gap-x-3"><span className="mono text-red">{m} {p}</span><span className="text-muted">{[E.verifyAttacks, E.verifyRun, E.verifyJudge][i]}</span></li>)}</ul>
         </Row>
       </section>
+    </div>
+  );
+}
+
+// The server's actor key mode and the public actor addresses, from /api/keys. Never a key.
+function KeyModeNote() {
+  const { d } = useLang();
+  const [info, setInfo] = useState<{ mode: string; addresses: Record<string, string> } | null>(null);
+  useEffect(() => { fetch("/api/keys").then((r) => r.json()).then(setInfo).catch(() => setInfo(null)); }, []);
+  const K = d.keyMode;
+  return (
+    <div className="mt-2 text-xs text-muted">
+      <p>{info?.mode === "deterministic-demo" ? K.deterministic : K.random}</p>
+      {info ? <p className="mono mt-1 break-all text-[10px]">{K.addresses}: {Object.entries(info.addresses).map(([k, a]) => `${k} ${a}`).join(", ")}</p> : null}
     </div>
   );
 }

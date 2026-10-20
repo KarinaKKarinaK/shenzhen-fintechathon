@@ -405,7 +405,7 @@ def section_02b(w: Writer):
         + (f" In one real run {dual.group(1)} of {dual.group(2)} intents have a successful receipt on both chains with the same hash." if dual else ""),
         f"FATE. Three lenders train one pilot default model with FATE {FATE['fate_version']} HomoLR and secure aggregation, no repayment records shared. Held out AUC goes from {m['local_only_lender_a']['auc']:.3f} for one lender alone to {m['fate_federated']['auc']:.3f} federated; the model sets a new pilot's starting credit score and cuts the instalment share error from {pe['flat_mae']:.0f} to {pe['fate_mae']:.0f} basis points. Data is synthetic and seeded.",
         f"Model provenance. The FATE model's sha256 is committed to the FISCO IntentLog (tx {FISCO['fateModel']['tx'][:12]}..., block {FISCO['fateModel']['block']}) and read back, so a lender can prove which model priced each pilot.",
-        "Scope. The FISCO node runs locally and is reproduced with contracts/script/fisco.sh; the public demo cannot reach it, so it shows FISCO through the evidence file. FISCO's block time is in milliseconds, so JobBoard's windows need a unit fix before live jobs run there.",
+        "Scope. The FISCO node runs locally and is reproduced with contracts/script/fisco.sh; the public demo reaches it through a tunnel and settles every money event on the deployed contracts there, falling back to the labelled simulation when the node is down. FISCO's block time is in milliseconds, so JobBoard's windows need a unit fix before live jobs run there.",
     ])
 
 
@@ -517,7 +517,7 @@ def section_04b(w: Writer):
     w.h2("Known risks")
     w.bullets([
         "IntentLog.commit in v1 is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing. Fixed in IntentLogV2 and BondV2 (commit only by the job's agent, entries keyed by agent and hash, a skipped commit on a running job still slashable), deployed and demonstrated on FISCO BCOS with 16 Foundry tests; Base Sepolia keeps v1 until the redeploy.",
-        "Demo keys are derived from fixed public strings so runs replay identically; anyone can derive them. Production keys live in the secure element, a hardware device and HSMs.",
+        "Actor keys are random per server instance and held in memory; a fixed derivation from public labels exists only for tests and replays. They are still software keys on one server; production keys live in the secure element, a hardware device and HSMs.",
         "Bond, JobBoard and Lease run as TypeScript mirrors in the live engine; a Foundry script runs one full job against the deployed contracts with its own evidence table.",
     ])
 

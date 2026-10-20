@@ -176,7 +176,7 @@ export const zh: Dict = {
     contractsTitle: "合约",
     contracts: ["持有两笔保证金。只有当已签名意图违反规则时才罚没，并对照自身记录核验。", "在策略引擎裁决之前，按任务保存每个意图的哈希，被拦截的尝试无法消失。", "锁定农户的费用，确认后释放；若被标记，冻结其中一部分 24 小时。", "从每笔费用中扣取分期款，余额归零时把所有权转给飞手。"],
     contractsStatus: "四份合约均已部署到 Base Sepolia，源码经 Sourcify 验证，并在 CI 中通过测试。",
-    contractsGap: "已知缺口：在线引擎目前只调用 IntentLog，其余规则在这些合约的镜像中运行；IntentLog.commit 可能被抢先提交（计划修复：只接受该任务智能体的提交）；所有权已记录在链上，但还不是可转让的代币。",
+    contractsGap: "已知缺口：在 Base Sepolia 上在线引擎调用 IntentLog 并锚定资金事件（在 FISCO 上直接通过合约结算）；IntentLog.commit 可能被抢先提交（计划修复：只接受该任务智能体的提交）；所有权已记录在链上，但还不是可转让的代币。",
     fullJobTitle: "在已部署合约上跑完一整单",
     fullJobNote: "每一步都是对 Base Sepolia 上已部署合约的真实调用，资金按合约规则流动：供应商保证金存入、费用锁定、确认并分账（分期款经 Lease 付给出租方）、一个越权意图被提交并凭证明从供应商保证金罚没、最后一笔付款把所有权转给飞手。",
     fullJobFisco: "同一单也在微众银行的联盟链 FISCO BCOS 上跑完。回执见 docs/FISCO_EVIDENCE.md 和 contracts/deployments/fisco-fulljob.json。",
@@ -280,5 +280,10 @@ export const zh: Dict = {
     title: "询问智能体", sub: "关于被拒的任务：{title}", open: "这单为什么被拒？", you: "飞手", agent: "智能体",
     template: "模板回复，未用模型", model: "模型措辞，数字来自代码", ratePh: "每亩价格（元），如 3.6", textPh: "或者输入一个问题", send: "发送", propose: "核算价格",
     thinking: "正在核算", failed: "无法连接智能体：{msg}", decision: { accept: "接单", decline: "拒绝", refused: "不允许" }, reset: "重新开始",
+  },
+  keyMode: {
+    random: "参与方密钥：每个服务器实例随机生成。每个参与方的签名私钥在服务器启动时由安全随机源生成，只保存在内存中，从不发送到浏览器。公开的只有地址。",
+    deterministic: "参与方密钥：确定性演示密钥，由公开标签派生。此模式仅用于测试和证据复现。",
+    addresses: "参与方地址",
   },
 };

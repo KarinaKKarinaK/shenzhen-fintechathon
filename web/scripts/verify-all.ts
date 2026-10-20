@@ -102,6 +102,12 @@ function collect(): Source[] {
 
   out.push(deploySource(path.join(DEP, "fisco-bcos.json"), "FISCO BCOS deployments", "fisco"));
   out.push(fulljobSource(path.join(DEP, "fisco-fulljob.json"), "FISCO BCOS full job", "fisco"));
+  // Engine runs that settled on the deployed contracts (web/evidence/fisco/settled-run-*.json, receipts only).
+  const fdir = path.join(process.cwd(), "evidence", "fisco");
+  for (const f of fs.existsSync(fdir) ? fs.readdirSync(fdir).filter((x) => /^(settled-run|recovery-[a-z-]+)-.*Z\.json$/.test(x)).sort() : []) {
+    const rows = ((readJson(path.join(fdir, f)).rows ?? []) as { tx?: string; block?: number; call?: string; status?: string }[]).filter((r) => r.status !== "failed");
+    out.push({ name: `FISCO BCOS engine settled run ${f}`, chain: "fisco", items: dedupe(rows.filter((r) => isHash(r.tx)).map((r) => ({ hash: r.tx as string, block: r.block, label: r.call ?? "" }))) });
+  }
   out.push(deploySource(path.join(DEP, "fisco-v2.json"), "FISCO BCOS v2 deployments", "fisco"));
   const fiscoRun = latest(path.join(EVI, "fisco"));
   if (fiscoRun) {

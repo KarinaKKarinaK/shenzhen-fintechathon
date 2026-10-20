@@ -8,8 +8,9 @@
 // All amounts are yuan.
 
 import { makeChain, type Chain } from "./chain";
+import { makeSettlement, SETTLED_MARK, type Settlement } from "./settle";
 import { BondContract, IntentLog, JobBoard, LeaseContract, HOLD_SHARE, PARTIES, type SlashResult } from "./contracts";
-import { ADDR, economics, explain, sign, split, understand } from "./agents";
+import { ADDR, checkReading, economics, explain, sign, split, understand, type Checked } from "./agents";
 import { PolicyEngine, DEFAULT_POLICY, DEMO, short, type Policy } from "./policy";
 import { frame, judge } from "./framing";
 import { intentHash } from "./keys";
@@ -41,7 +42,7 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
 export interface RunOpts { fast?: boolean; real?: boolean; fiscoOnly?: boolean; lang?: Lang; signal?: AbortSignal }
 
 // The live state of each scenario, so the button route can act on the same bond and lease.
-export interface RunState { chain: Chain; bond: BondContract; lease: LeaseContract; board: JobBoard; log: IntentLog; policy: PolicyEngine; m: MachineState }
+export interface RunState { chain: Chain; bond: BondContract; lease: LeaseContract; board: JobBoard; log: IntentLog; policy: PolicyEngine; m: MachineState; settle?: Settlement | null }
 export const RUNS = new Map<string, RunState>();
 
 // Transactions settle in the background of the story. Each tick moves every sent tx one step:
@@ -160,29 +161,43 @@ class Session {
   readonly policy: PolicyEngine;
   readonly m: MachineState;
   readonly ME = ADDR.machine;
+  readonly readings = new Map<string, Checked>(); // each offer's reading after code checked it
   lastLive = ""; // the most recent job with parties, the one an injected intent is proved against
   declined = 0; held = 0;
+  // FISCO only: the money moments as calls to the deployed contracts (settle.ts). Null elsewhere.
+  readonly settle: Settlement | null;
 
   constructor(readonly setup: Setup, readonly opts: RunOpts) {
     this.d = opts.fast ? 60 : 1100;
     this.lang = opts.lang ?? "en";
     this.chain = makeChain({ real: opts.real, fiscoOnly: opts.fiscoOnly });
     this.s = new Settler(this.chain);
-    this.board = new JobBoard(this.chain);
-    this.bond = new BondContract({ min: DEMO.bondMin, slashAmount: DEMO.pilotSlash, startFloor: DEMO.startFloor, vendor: { balance: 0, penalty: DEMO.vendorPenalty, dailyCap: DEMO.vendorDailyCap } }, this.chain, this.log, this.board);
+    this.settle = makeSettlement(this.chain);
+    // With settlement on, the mirrors' money sends become markers and the contract calls take their place.
+    const mc = this.settle ? this.settle.wrap(this.chain) : this.chain;
+    this.board = new JobBoard(mc);
+    this.bond = new BondContract({ min: DEMO.bondMin, slashAmount: DEMO.pilotSlash, startFloor: DEMO.startFloor, vendor: { balance: 0, penalty: DEMO.vendorPenalty, dailyCap: DEMO.vendorDailyCap } }, mc, this.log, this.board);
     this.m = { ...baseMachine(setup.lease), ...setup.machine, reserve: setup.reserve };
-    this.lease = new LeaseContract(setup.lease.total, setup.lease.rate, this.chain);
+    this.lease = new LeaseContract(setup.lease.total, setup.lease.rate, mc);
     this.lease.balance = this.m.leaseBalance;
     this.bond.balance = this.m.bond;
     PolicyEngine.reset(setup.scope);
     this.policy = new PolicyEngine(setup.policy, setup.scope);
-    const state: RunState = { chain: this.chain, bond: this.bond, lease: this.lease, board: this.board, log: this.log, policy: this.policy, m: this.m };
+    const state: RunState = { chain: this.chain, bond: this.bond, lease: this.lease, board: this.board, log: this.log, policy: this.policy, m: this.m, settle: this.settle };
     for (const k of setup.keys) RUNS.set(k, state);
   }
 
   t = (key: TrKey, vars?: TrVars) => tr(this.lang, key, vars);
   emitM = (): EngineEvent => ({ t: "machine", state: { ...this.m, position: { ...this.m.position } }, at: now() });
   tx = (t: ChainTx): EngineEvent => ({ t: "chain", tx: this.s.track(t), at: now() });
+  // A mirror tx, or, when it is a settlement marker, the contract calls queued for that moment.
+  async *txs(t: ChainTx): AsyncGenerator<EngineEvent> {
+    if (t.hash !== SETTLED_MARK) { yield this.tx(t); return; }
+    yield* this.drain();
+  }
+  *drain(): Generator<EngineEvent> {
+    for (const e of this.settle?.drain() ?? []) yield e.t === "chain" ? this.tx(e.tx) : e;
+  }
   wait = (ms: number) => wait(ms, this.opts.signal);
   ecoAt = (fee: number, mu: number) => economics(fee, this.lease.rate, round(mu * DEMO.energyPerMu), this.m.reserve);
   ecoOf = (j: StoryJob) => this.ecoAt(round(j.mu * j.rate), j.mu);
@@ -191,7 +206,8 @@ class Session {
     const { m, bond, t } = this;
     yield { t: "narration", text: t("n.intro", { cost: m.leaseTotal.toLocaleString("en"), leaseMu: m.muTotal.toLocaleString("en"), muDone: m.muDone.toLocaleString("en"), left: m.leaseBalance }), at: now() };
     yield this.emitM();
-    yield this.tx(await bond.postVendorBond(ADDR.vendor, DEMO.vendorBond));
+    await this.settle?.open({ vendorBond: DEMO.vendorBond, penalty: bond.vendor.penalty, dailyCap: bond.vendor.dailyCap, bondMin: bond.min, perTxCap: this.policy.policy.perTxCap, pilotSlash: bond.slashAmount, leaseBalance: this.lease.balance, leaseRate: this.lease.rate });
+    yield* this.txs(await bond.postVendorBond(ADDR.vendor, DEMO.vendorBond));
     m.vendorBond = bond.vendor.balance;
     yield { t: "narration", text: t("n.bonds", { pilot: bond.balance, vendor: bond.vendor.balance, penalty: bond.vendor.penalty, cap: bond.vendor.dailyCap }), at: now() };
     yield this.emitM();
@@ -201,9 +217,25 @@ class Session {
 
   // Task planning: a knapsack over the day. Jobs below the reserve rule are declined outright,
   // the rest compete for the battery budget and the day's minutes, maximising margin.
+  // Each offer is read (model when a key is present, else rules), checked by code against the signed
+  // listing and the rules reader, and the checked fee and area go into the planner.
+  async read(f: StoryJob): Promise<Checked> {
+    const have = this.readings.get(f.id);
+    if (have) return have;
+    const c = checkReading(await understand(f.text), { fee: round(f.mu * f.rate), mu: f.mu, geofence: f.geofence, window: f.window });
+    this.readings.set(f.id, c);
+    return c;
+  }
+  understoodEvent(f: StoryJob, c: Checked): EngineEvent {
+    const u = c.reading;
+    return { t: "understood", jobId: f.id, fields: { task: u.task, window: u.window || f.window, fee: c.fee, geofence: u.geofence || f.geofence, payeeName: u.payeeName }, source: c.readBy, confidence: u.confidence, mu: c.mu, accepted: c.accepted, used: c.used, mismatch: c.mismatch, at: now() };
+  }
+
   async *plan(jobs: StoryJob[]): AsyncGenerator<EngineEvent, PlanResult> {
+    const read = new Map<string, Checked>();
+    for (const j of jobs) { const c = await this.read(j); read.set(j.id, c); yield this.understoodEvent(j, c); }
     const dayPlan = plan({
-      jobs: jobs.map((j) => ({ id: j.id, title: j.title, fee: round(j.mu * j.rate), mu: j.mu, distanceM: j.distanceM, windowMin: j.windowMin })),
+      jobs: jobs.map((j) => ({ id: j.id, title: j.title, fee: read.get(j.id)!.fee, mu: read.get(j.id)!.mu, distanceM: j.distanceM, windowMin: j.windowMin })),
       budgetMu: DEMO.budgetMu, charges: DEMO.chargesPerDay, dayMinutes: DEMO.dayMinutes, eco: this.ecoAt,
       reason: (k, v) => this.t(`plan.${k}` as TrKey, v),
     });
@@ -249,9 +281,10 @@ class Session {
     try { pr = await bond.slashByProof(rogue, "PayeeNotAllowlisted", ADDR.lender); }
     catch (e) { yield { t: "narration", text: t("n.proofRefused", { msg: (e as Error).message }), at: now() }; return; }
     m.vendorBond = bond.vendor.balance; m.slashes += 1;
+    await this.settle?.slash(jobId, rogue.payee ?? payee, 120);
     yield { t: "proof", intentId: rogue.id, intentHash: pr.intentHash, rule: "PayeeNotAllowlisted", signer: pr.signer, signatureOk: pr.signatureOk, slash: pr.amount, bounty: pr.bountyAmount, treasury: pr.treasury, bond: pr.bond, shadow: pr.shadow, submitter: "lender", submitterAddr: ADDR.lender, currency: CURRENCY, at: now() };
-    yield this.tx(pr.slash);
-    if (pr.payout) yield this.tx(pr.payout);
+    yield* this.txs(pr.slash);
+    if (pr.payout) yield* this.txs(pr.payout);
     yield { t: "narration", text: t("n.slashed", { signer: short(pr.signer), jobId, amount: pr.amount, comp: pr.compensation, treasury: pr.treasury, pilot: bond.balance }), at: now() };
     yield this.emitM();
     await this.wait(d);
@@ -277,21 +310,24 @@ class Session {
     }
     // The farmer posts the job and the fee is locked. From here the job has parties and a log.
     yield { t: "job", job: { ...job, status: "locked" }, at: now() };
-    yield this.tx(await board.post(job));
-    const u = await understand(f.text);
-    yield { t: "understood", jobId: job.id, fields: { task: u.task, window: u.window || job.window, fee: u.fee, geofence: u.geofence || job.geofence, payeeName: u.payeeName }, source: u.source, confidence: u.confidence, at: now() };
+    await this.settle?.post(job.id, fee, job.geofence);
+    yield* this.txs(await board.post(job));
+    const read = await this.read(f);
+    yield this.understoodEvent(f, read);
     yield { t: "economics", jobId: job.id, eco, at: now() };
     const txt = await explain("machine", facts(eco), t(eco.clears ? "m.accept" : "m.decline", { fee, margin: eco.margin, inst: eco.instalment, energy: eco.energy, rail: eco.rail, rule: eco.reserveRule }), lang);
     m.status = "negotiating"; yield this.emitM();
     yield { t: "agent.message", from: "machine", to: "requester", text: txt.text, untrusted: false, facts: facts(eco), source: txt.source, grounded: txt.grounded, at: now() };
-    const accept = await sign("machine", "accept_job", { jobId: job.id, amount: fee, geofence: job.geofence });
+    // The accepted reading's fee is what the agent agrees to; the policy engine checks it against the listing band.
+    const accept = await sign("machine", "accept_job", { jobId: job.id, amount: read.fee, geofence: job.geofence });
     yield { t: "intent", intent: accept, at: now() };
     yield* commitAndDeliver(accept, log, board, lang, this.chain, this.tx);
     const ad = await policy.evaluate(accept, { listing: { feeMin: round(fee * 0.9), feeMax: round(fee * 1.1) }, requester: job.requester, eco });
     yield { t: "policy", decision: ad, at: now() };
     if (ad.verdict !== "allow") {
       // Moment 1: declined. The lock is cancelled and the fee goes back to the farmer.
-      yield this.tx(await board.cancel(job.id));
+      await this.settle?.keepLocked(job.id, "declined by the policy engine");
+      yield* this.txs(await board.cancel(job.id));
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
       const vars = { mu: f.mu, rate: f.rate, margin: eco.margin, rule: eco.reserveRule };
       const failed = ad.lines.filter((l) => !l.ok);
@@ -309,8 +345,9 @@ class Session {
     yield* commitAndDeliver(start, log, board, lang, this.chain, this.tx);
     const sd = await policy.evaluate(start, { job: board.jobs.get(job.id), bond: { balance: bond.balance, min: bond.min, floor: bond.startFloor } });
     yield { t: "policy", decision: sd, at: now() };
-    if (sd.verdict !== "allow") { yield this.tx(await board.cancel(job.id)); yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() }; this.declined += 1; m.status = "idle"; yield this.emitM(); return; }
+    if (sd.verdict !== "allow") { await this.settle?.keepLocked(job.id, "start refused"); yield* this.txs(await board.cancel(job.id)); yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() }; this.declined += 1; m.status = "idle"; yield this.emitM(); return; }
     board.jobs.get(job.id)!.status = "running";
+    await this.settle?.start(job.id); yield* this.drain();
     this.lastLive = job.id;
     // Charging is a real payment to the charging network, signed and checked like any other.
     const energy = await sign("machine", "pay", { jobId: job.id, payee: A.charging, amount: eco.energy });
@@ -345,7 +382,8 @@ class Session {
         const fv = { claimed: flight.claimedMu, area: flight.areaMu, ratio: flight.ratio };
         yield { t: "attack", name: tr("en", "a.fakedLog"), nameZh: tr("zh", "a.fakedLog"), blocked: true, where: "plausibility check", detail: tr("en", "a.fakedLog.detail", fv), detailZh: tr("zh", "a.fakedLog.detail", fv), standard: "hallucination prevention", at: now() };
       }
-      yield this.tx(await board.refund(job.id));
+      await this.settle?.keepLocked(job.id, "flight log held", true);
+      yield* this.txs(await board.refund(job.id));
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
       const lenderText = channel.length
         ? (lang === "zh" ? `飞行任务 ${job.id} 已冻结：${channel.map(channelZh).join("；")}。费用 ${fee} 元已冻结，未扣分期款。租赁余额保持 ${lease.balance} 元。` : `Flight ${job.id} held: ${channel.map((r) => r.replace(/, log held$/, "")).join("; ")}. Fee ${fee} yuan held, no instalment taken. Lease balance stays at ${lease.balance} yuan.`)
@@ -367,7 +405,8 @@ class Session {
     const hold = round(fee * HOLD_SHARE);
     const instAmt = lease.instalmentFor(fee);
     const sp = split(fee, instAmt, Math.max(0, bond.min - bond.balance), hold);
-    for (const tx of await board.release(job.id, ME, sp)) { yield this.tx(tx); m.balance = round(m.balance + (tx.kind === "fee_in" ? tx.amount : -tx.amount)); }
+    await this.settle?.confirm(job.id);
+    for (const tx of await board.release(job.id, ME, sp)) { yield* this.txs(tx); m.balance = round(m.balance + (tx.kind === "fee_in" ? tx.amount : -tx.amount)); }
     let title: ChainTx | undefined;
     if (instAmt > 0) {
       // Moment 2: the instalment. Computed by the lease contract, signed, checked, paid.
@@ -378,17 +417,18 @@ class Session {
       const taken = await lease.take(instAmt, ME);
       title = taken.title;
       m.balance = round(m.balance - instAmt); m.leaseBalance = lease.balance;
-      yield this.tx(taken.tx);
+      yield* this.txs(taken.tx);
       yield { t: "agent.message", from: "lender", to: "machine", text: t("m.instalment", { amt: instAmt, jobId: job.id, bal: lease.balance, total: lease.total }), untrusted: false, source: "template", grounded: true, at: now() };
     }
-    if (sp.bond > 0) { yield this.tx(await bond.fill(ME, sp.bond)); m.balance = round(m.balance - sp.bond); m.bond = bond.balance; }
+    if (sp.bond > 0) { yield* this.txs(await bond.fill(ME, sp.bond)); m.balance = round(m.balance - sp.bond); m.bond = bond.balance; }
     m.muDone += f.mu; m.tasksDone += 1;
     yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
     yield { t: "narration", text: t("n.split", { fee, inst: sp.instalment, bond: sp.bond, rail: sp.rail, hold, owner: sp.owner, pilot: bond.balance, min: bond.min }), at: now() };
     if (title) {
       // Moment 5: the lease is paid. The title moves on chain.
       m.owned = true;
-      yield this.tx(title);
+      await this.settle?.title();
+      yield* this.txs(title);
       yield { t: "narration", text: t("n.title", { mu: m.muDone.toLocaleString("en") }), at: now() };
     }
     m.status = "idle"; yield this.emitM();
@@ -398,7 +438,9 @@ class Session {
 
   async *close(summary: string): AsyncGenerator<EngineEvent> {
     const { m, board, ME } = this;
-    for (const { tx, job } of await board.releaseHolds(ME)) { yield this.tx(tx); m.balance = round(m.balance + tx.amount); yield { t: "job", job: { ...job }, at: now() }; }
+    await this.settle?.releaseHolds();
+    yield* this.drain();
+    for (const { tx, job } of await board.releaseHolds(ME)) { yield* this.txs(tx); m.balance = round(m.balance + tx.amount); yield { t: "job", job: { ...job }, at: now() }; }
     yield* this.s.flush(this.d);
     yield this.emitM();
     yield { t: "button", waiting: true, what: "top_up", at: now() };

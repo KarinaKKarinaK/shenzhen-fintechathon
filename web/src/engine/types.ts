@@ -149,7 +149,7 @@ export type EngineEvent =
   | { t: "narration"; text: string; at: number }
   | { t: "agent.message"; from: Actor; to: Actor; text: string; untrusted: boolean; at: number; facts?: Record<string, string | number | boolean>; source?: "model" | "template"; grounded?: boolean }
   | { t: "gate"; from: Actor; action: "pass" | "redact" | "hold" | "refuse"; categories: string[]; reason: string; framed: string; at: number; risk?: number }
-  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number; confidence?: number }
+  | { t: "understood"; jobId: string; fields: Understood; source: "model" | "rules"; at: number; confidence?: number; mu?: number; accepted?: boolean; used?: "model" | "rules" | "listing"; mismatch?: string[] }
   | { t: "plan"; items: PlanItem[]; at: number; budgetMu?: number; usedMu?: number; charges?: number; chargesUsed?: number; totalMargin?: number; usedMinutes?: number; method?: "knapsack" }
   | { t: "solvency"; jobId: string; worst: number; bond: number; min: number; floor: number; covers: boolean; earnIn: boolean; at: number }
   | { t: "economics"; jobId: string; eco: Economics; at: number }

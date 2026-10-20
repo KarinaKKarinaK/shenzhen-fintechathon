@@ -1,0 +1,395 @@
+{
+  "network": "FISCO BCOS (local)",
+  "ranAt": "2026-10-20T13:53:56.737Z",
+  "fault": "start-revert",
+  "script": "ZISHI_FAULT=start-revert pnpm settle",
+  "contracts": {
+    "intentLog": "0x9555c12c2789e44868070d0d877f9baadabe4f54",
+    "bond": "0xe3f2011697301e15e4cf829b0aeb189fab754029",
+    "lease": "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601",
+    "board": "0x20dc56e80b73f6066208a9d8197748f861579d37"
+  },
+  "farmer": "0x31037aeE1C1983cC6404A41B2deB0223928b47fD",
+  "unit": "1 yuan = 1e9 wei",
+  "recovery": [
+    {
+      "at": 1792504408164,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.postVendorBond",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504408425,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.postVendorBond",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xf2552011769f38b2204a7182abd3e7d9ba8b7de7644edca67090a2c81cd286c5"
+    },
+    {
+      "at": 1792504408425,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.register",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504409170,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.register",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xdabced06354c27fe92c1cc68d289a8334429ee223d328bb77b663001e987fac3"
+    },
+    {
+      "at": 1792504409190,
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504409474,
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x128d5215f2c54fcfad00154d9801e8b3b4f03c641e3ba03274765770d5abe3ea"
+    },
+    {
+      "at": 1792504410271,
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504410530,
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xa9c0822ecd09231e074b710d46d8e3459fd5dcb15d92a50dbc0b3f90e94699df"
+    },
+    {
+      "at": 1792504411893,
+      "moment": "job job-202",
+      "call": "JobBoard.cancel",
+      "state": "retry",
+      "detail": "scheduled: job-202 declined by the policy engine; the fee stays Locked and JobBoard.cancel refunds the farmer after the window ends at 2026-10-20T13:53:50.270Z"
+    },
+    {
+      "at": 1792504412579,
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504413263,
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xa2e3d99863204adcd895271823d2522221e93df2b64ee144b0792d08a75e715e"
+    },
+    {
+      "at": 1792504413367,
+      "moment": "job job-203 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504413602,
+      "moment": "job job-203 started",
+      "call": "JobBoard.start",
+      "state": "failed",
+      "detail": "reverted on chain, tx 0xbbfd5437, no retry, compensation next",
+      "tx": "0xbbfd5437dc35c3f0a419d3ed356200c0fc13a97601f46352e6bd4bb2e445b271"
+    },
+    {
+      "at": 1792504413602,
+      "moment": "job job-203",
+      "call": "JobBoard.cancel",
+      "state": "retry",
+      "detail": "scheduled: JobBoard.start failed for job-203; the fee stays Locked and JobBoard.cancel refunds the farmer after the window ends at 2026-10-20T13:53:52.578Z"
+    },
+    {
+      "at": 1792504416928,
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504418391,
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x179821825386789be7d6e25b0a00f86bea58a2393a725833e3cc716ab2a01048"
+    },
+    {
+      "at": 1792504418467,
+      "moment": "job job-204 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504418748,
+      "moment": "job job-204 started",
+      "call": "JobBoard.start",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x7dc8c44a6242a44aba60d2b1efea0e59a9de57a6e0e6dbed8eb6ff200ca7eddf"
+    },
+    {
+      "at": 1792504419816,
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLog.commit",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504420470,
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLog.commit",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x283fb734cea700c5efe7641522ca11e8a2f7d9dd1ebed6b05159197a6d4da414"
+    },
+    {
+      "at": 1792504420471,
+      "moment": "rogue intent on job-203 proven",
+      "call": "Bond.slashByProof",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504421161,
+      "moment": "rogue intent on job-203 proven",
+      "call": "Bond.slashByProof",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x29783f8002ffb5f3e347253a9042c161e784b1758ca87f8d1d9a9d6404eb825a"
+    },
+    {
+      "at": 1792504421508,
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504422187,
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x099710deaad2e79bd8b505906247ef73a4902e6f82d39b8f68cb711cc8b2d691"
+    },
+    {
+      "at": 1792504422297,
+      "moment": "job job-201 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504422552,
+      "moment": "job job-201 started",
+      "call": "JobBoard.start",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xcd0313e0e981e80a808c670a571ff8fbb835412db03c2ab1e9cba30e1002f358"
+    },
+    {
+      "at": 1792504423099,
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504423773,
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x62024e483422ea97f5cb951de4677073cef9895bfa98c346ebfe1034963dcd26"
+    },
+    {
+      "at": 1792504424055,
+      "moment": "title",
+      "call": "Lease.pay",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504424826,
+      "moment": "title",
+      "call": "Lease.pay",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x71b8eac92ad88abe8fe810fb365a33a726d85fbed343dab9829cee5c2f70a305"
+    },
+    {
+      "at": 1792504433313,
+      "moment": "job job-202 refund",
+      "call": "JobBoard.cancel",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504433568,
+      "moment": "job job-202 refund",
+      "call": "JobBoard.cancel",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x57a522e49831d532b7a5096b494a3724fc7b1b6cf79778918f9dd88abfaec2b3"
+    },
+    {
+      "at": 1792504433575,
+      "moment": "job job-202",
+      "call": "JobBoard.cancel",
+      "state": "compensated",
+      "detail": "farmer refunded 60000000000 wei of the 60000000000 wei fee (job-202 declined by the policy engine)",
+      "tx": "0x57a522e49831d532b7a5096b494a3724fc7b1b6cf79778918f9dd88abfaec2b3"
+    },
+    {
+      "at": 1792504435651,
+      "moment": "job job-203 refund",
+      "call": "JobBoard.cancel",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504435987,
+      "moment": "job job-203 refund",
+      "call": "JobBoard.cancel",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xbe3ab0233187898b8230f68e3e4f71e0a1afb6392e63354b200221e56a40721e"
+    },
+    {
+      "at": 1792504435996,
+      "moment": "job job-203",
+      "call": "JobBoard.cancel",
+      "state": "compensated",
+      "detail": "farmer refunded 1500000000000 wei of the 1500000000000 wei fee (JobBoard.start failed for job-203)",
+      "tx": "0xbe3ab0233187898b8230f68e3e4f71e0a1afb6392e63354b200221e56a40721e"
+    }
+  ],
+  "refunds": [
+    {
+      "jobId": "job-202",
+      "fee": "60000000000",
+      "before": "5000000000",
+      "after": "65000000000",
+      "refunded": "60000000000",
+      "ok": true
+    },
+    {
+      "jobId": "job-203",
+      "fee": "1500000000000",
+      "before": "65000000000",
+      "after": "1565000000000",
+      "refunded": "1500000000000",
+      "ok": true
+    }
+  ],
+  "pendingProofs": [],
+  "checks": [
+    {
+      "check": "start reverted on chain",
+      "value": "sent > failed > sent > confirmed > sent > confirmed",
+      "ok": true
+    },
+    {
+      "check": "farmer got the fee back through JobBoard.cancel (wei)",
+      "value": "job-202: 60000000000 of 60000000000, job-203: 1500000000000 of 1500000000000",
+      "ok": true
+    }
+  ],
+  "rows": [
+    {
+      "moment": "job job-203 started",
+      "call": "JobBoard.start job-203",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xbbfd5437dc35c3f0a419d3ed356200c0fc13a97601f46352e6bd4bb2e445b271",
+      "block": 495,
+      "status": "failed",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-204 started",
+      "call": "JobBoard.start job-204",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x7dc8c44a6242a44aba60d2b1efea0e59a9de57a6e0e6dbed8eb6ff200ca7eddf",
+      "block": 501,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 started",
+      "call": "JobBoard.start job-201",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xcd0313e0e981e80a808c670a571ff8fbb835412db03c2ab1e9cba30e1002f358",
+      "block": 508,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0x62024e483422ea97f5cb951de4677073cef9895bfa98c346ebfe1034963dcd26",
+      "block": 510,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-202 refund",
+      "call": "JobBoard.cancel job-202, fee refunded to the farmer",
+      "from": "farmer",
+      "valueWei": "0",
+      "tx": "0x57a522e49831d532b7a5096b494a3724fc7b1b6cf79778918f9dd88abfaec2b3",
+      "block": 513,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-203 refund",
+      "call": "JobBoard.cancel job-203, fee refunded to the farmer",
+      "from": "farmer",
+      "valueWei": "0",
+      "tx": "0xbe3ab0233187898b8230f68e3e4f71e0a1afb6392e63354b200221e56a40721e",
+      "block": 514,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    }
+  ],
+  "narrations": [
+    "Fault injection (ZISHI_FAULT=start-revert): job-202 is posted with a start time after its window end, so JobBoard.start will revert.",
+    "Recovery: JobBoard.cancel scheduled: job-202 declined by the policy engine; the fee stays Locked and JobBoard.cancel refunds the farmer after the window ends at 2026-10-20T13:53:50.270Z",
+    "Fault injection (ZISHI_FAULT=start-revert): job-203 is posted with a start time after its window end, so JobBoard.start will revert.",
+    "Recovery: JobBoard.start reverted on chain, tx 0xbbfd5437, no retry, compensation next",
+    "Recovery: JobBoard.cancel scheduled: JobBoard.start failed for job-203; the fee stays Locked and JobBoard.cancel refunds the farmer after the window ends at 2026-10-20T13:53:52.578Z",
+    "Recovery: JobBoard.confirm for job-203 skipped, the job never started on FISCO; the refund is pending through JobBoard.cancel.",
+    "Recovery: JobBoard.cancel farmer refunded 60000000000 wei of the 60000000000 wei fee (job-202 declined by the policy engine)",
+    "Recovery: JobBoard.cancel farmer refunded 1500000000000 wei of the 1500000000000 wei fee (JobBoard.start failed for job-203)"
+  ]
+}

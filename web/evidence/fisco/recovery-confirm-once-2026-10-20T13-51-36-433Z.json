@@ -1,0 +1,330 @@
+{
+  "network": "FISCO BCOS (local)",
+  "ranAt": "2026-10-20T13:51:36.433Z",
+  "fault": "confirm-once",
+  "script": "ZISHI_FAULT=confirm-once pnpm settle",
+  "contracts": {
+    "intentLog": "0x9555c12c2789e44868070d0d877f9baadabe4f54",
+    "bond": "0xe3f2011697301e15e4cf829b0aeb189fab754029",
+    "lease": "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601",
+    "board": "0x20dc56e80b73f6066208a9d8197748f861579d37"
+  },
+  "farmer": "0x6F1d26F2EF2992F8a1d7a12751E5d23A6fBe42e2",
+  "unit": "1 yuan = 1e9 wei",
+  "recovery": [
+    {
+      "at": 1792504282595,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.postVendorBond",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504283247,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.postVendorBond",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x494a86b60eb8e899186799827a104e5c089eb50678f37355e9b4ca76926e59da"
+    },
+    {
+      "at": 1792504283247,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.register",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504283885,
+      "moment": "vendor bond, agent, lease",
+      "call": "Bond.register",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xc615bc0d6f16abcf140acd2bfdfceeebb37eb03676d758c97ec8c084c01171e0"
+    },
+    {
+      "at": 1792504283890,
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504284132,
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x7f85c4aba853ef66a778ff7958853c6ea8153705fb9d9dba898d679679a7fc1d"
+    },
+    {
+      "at": 1792504284928,
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504285187,
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xd5a93d67b944dd5c0752bcddfea73ae324fdeea789f8451c171a798b66722ff9"
+    },
+    {
+      "at": 1792504286565,
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504286806,
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xbda0f73d42e939ab50cccad8c1184191a5599951579703463cfad2a6bb3b2017"
+    },
+    {
+      "at": 1792504286841,
+      "moment": "job job-203 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504287483,
+      "moment": "job job-203 started",
+      "call": "JobBoard.start",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xfafa13d1db4a1028d0a6c20c5b12b2f703193f24fbe47bac6ceeb71bbdf24963"
+    },
+    {
+      "at": 1792504287930,
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504287931,
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "failed",
+      "detail": "failed (network, nonce or timeout): simulated network error: fetch failed (ZISHI_FAULT=confirm-once)"
+    },
+    {
+      "at": 1792504287931,
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "retry",
+      "detail": "retry 1 of 2 in 500 ms with a fresh nonce"
+    },
+    {
+      "at": 1792504288431,
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "sent",
+      "detail": "sent again, attempt 2 of 3"
+    },
+    {
+      "at": 1792504289089,
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "recovered",
+      "detail": "recovered on attempt 2, tx 0x28125cb6",
+      "tx": "0x28125cb676e4ac4790393950f8662ef86002b9d6e3c8f9f929a638fc164051e6"
+    },
+    {
+      "at": 1792504290081,
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504290318,
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x05609f0c683760663d83f56f5cf2477bf82c1aee1f8cdc6ed41855379b28e481"
+    },
+    {
+      "at": 1792504290381,
+      "moment": "job job-204 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504291020,
+      "moment": "job job-204 started",
+      "call": "JobBoard.start",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xf53dba964698eb61a73b63542a00cf16a0d9210a01d7a659f971a48385c6a5e2"
+    },
+    {
+      "at": 1792504292234,
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLog.commit",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504292460,
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLog.commit",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x1990dabe01a0b7fbc5b46e8b35ea094a6c7c85387d77b8ab767a4eb504ea39cd"
+    },
+    {
+      "at": 1792504292460,
+      "moment": "rogue intent on job-203 proven",
+      "call": "Bond.slashByProof",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504293110,
+      "moment": "rogue intent on job-203 proven",
+      "call": "Bond.slashByProof",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x8aaedc7e0d295cf6f395e90c01af283286159346c678f16fc7e711fc4f5f9381"
+    },
+    {
+      "at": 1792504293442,
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504294089,
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xc1997c6b9f788e4929f69f347a5e72c1be30715069cc8c49948b810e6022f949"
+    },
+    {
+      "at": 1792504294140,
+      "moment": "job job-201 started",
+      "call": "JobBoard.start",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504294796,
+      "moment": "job job-201 started",
+      "call": "JobBoard.start",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0xa48dc13ab15ab89592340672fdac5cf571c85c0e783db0bdcf0fac290ad8f1ec"
+    },
+    {
+      "at": 1792504295121,
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "sent",
+      "detail": "sent"
+    },
+    {
+      "at": 1792504295763,
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm",
+      "state": "confirmed",
+      "detail": "confirmed",
+      "tx": "0x4dfe965b2244900055f21436aeae5dae382784e84c0f4a560aa5cbfe22d0d67d"
+    }
+  ],
+  "refunds": [],
+  "pendingProofs": [],
+  "checks": [
+    {
+      "check": "confirm failed once, retried and recovered",
+      "value": "sent > failed > retry > sent > recovered > sent > confirmed",
+      "ok": true
+    }
+  ],
+  "rows": [
+    {
+      "moment": "job job-203 started",
+      "call": "JobBoard.start job-203",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xfafa13d1db4a1028d0a6c20c5b12b2f703193f24fbe47bac6ceeb71bbdf24963",
+      "block": 399,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "none",
+      "block": 0,
+      "status": "failed",
+      "error": "failed (network, nonce or timeout): simulated network error: fetch failed (ZISHI_FAULT=confirm-once)",
+      "receipt": "none"
+    },
+    {
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0x28125cb676e4ac4790393950f8662ef86002b9d6e3c8f9f929a638fc164051e6",
+      "block": 402,
+      "status": "success",
+      "attempt": 2,
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-204 started",
+      "call": "JobBoard.start job-204",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xf53dba964698eb61a73b63542a00cf16a0d9210a01d7a659f971a48385c6a5e2",
+      "block": 406,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 started",
+      "call": "JobBoard.start job-201",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0xa48dc13ab15ab89592340672fdac5cf571c85c0e783db0bdcf0fac290ad8f1ec",
+      "block": 413,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    },
+    {
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0x4dfe965b2244900055f21436aeae5dae382784e84c0f4a560aa5cbfe22d0d67d",
+      "block": 415,
+      "status": "success",
+      "valueOnChainWei": "0",
+      "to": "0x20DC56e80b73F6066208A9D8197748f861579D37"
+    }
+  ],
+  "narrations": [
+    "Recovery: JobBoard.confirm failed (network, nonce or timeout): simulated network error: fetch failed (ZISHI_FAULT=confirm-once)",
+    "Recovery: JobBoard.confirm retry 1 of 2 in 500 ms with a fresh nonce",
+    "Recovery: JobBoard.confirm recovered on attempt 2, tx 0x28125cb6"
+  ]
+}
