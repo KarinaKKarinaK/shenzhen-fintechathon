@@ -18,6 +18,7 @@
 
 <p align="center">
   <b><a href="https://zishi-fintechathon.vercel.app">Open the live demo</a></b> &nbsp;|&nbsp;
+  <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/releases/download/v1.1.0/International-Zishi-DemoVideo.mp4">Demo video</a> &nbsp;|&nbsp;
   <a href="SUBMISSION.md">Submission index</a> &nbsp;|&nbsp;
   <a href="docs/JUDGES_GUIDE.md">Judges' guide</a> &nbsp;|&nbsp;
   <a href="docs/pdf/Zishi_Technical_Document.pdf">Technical document</a> &nbsp;|&nbsp;
@@ -97,6 +98,7 @@ Known limitations: spraying telemetry and the actors are synthetic; the FISCO no
 
 - **GitHub repository:** https://github.com/KarinaKKarinaK/shenzhen-fintechathon (release [v1.1.0](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/releases/tag/v1.1.0) carries every submission document)
 - **Live demo:** https://zishi-fintechathon.vercel.app
+- **Demo video:** https://github.com/KarinaKKarinaK/shenzhen-fintechathon/releases/download/v1.1.0/International-Zishi-DemoVideo.mp4
 - **Deployment instructions:** the app deploys to Vercel from `web/` (`vercel deploy --prod`), env vars as in section 3. Contracts: `forge script script/Deploy.s.sol --rpc-url <rpc> --private-key <key> --broadcast` (Base Sepolia, addresses in `contracts/deployments/base-sepolia.json`); FISCO BCOS with `bash contracts/script/fisco.sh`, V2 with `bash contracts/script/fisco_v2.sh`.
 
 ## 7. Security Notes

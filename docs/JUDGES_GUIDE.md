@@ -1,6 +1,6 @@
 # Judges' guide, one page
 
-Live app: https://zishi-fintechathon.vercel.app. English and Simplified Chinese (toggle in the top bar), light and dark. Nothing to install, no wallet to connect.
+Live app: https://zishi-fintechathon.vercel.app. English and Simplified Chinese (toggle in the top bar), light and dark. Nothing to install, no wallet to connect. Demo video: https://github.com/KarinaKKarinaK/shenzhen-fintechathon/releases/download/v1.1.0/International-Zishi-DemoVideo.mp4.
 
 ## 1. Ten minutes, in order
 
