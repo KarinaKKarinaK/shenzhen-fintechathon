@@ -9,6 +9,7 @@
 
 import { fuse, type GpsTrack } from "../fusion/kalman";
 import { calibrate, exceedRate, type Conformal } from "../fusion/conformal";
+import { wilson, fmtInterval, type Interval } from "../stats";
 
 export const SEED = 7331;
 export const N = 2000;
@@ -35,6 +36,10 @@ export interface PlausibilityMetrics {
   // the same inflated claims and compressed clocks.
   trackSmoothingGainPct: number; rawFalseAlarmRate: number; smoothedFalseAlarmRate: number; fixedThreshold: number; rawThreshold: number; matchedDetection: number;
   byTamper: Record<Tamper, { n: number; caught: number }>;
+  // Wilson 95 percent intervals with k and n. falseAlarmCI is the one oracle false alarm figure:
+  // the full five feature model at the conformal threshold on the honest held out flights.
+  // smoothedFalseAlarmRate is an ablation (two track features only, fixed z 4), not this figure.
+  honestN: number; detectionCI: Interval; falseAlarmCI: Interval; falseAlarmTestSet: string;
 }
 
 export const FEATURES = ["area ratio", "speed", "battery per mu", "altitude variance", "gps innovation"] as const;
@@ -247,12 +252,15 @@ export const METRICS: PlausibilityMetrics = (() => {
   const rawThreshold = need > 0 ? [...tamperRaw].sort((a, b) => b - a)[need - 1] - 1e-9 : FIXED_THRESHOLD;
   const rawFa = exceedRate(honestRaw, rawThreshold);
   const fa = honestN ? fp / honestN : 0;
+  const detectionCI = wilson(tp, tampered), falseAlarmCI = wilson(fp, honestN);
+  const falseAlarmTestSet = `${honestN} honest flights of the ${test.length} held out (seed ${SEED}), full five feature model plus replay and teleport checks at the conformal threshold z ${THRESHOLD}`;
   return {
     n: test.length, tampered, detectionRate: r3(tampered ? tp / tampered : 0), falseAlarmRate: r3(fa),
     threshold: THRESHOLD, seed: SEED, trainN: TRAIN_N,
-    heldOut: `${test.length} of ${N} synthetic flights held out by seed ${SEED}, ${tampered} tampered; fit on ${FIT_N}, conformal calibration on the honest rows of the next ${TRAIN_N - FIT_N}`,
+    heldOut: `${test.length} of ${N} synthetic flights held out by seed ${SEED}, ${tampered} tampered; fit on ${FIT_N}, conformal calibration on the honest rows of the next ${TRAIN_N - FIT_N}. Detection ${fmtInterval(detectionCI)}; false alarm ${fmtInterval(falseAlarmCI)} on ${falseAlarmTestSet}. The 0.0% smoothed figure is an ablation on the two track features at a fixed z ${FIXED_THRESHOLD}, not the oracle's false alarm rate`,
     conformalThreshold: THRESHOLD, targetFalseAlarm: TARGET_FALSE_ALARM, achievedFalseAlarm: r3(fa), coverage: r3(1 - fa), calibrationN: CONFORMAL.n,
     trackSmoothingGainPct: rawFa > 0 ? Math.round((rawFa - smoothFa) / rawFa * 1000) / 10 : 0, rawFalseAlarmRate: r3(rawFa), smoothedFalseAlarmRate: r3(smoothFa), fixedThreshold: FIXED_THRESHOLD, rawThreshold: r3(rawThreshold), matchedDetection: r3(matched),
     byTamper,
+    honestN, detectionCI, falseAlarmCI, falseAlarmTestSet,
   };
 })();

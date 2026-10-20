@@ -10,7 +10,7 @@
   <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Contracts on Base Sepolia" src="https://img.shields.io/badge/contracts-Base%20Sepolia%2C%20verified-1a1a1a">
   <img alt="WeBank stack" src="https://img.shields.io/badge/WeBank%20stack-FISCO%20BCOS%20%2B%20FATE-c8102e">
-  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-44%20tests-d4a017">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-68%20tests-d4a017">
   <img alt="Attack set" src="https://img.shields.io/badge/attacks-52%20of%2052%20blocked-1a1a1a">
   <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-d4a017">
   <img alt="Licence" src="https://img.shields.io/badge/licence-MIT-1a1a1a">
@@ -70,6 +70,19 @@ China has more than 200,000 agricultural drone pilots. A spraying drone costs ab
 4. **Slash by proof.** A compromised intent pays an address off the allowlist. A party submits the proof, the contract checks it, the vendor bond pays. The pilot bond is untouched.
 5. **Title transferred.** The lease reaches zero and the drone belongs to the person who flew it.
 
+## Ask the agent why
+
+After a job is declined, the pilot can ask the agent why, on the Fleet page. The agent answers from the engine's own numbers, in English or 中文, then asks one clarifying question with concrete choices. The pilot can correct it, and the agent recomputes with the same planner and policy engine:
+
+> **Pilot:** Why was this job declined?
+> **Agent:** The fee is 60 yuan (20 mu at 3 yuan per mu). The lease instalment takes 24 yuan, charging 12, the rail fee 1.2, which leaves 22.8 yuan. The reserve rule needs at least 30 yuan per job, so the planner declined it. The break even is 3.7 yuan per mu. Should I accept it if the farmer raises the rate to 3.7?
+> **Pilot:** What about 3.5?
+> **Agent:** Recomputed at 3.5: margin 28.6 yuan, still below the reserve rule. Decision: decline. The lowest rate that clears is 3.7.
+> **Pilot:** Lower the reserve for this job.
+> **Agent:** I cannot. The reserve rule is the lender's floor in the lease terms; a rule change needs the operator key (L3, the physical button) and the lender. A rate of 3.7 clears it.
+
+It works with no model key (labelled template wording). With a key the model may reword the explanation, but every number and decision comes from code (`web/src/engine/ask.ts`, `POST /api/ask`).
+
 ## By the numbers
 
 Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and `pnpm charts` on fixed seeds; chain figures from Base Sepolia receipts.
@@ -77,18 +90,19 @@ Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and
 | | |
 |---|---|
 | **4** contracts on Base Sepolia | Source verified on Sourcify, exact match |
-| **44** Foundry tests | Three fuzzed over amounts, nonces and payees, 256 runs each |
-| **52 of 52** attacks blocked | 7 of 7 benign messages pass; a naive wallet falls to 51 of 52 |
+| **9 of 9** contract calls in one full job | Fee locked in JobBoard, confirmed, instalment paid to the lender through Lease, vendor bond slashed by proof, title moved to the pilot at zero; real value, every receipt on Base Sepolia, and the same job on FISCO BCOS |
+| **68** Foundry tests | The 15 contract layer attacks ported to Solidity, 9 Lease tests, three fuzzed over amounts, nonces and payees |
+| **52 of 52** attacks blocked | By the full pipeline (gate, policy engine, contracts); 7 of 7 benign messages pass. The classifier alone, never trained on these texts, holds 13 of 52: the rules and the policy do the rest |
 | **21** policy rule lines | Over 7 intent kinds and 4 trust tiers, checked on every signed intent |
 | **30 of 30** intents on FISCO BCOS | Every hash read back from the FISCO IntentLog equals the engine's; 15 match Base Sepolia one for one |
 | **15 of 15** intents on two ledgers at once | One real run: each intent sent to Base Sepolia and FISCO BCOS in the same step, same hash, both receipts successful |
 | **1** model fingerprint on chain | The FATE model's sha256 committed to the FISCO IntentLog and read back, so a lender can prove which model priced a pilot |
 | **0.729 to 0.782** AUC | A lender's credit model alone, then trained with two other lenders in FATE, no raw records shared |
-| **40 of 40** transactions confirmed | One real run, every receipt fetched back from the chain; 15 were IntentLog contract calls |
-| **100%** tamper detection | On five tamper classes, 500 held out flights, at 3.0% false alarm |
-| **13.8% to 0.0%** | False alarms on honest flights at full detection, after Kalman smoothing |
+| **40 of 40** transactions confirmed | One real run of the live engine, every receipt fetched back: 15 IntentLog contract calls and 25 calldata anchors of money events (the engine's mirrors hold the money logic; the full job above moves it on chain) |
+| **72 of 72** tampered flights held | 95% interval 94.9 to 100%, five tamper classes, 500 synthetic held out flights; false alarm 3.0% (13 of 428 honest, interval 1.8 to 5.1%) |
+| **13.8% to 0.0%** | False alarms of the two track features alone at full detection, before and after Kalman smoothing (a component test; the oracle's own rate is 3.0%) |
 | **25,593 to 19,739** yuan | The lender's p95 loss given default, without and with the two bonds |
-| **95.0%** classifier accuracy | 100 held out messages in English and Chinese, recall 95.5% |
+| **93.1%** classifier accuracy | 87 held out messages in English and Chinese, attack texts removed from training: precision 100% (26 of 26), recall 81.3% (26 of 32, interval 64.7 to 91.1%), false alarm 0 of 55 |
 | **293** events per run | Hash chained; the same head on the same seed, a tampered entry caught at its position |
 
 ## Why it is different
@@ -249,6 +263,8 @@ The vendor bond pays for agent rules with a fixed penalty and a daily cap; on a 
 
 Solidity 0.8.26, Foundry, source verified on Sourcify. Bond and JobBoard were redeployed after the collusion fix; addresses and deploy transactions are in [`contracts/deployments/base-sepolia.json`](contracts/deployments/base-sepolia.json). In real mode the engine calls IntentLog for every intent and anchors every money event on the same chain; Bond, JobBoard and Lease rules run in TypeScript mirrors with the same numbers.
 
+One full job also runs against the deployed contracts themselves, value moving at every step: fee locked in JobBoard, confirmed and split, the instalment paid to the lender through Lease, a rogue intent committed and slashed by proof from the vendor bond, the title moved to the pilot at zero. Nine contract calls, all successful, in [`docs/EXECUTION_EVIDENCE.md`](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts), reproducible with `bash contracts/script/fulljob.sh base` (or `fisco`).
+
 ## Built on WeBank's stack: FISCO BCOS and FATE
 
 A licensed lender will not run its book on a public chain, and no lender will hand its repayment records to a rival. So Zishi runs on both of WeBank's open source pillars, and each one does a job in the product.
@@ -299,8 +315,8 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 
 | Component | Borrowed from | Before | After | Before result | After result |
 |---|---|---|---|---|---|
-| Message gate | Text classification | rules only (regex) | rules plus logistic classifier on hashed 1 to 3 grams | 52 of 52 scripted attacks, no score on paraphrases | held out 100 messages: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
-| Telemetry check | Aerospace, Kalman and RTS smoother | raw GPS length | smoothed track, innovation gating, replay hash | false alarm 13.8% at full detection | false alarm 0.0% at full detection |
+| Message gate | Text classification | rules only (regex) | rules plus logistic classifier on hashed 1 to 3 grams | 52 of 52 scripted attacks, no score on paraphrases | held out 87 messages, no attack text in training: accuracy 93.1%, recall 81.3%, false alarm 0 of 55 |
+| Telemetry check | Aerospace, Kalman and RTS smoother | raw GPS length | smoothed track, innovation gating, replay hash | track features only: false alarm 13.8% at full detection | false alarm 0.0% at full detection |
 | Anomaly threshold | Statistics, split conformal | fixed z 4 | calibrated z 2.60 for a 2% target | false alarm 0.0%, detection 100% | false alarm 3.0%, detection 100% with a stated guarantee |
 | Lease strategy | Operations research, value iteration | greedy rule | MDP policy, 46,800 states, 26 weeks | 7,471 yuan mean profit, title 84% | 7,540 yuan, title 84% |
 | Acceptance knobs | The autoresearch loop | baseline | hill climbing ratchet, 5 of 60 steps kept | 246 yuan on the frozen week | 926 yuan |
@@ -309,6 +325,8 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 | Drift detection | Manufacturing process control, CUSUM | none | CUSUM on classifier risk and deny rate | never | alarm 6 observations after the shift, 0 false alarms in 600 |
 | Day planner | Mechanism design | first come | knapsack plus second price tie break | an inflated bid buys priority | a bid inflated to 5 wins at 4.2 and loses 0.7 utility |
 | Run integrity | Financial ledgers | no log | hash chained event log, `GET /api/replay` | not verifiable | two seeded runs, head 0x68c3abcf, equal; tamper caught at position 7 |
+
+**Which of these decide, which only watch.** Deciding: the conformal threshold and the Kalman smoothed track decide whether a flight log is held and the fee stays locked; the planner decides which jobs are flown or declined; the classifier can add a hold, never a pass. Monitoring only: the Buhlmann credit score shows the share it would set (the paid instalment still uses the demo rate), CUSUM drift feeds the metrics page, and the MDP and the ratchet are offline studies. A missing or out of range sensor channel holds the log; it is never filled in.
 
 ```mermaid
 flowchart LR
@@ -375,7 +393,7 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 
 | Layer | Status |
 |---|---|
-| Contracts | Deployed and source verified on Base Sepolia, 44 Foundry tests. The engine calls IntentLog; Bond, JobBoard and Lease rules run in mirrors, their calls are next |
+| Contracts | Deployed and source verified on Base Sepolia, 68 Foundry tests including the 15 contract layer attacks. One full job ran against the deployed contracts with value moving ([evidence](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts)). Inside the live engine only IntentLog is called; Bond, JobBoard and Lease rules run in mirrors there |
 | FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; not reachable from the public demo |
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
@@ -414,7 +432,7 @@ pnpm report       # rewrites the execution evidence, red team and evaluation rep
 pnpm shots        # retakes docs/screenshots against a build on port 3111
 
 cd ../contracts
-forge test        # 44 tests, forge-std vendored in contracts/lib
+forge test        # 68 tests, forge-std vendored in contracts/lib
 forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --private-key $SURETY_PRIVATE_KEY --broadcast
 ```
 
@@ -427,7 +445,7 @@ web/                 Next.js app: engine, API routes, interface, English and Chi
   src/engine/        policy, gate, agents, planner, oracle, mirrors, chain, ml, fusion, economics, credit, drift, replay
   src/app/api/       run, run-custom, live, samples, judge, attacks, button, metrics, ratchet, replay
   scripts/           evidence, verify, bench, charts, report, shots, pdf, techdoc
-contracts/           IntentLog, Bond, JobBoard, Lease, 44 tests, deploy scripts, deployments/
+contracts/           IntentLog, Bond, JobBoard, Lease, 68 tests, deploy scripts, deployments/
 docs/                technical document, judges' guide, reports, charts, screenshots, brand, pdf
 TECHNICAL.md         technical documentation
 SELF_ASSESSMENT.md   security self assessment

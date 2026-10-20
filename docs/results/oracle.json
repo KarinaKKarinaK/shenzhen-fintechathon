@@ -6,7 +6,7 @@
   "threshold": 2.597,
   "seed": 7331,
   "trainN": 1500,
-  "heldOut": "500 of 2000 synthetic flights held out by seed 7331, 72 tampered; fit on 750, conformal calibration on the honest rows of the next 750",
+  "heldOut": "500 of 2000 synthetic flights held out by seed 7331, 72 tampered; fit on 750, conformal calibration on the honest rows of the next 750. Detection 100.0% (95% CI 94.9 to 100.0, 72 of 72); false alarm 3.0% (95% CI 1.8 to 5.1, 13 of 428) on 428 honest flights of the 500 held out (seed 7331), full five feature model plus replay and teleport checks at the conformal threshold z 2.597. The 0.0% smoothed figure is an ablation on the two track features at a fixed z 4, not the oracle's false alarm rate",
   "conformalThreshold": 2.597,
   "targetFalseAlarm": 0.02,
   "achievedFalseAlarm": 0.03,
@@ -39,5 +39,21 @@
       "n": 10,
       "caught": 10
     }
-  }
+  },
+  "honestN": 428,
+  "detectionCI": {
+    "rate": 1,
+    "lo": 0.949,
+    "hi": 1,
+    "k": 72,
+    "n": 72
+  },
+  "falseAlarmCI": {
+    "rate": 0.03,
+    "lo": 0.018,
+    "hi": 0.051,
+    "k": 13,
+    "n": 428
+  },
+  "falseAlarmTestSet": "428 honest flights of the 500 held out (seed 7331), full five feature model plus replay and teleport checks at the conformal threshold z 2.597"
 }

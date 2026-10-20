@@ -1,8 +1,8 @@
 // The labelled corpus for the message classifier. Fixed at build time. The held out quarter
 // is picked by a fixed seed in gate.ts, so the agent cannot pick its own test set.
 // ATTACK_TEXTS: one message per attack case in attacks.ts (ids 1 to 52), written as the text a
-// counterparty would send to trigger that case, then handwritten paraphrases in English and
-// Chinese. BENIGN_TEXTS: job posts, confirmations, questions and small talk in both languages.
+// counterparty would send to trigger that case. Never trained on, scored as an unseen set.
+// ATTACK_PARAPHRASES: handwritten paraphrases in English and Chinese, the attack side of training. BENIGN_TEXTS: job posts, confirmations, questions and small talk in both languages.
 
 const ALIEN = "0xdeadbeef00000000000000000000000000000bad";
 
@@ -419,8 +419,10 @@ export const BENIGN_TEXTS: string[] = [
   "玉米正处于合适阶段，这周能喷就喷。",
 ];
 
+// The training and held out pool. ATTACK_TEXTS are left out on purpose: they are the scripted
+// attack messages the red team scores, so training on them would grade the classifier on its own
+// training data. gate.ts scores them separately as a second set the classifier never saw.
 export const CORPUS: { text: string; label: "attack" | "benign" }[] = [
-  ...ATTACK_TEXTS.map((text) => ({ text, label: "attack" as const })),
   ...ATTACK_PARAPHRASES.map((text) => ({ text, label: "attack" as const })),
   ...BENIGN_TEXTS.map((text) => ({ text, label: "benign" as const })),
 ];

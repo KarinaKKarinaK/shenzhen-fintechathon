@@ -1,0 +1,359 @@
+{
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "ranAt": "2026-10-20T12:37:47Z",
+  "script": "contracts/script/fulljob.sh base",
+  "contracts": {
+    "IntentLog": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
+    "Bond": "0x6161f6e08c8695849e7A8aF74c39a5A1056d5435",
+    "Lease": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
+    "JobBoard": "0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952"
+  },
+  "roles": {
+    "deployer (treasury and rail)": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59",
+    "vendor": "0xf593A81e3AE3d5975d071090F8794BF64f54e6d8",
+    "agent": "0x539A8DdF923E21Ae56C88857C8c7c939b02d940F",
+    "pilot": "0x617cB14a84A40021E26A907b9edF9e9791d2060d",
+    "lender": "0x55AFCCF107e322e0A040Ead76b475b7788D4C4Ab",
+    "farmer (requester)": "0xCD86Cf9D4bCb4CF69e26cb9c54e59118f5DB990F",
+    "verifier": "0x668D827e1f3C40E7527b8b7698d0f8834CeAC0D7"
+  },
+  "steps": [
+    {
+      "step": "fund vendor",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1451200000000",
+      "tx": "0xcd98eccdebab2ce16c4ffb23d69b16dfa675f2b983d3665d7aeed7aa8744d5ad",
+      "block": 48365730,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "fund agent",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "5175200000000",
+      "tx": "0x233ab1bc5bff1250da9cc32c581c5fff129bafdd31ca16cc466b39337dda83ca",
+      "block": 48365731,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "fund lender",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "3951200000000",
+      "tx": "0xb6d687c555d655922b7865c69cc1f527b5f9635322c1b248e150ef294109b596",
+      "block": 48365732,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "fund farmer",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "2251200000000",
+      "tx": "0x8d867ba0d9bd4ce5e052ab8334d0390608a57e341edb5a6d5432bb2869bb1a31",
+      "block": 48365734,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "fund verifier",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "2871200000000",
+      "tx": "0xb0daed5b87fb65dea1e0ea25cf9845f5a42e4af859f4a9f38b5c1e2cb9a8afb6",
+      "block": 48365735,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "fund pilot",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1491200000000",
+      "tx": "0x509784fbaa9173633a95b8ce382618f252b60487ff35bf76f192c138d1663ce8",
+      "block": 48365736,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "1",
+      "contract": "Bond",
+      "function": "postVendorBond",
+      "from": "vendor",
+      "valueWei": "20000000000",
+      "tx": "0xf080cce89f89919ceb7a6de20f934385d2aa597c1239509f57cc01482e80d8f6",
+      "block": 48365739,
+      "gasUsed": 90669,
+      "status": "success",
+      "feeWei": 652816800090
+    },
+    {
+      "step": "2",
+      "contract": "Bond",
+      "function": "register",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x5218a1052d2868ac3e50c9f605b5f25236a1f12402737424885713b886c8c53d",
+      "block": 48365741,
+      "gasUsed": 162649,
+      "status": "success",
+      "feeWei": 1171072800171
+    },
+    {
+      "step": "3",
+      "contract": "Lease",
+      "function": "open",
+      "from": "lender",
+      "valueWei": "0",
+      "tx": "0x8a0006519d34b1fb9817032e4e0003e58dd5bef4eb535e2a434ec48057bff04d",
+      "block": 48365744,
+      "gasUsed": 192409,
+      "status": "success",
+      "feeWei": 1385344800115
+    },
+    {
+      "step": "4",
+      "contract": "JobBoard",
+      "function": "post",
+      "from": "farmer",
+      "valueWei": "100000000000",
+      "tx": "0xc1d373ee3c7ad50c3b249ddcc40fb1551b847c00e8f4fbb4d51ddfec6778d899",
+      "block": 48365747,
+      "gasUsed": 187428,
+      "status": "success",
+      "feeWei": 1349481600131
+    },
+    {
+      "step": "5",
+      "contract": "JobBoard",
+      "function": "start",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x3f708c8be9b57f870ef2da16fe6df7087a7fd676bd785879170eb0737dbd954f",
+      "block": 48365749,
+      "gasUsed": 46171,
+      "status": "success",
+      "feeWei": 332431200090
+    },
+    {
+      "step": "6",
+      "contract": "JobBoard",
+      "function": "confirm",
+      "from": "verifier",
+      "valueWei": "0",
+      "tx": "0x1b3f71b8fbe7dc4a727eb1b7252df25f1634f9f5222dfbd158329ffdb29e7db6",
+      "block": 48365753,
+      "gasUsed": 176680,
+      "status": "success",
+      "feeWei": 1272096000090
+    },
+    {
+      "step": "7",
+      "contract": "IntentLog",
+      "function": "commit",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x05af20e0f2f4711eae00045a094406ca7b7786ece331077ffcf46e8918bac73c",
+      "block": 48365760,
+      "gasUsed": 68916,
+      "status": "success",
+      "feeWei": 496195200090
+    },
+    {
+      "step": "8",
+      "contract": "Bond",
+      "function": "slashByProof",
+      "from": "lender",
+      "valueWei": "0",
+      "tx": "0x68606a4cb994906a253f0acc63aac5c78442ecdc49c6a393ceb672784d61d748",
+      "block": 48365763,
+      "gasUsed": 187021,
+      "status": "success",
+      "feeWei": 1346551200185
+    },
+    {
+      "step": "9",
+      "contract": "Lease",
+      "function": "pay",
+      "from": "pilot",
+      "valueWei": "60000000000",
+      "tx": "0x5440d994b3c254e6e8925e7253da7537d90e63c6c4fe3612f6557a4b2e3c3bd3",
+      "block": 48365767,
+      "gasUsed": 66955,
+      "status": "success",
+      "feeWei": 482076000090
+    },
+    {
+      "step": "sweep VENDOR",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "vendor",
+      "valueWei": "527183199910",
+      "tx": "0xc9b4037999b2acca703bd31f3d361eb538ff0dd627a92b0f2f251f84adebeba0",
+      "block": 48365773,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "sweep AGENT",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "agent",
+      "valueWei": "2958970799649",
+      "tx": "0x3f3df3858b1209daf63533a7cfb4c45b45bc42dd77dc8b4b61056e4ab0c060cd",
+      "block": 48365775,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "sweep PILOT",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "pilot",
+      "valueWei": "697923999910",
+      "tx": "0xeb077673c129b14b8a90453722d044356a306007bc60d3733146cbca68149c96",
+      "block": 48365777,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "sweep LENDER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "lender",
+      "valueWei": "1068103999700",
+      "tx": "0x981d8906861dc39a9f23c4aa0112049308675bbe27fe7149ebb2bb9d3948087f",
+      "block": 48365778,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "sweep FARMER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "farmer",
+      "valueWei": "550518399869",
+      "tx": "0x3e6d95936df02aaaf43dac01f5e46ba560aa237da3a032f61478b008ace58963",
+      "block": 48365780,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    },
+    {
+      "step": "sweep VERIFIER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "verifier",
+      "valueWei": "1347903999910",
+      "tx": "0xef8d5811031749493b92d3aabc65e7d2e81d29483db0a443ccc464cdecee47c5",
+      "block": 48365782,
+      "gasUsed": 21000,
+      "status": "success",
+      "feeWei": 151200000090
+    }
+  ],
+  "checks": [
+    {
+      "check": "vendor bond after post (wei)",
+      "value": "20000000000 (before 0)"
+    },
+    {
+      "check": "operatorOf(agent) is pilot",
+      "value": "0x617cB14a84A40021E26A907b9edF9e9791d2060d"
+    },
+    {
+      "check": "lease id",
+      "value": "1"
+    },
+    {
+      "check": "title owner after open (lender)",
+      "value": "0x55AFCCF107e322e0A040Ead76b475b7788D4C4Ab"
+    },
+    {
+      "check": "job id",
+      "value": "1"
+    },
+    {
+      "check": "JobBoard balance delta after post (fee locked)",
+      "value": "100000000000"
+    },
+    {
+      "check": "lender received instalment via Lease.pay (wei)",
+      "value": "40000000000 (balance at the tx block minus the block before; the first read through the public RPC was stale and showed 0)"
+    },
+    {
+      "check": "agent received rest (wei)",
+      "value": "34670000000"
+    },
+    {
+      "check": "pilot bond filled (wei)",
+      "value": "10000000000"
+    },
+    {
+      "check": "hold kept in JobBoard (wei)",
+      "value": "13330000000"
+    },
+    {
+      "check": "lease balance after confirm (wei)",
+      "value": "60000000000"
+    },
+    {
+      "check": "rogue intent hash",
+      "value": "0x45229be9c73782e18be195bc2cbea7557063093d338b40dc80ba47b5c45d4017"
+    },
+    {
+      "check": "rogue intent signer recovered off chain",
+      "value": "agent"
+    },
+    {
+      "check": "vendor bond decreased by (wei)",
+      "value": "10000000000"
+    },
+    {
+      "check": "treasury (deployer) received penalty (wei)",
+      "value": "10000000000"
+    },
+    {
+      "check": "lender received remaining lease (wei)",
+      "value": "60000000000 (balance at the tx block minus the block before; the first read through the public RPC was stale and showed 0)"
+    },
+    {
+      "check": "lease balance after final payment (wei)",
+      "value": "0"
+    },
+    {
+      "check": "title owner after zero balance",
+      "value": "0x617cB14a84A40021E26A907b9edF9e9791d2060d"
+    },
+    {
+      "check": "hold",
+      "value": "releaseHold callable after holdUntil=1792586194 (one day after confirm), not called in this run"
+    },
+    {
+      "check": "rail (deployer) received rail fee (wei)",
+      "value": "2000000000 (balance at the confirm block minus the block before)"
+    }
+  ],
+  "totalGasCostWei": 10302465602132,
+  "note": "One full job on the deployed contracts, every row a real transaction with its receipt fetched back. Fresh keys per role, funded from the deployer. Value moves where the contract moves it: the vendor bond into Bond, the fee locked in JobBoard, on confirm the rail fee to the rail, the instalment to the lender through Lease.pay, the bond gap into the pilot bond and the rest to the agent, the hold kept in JobBoard. The rogue intent is a signed payment to 0xdEaD (not on the allowlist), committed to IntentLog by the agent and proven by the lender with Bond.slashByProof (rule PayeeNotAllowlisted): the vendor bond pays the penalty to the treasury. The pilot then pays the remaining lease and the title moves to the pilot. The hold is one day on Base, so releaseHold was not called in this run. Leftover gas money in the role wallets was swept back to the deployer."
+}

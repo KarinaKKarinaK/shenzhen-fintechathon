@@ -4,3 +4,4 @@ lib/
 broadcast/
 out-fisco/
 .fisco/
+.fulljob/

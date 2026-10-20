@@ -337,7 +337,7 @@ def section_02a(w: Writer, arch_png: Path, flow_png: Path):
         ["Intent log and mirrors", "engine/contracts.ts", "TypeScript mirrors of IntentLog, Bond, JobBoard and Lease with the same rules and numbers as the Solidity, so the demo runs with no chain."],
         ["Oracle", "engine/oracle.ts, engine/ml/plausibility.ts, engine/fusion/", "Checks a flight log by geometry and physics, smooths the GPS track with a Kalman filter, scores a robust z over five features against a conformal threshold, detects replayed tracks and teleport jumps."],
         ["Economics", "engine/economics/", "Lease MDP (value iteration), bond stress test (Monte Carlo), second price pricing."],
-        ["Credit and drift", "engine/credit/score.ts, engine/drift/", "Buhlmann credibility score that moves the instalment share inside the band; CUSUM monitors on classifier risk and deny rate."],
+        ["Credit and drift", "engine/credit/score.ts, engine/drift/", "Buhlmann credibility score that shows the instalment share it would set inside the band (shown, not yet applied: the paid instalment uses the demo rate); CUSUM monitors on classifier risk and deny rate (monitoring, not decisions)."],
         ["Replay log", "engine/replay/log.ts", "Every event of a run appended to a hash chain; GET /api/replay lists and verifies."],
         ["Chain adapter", "engine/chain.ts", "SimChain: deterministic hashes labelled simulated. RealChain: IntentLog.commit for every intent and a calldata anchor for every money event on Base Sepolia, one transaction at a time with an explicit nonce."],
         ["Contracts", "contracts/src/", "IntentLog, Bond, JobBoard, Lease and the IBonded interface. Solidity 0.8.26, 43 Foundry tests, deployed on Base Sepolia."],
@@ -507,8 +507,18 @@ def section_04b(w: Writer):
     w.h2("Compliance")
     w.bullets([
         "The agent services the lease; it does not lend. The lender of record is a licensed lessor in a regulatory sandbox, and the wallet is a sub account of the pilot's business.",
-        "The demo runs on a public test network with test ETH for gas and yuan as demo units. Production settles in bank money on a consortium chain (FISCO BCOS) or in fiat; there is no public token.",
+        "The demo runs on a public test network with test ETH for gas and yuan as demo units. Production settles in bank money on a consortium chain (FISCO BCOS) or in fiat; there is no public token, in line with the PBoC's 2021 notice on virtual currency trading.",
+        "Financial leasing (融资租赁): the lessor is a company licensed under the NFRA's Measures for the Administration of Financial Leasing Companies (2024) or the interim measures for financing lease companies (2020). Zishi services the contract inside a signed rate band; it does not lend.",
+        "Payments: fees settle through a licensed bank or payment institution under the Regulations on Non-bank Payment Institutions (2024), or e-CNY. The chain records events; it does not custody customer funds.",
+        "Drone operations: under the CAAC's Interim Regulations on the Flight Management of Unmanned Aircraft (2024) and CCAR-92, the pilot holds the operator licence and operation certificate, the drone is real name registered and third party liability insurance is in force. The job terms carry these as preconditions.",
+        "Hong Kong: the same split under the HKMA (payments), the SFC (virtual asset activities) and the PDPO (personal data).",
         "Physical damage and third party liability are the pilot's drone insurance plus a human dispute path; the bonds cover rule breaks only.",
+    ])
+    w.h2("Known risks")
+    w.bullets([
+        "IntentLog.commit is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing; slashByProof then fails as not in log. Planned fix: commits restricted to the job's registered agent or bound to the job escrow, with Foundry tests, then redeploy.",
+        "Demo keys are derived from fixed public strings so runs replay identically; anyone can derive them. Production keys live in the secure element, a hardware device and HSMs.",
+        "Bond, JobBoard and Lease run as TypeScript mirrors in the live engine; a Foundry script runs one full job against the deployed contracts with its own evidence table.",
     ])
 
 

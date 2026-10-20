@@ -135,6 +135,23 @@ async function main() {
     break;
   }
 
+  // One full job against the deployed contracts on FISCO (contracts/script/fulljob.sh fisco).
+  const fjPath = join(ROOT, "contracts", "deployments", "fisco-fulljob.json");
+  const fjMd: string[] = [];
+  if (existsSync(fjPath)) {
+    const fj = JSON.parse(readFileSync(fjPath, "utf8")) as { steps: { step: string; contract: string; function: string; from: string; valueWei: string; tx: string }[] };
+    const calls = fj.steps.filter((x) => /^\d+$/.test(x.step));
+    let ok = 0;
+    const rowsFj: string[] = [];
+    for (const x of calls) {
+      const r = await fisco.getTransactionReceipt({ hash: x.tx as `0x${string}` });
+      if (r.status === "success") ok += 1; else bad += 1;
+      rowsFj.push(`| ${x.step} | ${x.contract}.${x.function} | ${x.from} | ${x.valueWei === "0" ? "0" : `${x.valueWei} wei`} | \`${x.tx}\` | ${Number(r.blockNumber)} | ${r.status} |`);
+    }
+    fjMd.push("## 6. One full job against the deployed contracts", "", `Run by \`contracts/script/fulljob.sh fisco\`: fresh keys for six roles, every step a call to the deployed Bond, Lease, JobBoard or IntentLog with native value moving: vendor bond posted, fee locked, confirmed and split (instalment to the lender through Lease), a rogue intent committed and slashed by proof from the vendor bond, the last payment moving the title to the pilot, the hold released. ${ok} of ${calls.length} receipts fetched again now with status success.`, "", "| # | Call | From | Value | Transaction | Block | Status |", "|---|---|---|---|---|---|---|", ...rowsFj, "");
+    console.log(`full job on FISCO: ${ok} of ${calls.length} contract calls succeeded`);
+  }
+
   const md = [
     "# FISCO BCOS evidence",
     "",
@@ -172,7 +189,8 @@ async function main() {
     "",
     ...fate,
     ...dual.map((l) => l.replace("## 4. One real run", `## ${fate.length ? 5 : 4}. One real run`)),
-    `## ${4 + (dual.length ? 1 : 0) + (fate.length ? 1 : 0)}. Reproduce`,
+    ...fjMd,
+    `## ${4 + (dual.length ? 1 : 0) + (fate.length ? 1 : 0) + (fjMd.length ? 1 : 0)}. Reproduce`,
     "",
     "```",
     "bash contracts/script/fisco.sh     # node in Docker, deploy, smoke, FATE model hash, contracts/deployments/fisco-bcos.json",

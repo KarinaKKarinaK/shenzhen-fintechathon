@@ -3,7 +3,9 @@
 // rules must have none, and the model layer must have no reach into keys or chain.
 import fs from "node:fs";
 import path from "node:path";
-import { runAll, runBenign, ATTACKS } from "./attacks";
+import { runAll, runBenign, ATTACKS, scriptedGate } from "./attacks";
+import { POST as buttonPOST } from "../app/api/button/route";
+import { DEMO_KEYS_PUBLIC } from "./keys";
 import { PolicyEngine, DEFAULT_POLICY, DEMO } from "./policy";
 import { SLASH_RULES } from "./contracts";
 import { sign, economics } from "./agents";
@@ -115,6 +117,15 @@ async function main() {
   if (!honest.ok) { console.error("honest flight log flagged", honest); process.exit(1); }
   const faked = plausible("job-204", 2400, 400, 2, 50);
   if (faked.ok) { console.error("faked flight log not flagged", faked); process.exit(1); }
+  // Fail safe sensors: a log without battery or altitude, or with a degraded reading, is held
+  // with a reason naming the channel, never scored on a value predicted from the track.
+  const okLog = plausible("job-201", 13601, 2267, 3, 60, 33.5, 0.26);
+  if (!okLog.ok) { console.error("complete honest log flagged", okLog); process.exit(1); }
+  for (const [label, b, a, want] of [["no battery", undefined, 0.26, "battery channel missing"], ["no altitude", 33.5, undefined, "altitude channel missing"], ["battery NaN", NaN, 0.26, "battery channel degraded"], ["battery 140", 140, 0.26, "battery channel degraded"], ["altitude negative", 33.5, -1, "altitude channel degraded"]] as const) {
+    const t = plausible("job-201", 13601, 2267, 3, 60, b, a);
+    if (t.ok || !t.reasons.some((r) => r.startsWith(want))) { console.error(`sensor fault not held: ${label}`, t); process.exit(1); }
+  }
+  console.log("oracle: missing or degraded battery and altitude channels hold the log with a reason");
   const day = plan({ jobs: [{ id: "a", title: "a", fee: 240, mu: 60, distanceM: 300, windowMin: 480 }, { id: "b", title: "b", fee: 60, mu: 20, distanceM: 300, windowMin: 480 }], budgetMu: 55, charges: 2, dayMinutes: 480, eco: (fee, mu) => economics(fee, DEMO.leaseRate, mu * DEMO.energyPerMu, DEMO.reserveRule), reason: (k) => k });
   if (day.method !== "knapsack" || day.usedMu !== 60 || day.items.find((i) => i.jobId === "b")?.why !== "below") { console.error("planner result unexpected", day); process.exit(1); }
   // Two accepted jobs that cannot both fit a 90 minute window: the auction orders them and
@@ -176,6 +187,20 @@ async function main() {
   if (broken.ok || broken.brokenAt !== 7) { console.error("tampered replay not caught at index 7", broken); process.exit(1); }
   console.log(`replay: two fleet runs end on head ${ha.head.slice(0, 10)}... over ${ha.length} events, tamper caught at ${broken.brokenAt}`);
 
+  // The operator button signs as the operator, so it must refuse without the demo token.
+  const savedToken = process.env.DEMO_TOKEN;
+  const press = (h: Record<string, string> = {}) => buttonPOST(new Request("http://x/api/button", { method: "POST", headers: { "Content-Type": "application/json", ...h }, body: JSON.stringify({ what: "set_cap", amount: 10000, scenario: "attack" }) }));
+  delete process.env.DEMO_TOKEN;
+  const noEnv = await press({ "x-zishi-demo": "anything" });
+  process.env.DEMO_TOKEN = "selfcheck-token";
+  const noHeader = await press();
+  const wrong = await press({ "x-zishi-demo": "wrong" });
+  const right = await press({ "x-zishi-demo": "selfcheck-token" });
+  if (savedToken === undefined) delete process.env.DEMO_TOKEN; else process.env.DEMO_TOKEN = savedToken;
+  if (noEnv.status !== 401 || noHeader.status !== 401 || wrong.status !== 401 || right.status === 401) { console.error("button route auth unexpected", noEnv.status, noHeader.status, wrong.status, right.status); process.exit(1); }
+  console.log(`button: 401 with no DEMO_TOKEN set, no header, wrong token; with the token it passes auth (status ${right.status})`);
+  if (!DEMO_KEYS_PUBLIC) { console.error("demo keys flag missing"); process.exit(1); }
+
   // FISCO BCOS target: off unless its RPC, key and IntentLog address are all set.
   const fiscoVars = { FISCO_RPC_URL: "http://127.0.0.1:8545", FISCO_PRIVATE_KEY: "0x" + "11".repeat(32), FISCO_INTENT_LOG: "0x" + "22".repeat(20) };
   const saved = { ...process.env };
@@ -188,7 +213,37 @@ async function main() {
 
   console.log(`ok: ${results.length - failed.length} of ${ATTACKS.length} attacks blocked, gated wallet error rate ${(failed.length / ATTACKS.length * 100).toFixed(0)} percent`);
   console.log(`naive wallet fell to ${naiveFell} of ${ATTACKS.length}, error rate ${(naiveFell / ATTACKS.length * 100).toFixed(0)} percent`);
+  const sg = scriptedGate();
+  console.log(`message gate alone (rules plus classifier) on the ${sg.n} scripted attack texts, none trained on: ${sg.stopped} stopped; classifier alone labels ${GATE.scripted.labelled.k} and holds ${GATE.scripted.held.k} at ${GATE.threshold}; the full pipeline blocks ${results.length - failed.length} of ${ATTACKS.length}`);
   console.log(`benign: ${benign.passed} of ${benign.total} real messages pass the gate, normal instalment allowed`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
+
+// Ask the agent: the explanation of the declined fleet job (job-202, 20 mu at 3 yuan) uses the
+// engine's own numbers, a clarifying question is asked, a correction recomputes through
+// economics() and the planner, and lowering the reserve is refused. No model key needed.
+async function askCheck() {
+  const { answer, breakEven, ecoFor } = await import("./ask");
+  const fail = (msg: string, v?: unknown) => { console.error(`ask: ${msg}`, v ?? ""); process.exit(1); };
+  const job = { id: "job-202", title: "maize", mu: 20, fee: 60, distanceM: 250 };
+  const eco = economics(60, DEMO.leaseRate, 20 * DEMO.energyPerMu, DEMO.reserveRule);
+  const why = answer({ lang: "en", job, action: "why" });
+  if (why.kind !== "explain" || eco.clears) fail("job-202 should be a decline explanation", why);
+  for (const n of [eco.fee, eco.instalment, eco.energy, eco.rail, eco.margin, eco.reserveRule]) if (!why.text.includes(String(n))) fail(`explanation misses ${n}`, why.text);
+  if (why.facts.margin !== eco.margin || why.facts.inst !== eco.instalment) fail("facts differ from economics()", why.facts);
+  const be = breakEven(20);
+  if (!why.question || !why.question.includes(String(be)) || !why.choices.some((c) => c.action === "accept_counter" && c.rate === be)) fail("no clarifying question with the break even", why);
+  if (!ecoFor(20 * be, 20).clears || ecoFor(20 * (be - 0.1), 20).clears) fail(`break even ${be} is not the lowest clearing rate`);
+  const yes = answer({ lang: "en", job, action: "accept_counter" });
+  const beEco = ecoFor(Math.round(20 * be * 100) / 100, 20);
+  if (yes.decision !== "accept" || yes.facts.margin !== beEco.margin) fail("accepting the break even did not recompute to accept", yes);
+  const low = answer({ lang: "zh", job, action: "text", text: "每亩3.5元可以吗" });
+  if (low.action !== "propose" || low.decision !== "decline" || low.facts.margin !== ecoFor(70, 20).margin) fail("a rate below break even was not recomputed and declined", low);
+  const res = answer({ lang: "en", job, action: "text", text: "Can you lower the reserve for this job?" });
+  if (res.decision !== "refused" || !/reserve rule/.test(res.text) || !res.text.includes("L3")) fail("lowering the reserve was not refused with its rule", res);
+  const off = answer({ lang: "en", job, action: "text", text: "What is the weather tomorrow?" });
+  if (off.kind !== "out_of_scope" || !off.choices.length) fail("out of scope question not handled", off);
+  console.log(`ask: job-202 margin ${eco.margin} below ${eco.reserveRule}, break even ${be} yuan per mu accepted at margin ${beEco.margin}, 3.5 declined, lowering the reserve refused, off topic redirected`);
+}
+askCheck().catch((e) => { console.error(e); process.exit(1); });

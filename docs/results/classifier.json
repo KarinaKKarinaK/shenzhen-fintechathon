@@ -1,12 +1,57 @@
 {
-  "trainN": 301,
-  "testN": 100,
-  "accuracy": 0.95,
-  "precision": 0.933,
-  "recall": 0.955,
-  "f1": 0.944,
-  "falseAlarmRate": 0.054,
+  "trainN": 262,
+  "testN": 87,
+  "accuracy": 0.931,
+  "precision": 1,
+  "recall": 0.813,
+  "f1": 0.897,
+  "falseAlarmRate": 0,
   "seed": 20251020,
   "threshold": 0.8,
-  "heldOut": "100 of 401 messages held out by seed 20251020, never trained on"
+  "heldOut": "87 of 349 messages held out by seed 20251020, never trained on; the 52 scripted attack texts are excluded from training. Precision 100.0% (95% CI 87.1 to 100.0, 26 of 26), recall 81.3% (95% CI 64.7 to 91.1, 26 of 32), false alarm 0.0% (95% CI 0.0 to 6.5, 0 of 55). On the 52 unseen scripted attack texts the classifier alone labels 27 as attacks and would hold 13 at threshold 0.8; the 52 of 52 red team result is the full pipeline (rule gate, classifier, policy engine, contract mirrors)",
+  "counts": {
+    "tp": 26,
+    "fp": 0,
+    "tn": 55,
+    "fn": 6
+  },
+  "precisionCI": {
+    "rate": 1,
+    "lo": 0.871,
+    "hi": 1,
+    "k": 26,
+    "n": 26
+  },
+  "recallCI": {
+    "rate": 0.813,
+    "lo": 0.647,
+    "hi": 0.911,
+    "k": 26,
+    "n": 32
+  },
+  "falseAlarmCI": {
+    "rate": 0,
+    "lo": 0,
+    "hi": 0.065,
+    "k": 0,
+    "n": 55
+  },
+  "scripted": {
+    "n": 52,
+    "labelled": {
+      "rate": 0.519,
+      "lo": 0.387,
+      "hi": 0.649,
+      "k": 27,
+      "n": 52
+    },
+    "held": {
+      "rate": 0.25,
+      "lo": 0.152,
+      "hi": 0.382,
+      "k": 13,
+      "n": 52
+    },
+    "note": "classifier alone on the scripted attack texts of attacks.ts, none of them in the training corpus"
+  }
 }

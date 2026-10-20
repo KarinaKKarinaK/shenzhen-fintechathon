@@ -87,7 +87,7 @@ flowchart LR
 | Ratchet | `ratchet.ts` | Hill climbing over the acceptance strategy against a frozen week |
 | Keys | `keys.ts` | One secp256k1 key per actor, generated at boot. EIP-712 domain `Zishi` v1, chain 84532 |
 | Chain | `chain.ts` | `SimChain` or `RealChain` behind one `Chain` interface |
-| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 44 tests, deployed on Base Sepolia |
+| Contracts | `contracts/src` | Solidity 0.8.26, Foundry, 68 tests, deployed on Base Sepolia |
 
 ## 3. Data model
 
@@ -276,8 +276,8 @@ What they are not: not trained on live traffic or real drone logs. The classifie
 
 | Component | Before | After | Before result | After result |
 |---|---|---|---|---|
-| Message gate | rules only (regex) | rules plus learned classifier | 52 of 52 scripted attacks, no score on paraphrases | held out 100 messages: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
-| Telemetry check | raw GPS length | Kalman smoothed | false alarm 13.8% at full detection | false alarm 0.0% at full detection, cut 100% |
+| Message gate | rules only (regex) | rules plus learned classifier | 52 of 52 scripted attacks, no score on paraphrases | held out 87 messages, no attack text in training: accuracy 93.1%, recall 81.3%, false alarm 0 of 55 |
+| Telemetry check | raw GPS length | Kalman smoothed | track features only: false alarm 13.8% at full detection | 0.0% at full detection; the oracle's own rate with all features is 3.0% (13 of 428) |
 | Anomaly threshold | fixed |z| 4 | conformal |z| 2.60 (2% target) | false alarm 0.0%, detection 100.0% | false alarm 3.0%, detection 100.0% |
 | Lease strategy | greedy rule | MDP policy (26 weeks, value iteration) | 7,471 yuan mean, title 84.0% | 7,540 yuan mean, title 84.0% |
 | Acceptance knobs | baseline | ratchet, 5 of 60 steps kept | 246 yuan | 926 yuan |
@@ -317,7 +317,7 @@ With `AI_GATEWAY_API_KEY` or `ANTHROPIC_API_KEY` the model writes explanations a
 
 ## 7. Contracts
 
-Solidity 0.8.26, Foundry, 44 tests in `contracts/test`, three of them fuzz tests over the slash path (amount inside the cap never slashes, any amount over the cap slashes exactly the penalty, any payee off the allowlist slashes). Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
+Solidity 0.8.26, Foundry, 68 tests in `contracts/test` (15 of them the contract layer attack cases ported from the engine's attack set, 9 for Lease), three of them fuzz tests over the slash path (amount inside the cap never slashes, any amount over the cap slashes exactly the penalty, any payee off the allowlist slashes). Amounts in the tests use 1 ether as 1 yuan. Deploy order: `IntentLog`, `Bond(treasury, log, floor)`, `Lease`, `JobBoard(bond, lease, rail)`, then `bond.setBoard(board)`.
 
 Deployed on Base Sepolia (chain 84532) from the demo wallet, source verified on Sourcify with an exact match: IntentLog and Lease in block 48,335,911, Bond and JobBoard redeployed in block 48,339,163 after the collusion fix. Addresses and deploy transactions are in `contracts/deployments/base-sepolia.json`; the script is `contracts/script/Deploy.s.sol`.
 
@@ -533,7 +533,7 @@ Without any variable the app runs fully: scripted explanations, simulated chain,
 | `pnpm bench` | `web` | The before and after table in section 6.4, recomputed from the seeds |
 | `pnpm charts` | `web` | The nine charts in `docs/charts`, redrawn from the seeds |
 | `pnpm report` | `web` | `docs/EXECUTION_EVIDENCE.md` from the latest captured real run and the chain, `docs/RED_TEAM.md` from the attack set, `docs/EVALUATION.md` and `docs/results/` from the learned components |
-| `forge test` | `contracts` | 44 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (28, three fuzzed), `JobBoard.t.sol` (11). Needs `forge-std` in `contracts/lib` |
+| `forge test` | `contracts` | 68 tests: `IntentLog.t.sol` (5), `Bond.t.sol` (28, three fuzzed), `JobBoard.t.sol` (11), `Attacks.t.sol` (15, the contract layer attack cases), `Lease.t.sol` (9). Needs `forge-std` in `contracts/lib` |
 | `pnpm evidence && pnpm verify` | `web` | A full run and its balance sheet |
 
 CI (`.github/workflows/ci.yml`) runs lint, type check, self check, build and the Foundry tests on every push and pull request.
@@ -574,9 +574,9 @@ Measured on 2026-10-20 from the self check, the bench, the charts script and Bas
 | Fleet scenario, simulated, fast | 293 events in 1.3 s: 15 signed intents, 15 policy decisions over 113 rule lines, 25 transactions, 7 gate verdicts, 3 flight logs scored, 1 proof | `scenarios.ts` |
 | Fleet scenario, real chain | 15 `IntentLog.commit` calls, about 30 anchors, 0.000013 ETH | Base Sepolia receipts |
 | Contract deployment | 4 contracts, 4,491,890 gas, block 48,335,911 | `contracts/deployments/base-sepolia.json` |
-| Foundry | 44 tests, 3 fuzzed at 256 runs | `forge test` |
+| Foundry | 68 tests, 3 fuzzed at 256 runs | `forge test` |
 | Attack set | 52 cases, 7 benign, naive baseline falls to 51 of 52 | `attacks.ts` |
-| Classifier | 401 messages, 124 of them paraphrases, 100 held out, 2^14 hashed buckets | `ml/gate.ts`, `ml/corpus.ts` |
+| Classifier | 349 messages, none of them the 52 attack texts, 87 held out, 2^14 hashed buckets | `ml/gate.ts`, `ml/corpus.ts` |
 | Oracle | 2,000 flights, 312 tampered, 750 fit, 634 honest calibration, 500 held out | `ml/plausibility.ts` |
 | MDP | 46,800 states, 26 weeks, 200 seasons | `economics/mdp.ts` |
 | Stress test | 2,000 seasons, 7 skip rates on the chart | `economics/stress.ts` |

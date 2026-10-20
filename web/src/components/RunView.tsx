@@ -10,6 +10,7 @@ import { CashFlow, EventStream, RuleHits, UnitEconomics } from "./Graphs";
 import { KpiTiles } from "./Kpis";
 import { Moments, momentsOf, type MomentKey } from "./Moments";
 import { YourData } from "./YourData";
+import { AskAgent } from "./AskAgent";
 import type { Side } from "@/engine/types";
 import { useLang } from "@/i18n/LangProvider";
 import { layerLabel } from "@/engine/i18n";
@@ -60,6 +61,8 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
   const tel = state.telemetry.last;
   const proof = state.proofs[state.proofs.length - 1];
   const log = proof?.intentHash ? state.logs[proof.intentHash] : undefined;
+  // Moment one: the latest job declined for its economics. The pilot can ask the agent about it (not on custom data, which runs its own lease terms).
+  const declinedJob = mode === "data" ? undefined : Object.values(state.jobs).filter((j) => j.status === "declined" && j.mu && state.economics[j.id]?.clears === false).slice(-1)[0];
 
   // A finished run was narrated in one language. When the language changes while idle, fetch it again
   // in the new one, at the speed it was run. A run in progress is left alone.
@@ -156,6 +159,7 @@ export function RunView({ side }: { side: Exclude<Side, "attack"> }) {
 
         <aside className="flex flex-col gap-4">
           <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.proofTitle}</h2><ProofCard proof={proof} log={log} /></section>
+          {declinedJob ? <section className="card p-4"><AskAgent key={`${declinedJob.id}-${lang}`} job={declinedJob} /></section> : null}
           {state.button ? <section className="card p-4"><h2 className="mb-3 text-sm font-semibold">{R.buttonTitle}</h2><ButtonRing b={state.button} scenario={side} onEvents={append} /></section> : null}
           {m ? <section className="card p-4"><LeaseBar m={m} /></section> : null}
         </aside>

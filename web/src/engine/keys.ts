@@ -1,5 +1,12 @@
 // Fixed demo keys, one per actor. Derived from a label so they are stable across runs and
 // obviously not real funds. The policy engine and the bond contract verify against ADDR.
+//
+// DEMO ONLY. These private keys are keccak256 of public strings ("zishi-demo-key-operator" and
+// so on), so anyone who reads this file can derive them and sign as any actor. They prove the
+// signing and verification path, not who signed. Never fund these addresses and never use
+// them outside the demo. The derivation stays fixed on purpose: replay determinism and the
+// equal intent hashes on Base Sepolia and FISCO BCOS depend on it. A real deployment would
+// hold each actor's key in its own signer (an HSM or a wallet) and register those addresses.
 // Intents are signed under the Zishi EIP-712 domain so the same digest can be checked on chain.
 
 import { hashTypedData, keccak256, recoverTypedDataAddress, toHex, type TypedDataDefinition } from "viem";
@@ -9,6 +16,10 @@ import type { Actor, Intent } from "./types";
 export type KeyedActor = "machine" | "operator" | "requester" | "lender" | "hunter" | "vendor" | "oracle";
 
 const LABELS: KeyedActor[] = ["machine", "operator", "requester", "lender", "hunter", "vendor", "oracle"];
+
+// Flag the UI and docs can cite: the keys below are public and demo only.
+export const DEMO_KEYS_PUBLIC = true as const;
+export const DEMO_KEYS_NOTE = "Demo keys only: each actor's private key is keccak256 of a public label (zishi-demo-key-<actor>), so anyone can derive it. They show the signing path, not identity. Never fund them.";
 
 export const KEYS: Record<KeyedActor, PrivateKeyAccount> = Object.fromEntries(
   LABELS.map((a) => [a, privateKeyToAccount(keccak256(toHex(`zishi-demo-key-${a}`)))]),

@@ -13,6 +13,7 @@ import { BondContract, IntentLog, JobBoard, type SlashRule } from "./contracts";
 import { SimChain } from "./chain";
 import type { Actor, Intent, Job, Standard } from "./types";
 import { ATTACK_NAMES_ZH } from "./i18n";
+import { ATTACK_TEXTS } from "./ml/corpus";
 
 export interface AttackResult { blocked: boolean; detail: string; detailZh?: string }
 export interface AttackCase {
@@ -256,4 +257,17 @@ export async function runAll(): Promise<AttackRow[]> {
 export function runBenign(): { passed: number; total: number; failed: { text: string; action: string; reason: string }[] } {
   const failed = BENIGN.map((b) => ({ text: b.text, ...judge(b.text, b.relation) })).filter((r) => r.action !== "pass").map((r) => ({ text: r.text, action: r.action, reason: r.reason }));
   return { passed: BENIGN.length - failed.length, total: BENIGN.length, failed };
+}
+
+// The message gate alone (rules in framing.ts plus the classifier) on the 52 scripted attack
+// texts, none of which the classifier was trained on. Not every attack is a message attack:
+// many are stopped later by the policy engine or the contract mirrors, which is why the red
+// team count above is for the full pipeline and this number is lower.
+export function scriptedGate(): { n: number; stopped: number; classifierOnly: number } {
+  const verdicts = ATTACK_TEXTS.map((t) => judge(t, "counterparty"));
+  return {
+    n: verdicts.length,
+    stopped: verdicts.filter((v) => v.action !== "pass").length,
+    classifierOnly: verdicts.filter((v) => v.action === "hold" && v.reason.startsWith("classifier flagged")).length,
+  };
 }

@@ -464,6 +464,7 @@ export function ButtonRing({ b, scenario, onEvents }: { b?: { waiting: boolean; 
     setBusy(true); setErr(null);
     try {
       const r = await fetch("/api/button", { method: "POST", headers: { "Content-Type": "application/json", ...demoHeaders() }, body: JSON.stringify({ what: b!.what, amount: 200, scenario, lang }) });
+      if (r.status === 401) throw new Error(P.buttonRefused);
       if (!r.ok) throw new Error(`button returned ${r.status}`);
       const j = (await r.json()) as { events?: LooseEvent[] };
       onEvents?.(j.events ?? []);

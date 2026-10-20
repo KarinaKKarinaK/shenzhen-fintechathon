@@ -20,7 +20,7 @@ export const en = {
     howTitle: "How it works",
     howLink: "Watch it live",
     how: [["It earns", "A farmer posts a spraying job. The fee is paid per mu, and only after the farmer confirms the work."], ["It repays", "Every fee pays an instalment to the lender automatically. When the lease reaches zero, the drone belongs to the pilot."], ["It answers for mistakes", "A slice of each fee builds a bond. Prove a rule was broken and the bond is slashed. The AI's mistakes come out of the vendor's bond, never the pilot's."]] as [string, string][],
-    stats: [["attacks blocked", "every case in the set"], ["contracts", "44 tests passing"], ["bonds", "pilot and vendor"], ["human decisions", "on the normal path"]] as [string, string][],
+    stats: [["attacks blocked", "every case in the set"], ["contracts", "68 tests passing"], ["bonds", "pilot and vendor"], ["human decisions", "on the normal path"]] as [string, string][],
     castTitle: "Who's who",
     cast: [["Farmer", "Posts a spraying job and pays per mu, only after confirming the work."], ["Pilot", "Flies the drone and keeps the profit. Owns the drone once the lease is paid."], ["Lender", "Pays for the drone up front and is repaid from every fee, automatically."], ["AI vendor", "Built the agent that runs the money. Its own bond pays for the agent's mistakes."]] as [string, string][],
     bondsTitle: "Two bonds, two kinds of mistake",
@@ -149,7 +149,7 @@ export const en = {
     noJobs: "No jobs yet.", split: ", split pilot {o} instalment {i} rail {r} bond {b}", holdLine: "hold {h}, releases in 24h",
     jobStatus: { posted: "posted", locked: "locked", running: "running", confirmed: "confirmed", released: "released", held: "held", declined: "declined" },
     narrationIdle: "Press start. Five moments, narrated as they happen.",
-    press: "Press", pressAria: "Press the operator button", waitingButton: "Waiting for the operator's button", pressed: "Button pressed", topUp: "Top up the pilot bond by ¥200", opOnly: "operator only",
+    press: "Press", pressAria: "Press the operator button", waitingButton: "Waiting for the operator's button", pressed: "Button pressed", topUp: "Top up the pilot bond by ¥200", opOnly: "operator only", buttonRefused: "Refused: the operator button needs the demo link with its token.",
   },
   graphs: {
     cashTitle: "Cash flow per transaction, yuan", in: "in", out: "out", slash: "slash", first: "first", latest: "latest", noTx: "No transactions yet.", cashAria: "Cash flow per transaction",
@@ -172,7 +172,10 @@ export const en = {
     contractsTitle: "Contracts",
     contracts: ["Holds the two bonds. Slashes only on a signed intent that breaks a rule, checked against its own records.", "Keeps the hash of every intent, per job, before the policy engine decides, so a blocked attempt cannot vanish.", "Locks the farmer's fee, releases it on confirmation, holds part of it for 24 hours if flagged.", "Takes an instalment from each fee and moves the title to the pilot when the balance reaches zero."],
     contractsStatus: "All four are deployed on Base Sepolia, source verified on Sourcify, and tested in CI.",
-    contractsGap: "Known gaps: the deployed Bond predates the collusion fix (a vendor penalty on a live job now goes to the treasury only) and needs a redeploy; the title is recorded on chain, not yet as a transferable token.",
+    contractsGap: "Known gaps: inside the live engine only IntentLog is called, the other rules run in mirrors of these contracts; IntentLog.commit can be front run (planned fix: commits bound to the job's agent); the title is recorded on chain, not yet as a transferable token.",
+    fullJobTitle: "One full job on the deployed contracts",
+    fullJobNote: "Every step a real call to the deployed contracts on Base Sepolia, value moving where the contract moves it: the vendor bond posted, the fee locked, confirmed and split (instalment to the lender through Lease), a rogue intent committed and slashed by proof from the vendor bond, the last payment moving the title to the pilot.",
+    fullJobFisco: "The same job ran on FISCO BCOS, WeBank's consortium chain. Receipts in docs/FISCO_EVIDENCE.md and contracts/deployments/fisco-fulljob.json.",
     onBasescan: "on Basescan ↗",
     checkTitle: "Check it yourself",
     cannotBody: "The model cannot sign, move money, change a policy or invent a number. It writes one sentence from facts the engine gives it; a sentence with a number not in the facts is thrown out. ",
@@ -269,6 +272,11 @@ export const en = {
     replayNote: "Each entry hashes the previous hash and the event. Verify recomputes the chain from the first event.",
   },
   loading: { title: "Loading the field view", body: "A few seconds. The numbers above are already live.", posterAlt: "An agricultural drone spraying a rice field", posterLabel: "STILL VIEW ON PHONES" },
+  ask: {
+    title: "Ask the agent", sub: "About the declined job {title}", open: "Why was this job declined?", you: "Pilot", agent: "Agent",
+    template: "Template, no model", model: "Model wording, numbers from code", ratePh: "Rate in yuan per mu, e.g. 3.6", textPh: "Or type a question", send: "Send", propose: "Check rate",
+    thinking: "Checking the numbers", failed: "Could not reach the agent: {msg}", decision: { accept: "Accept", decline: "Decline", refused: "Refused" }, reset: "Start over",
+  },
 };
 
 export type Dict = typeof en;

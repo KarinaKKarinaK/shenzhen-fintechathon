@@ -2,10 +2,13 @@
 // single characters and pairs carry the Chinese signal, triples the English), trained at
 // module load on the corpus in corpus.ts. Weights are averaged over the second half of
 // training, which steadies SGD on a small corpus. No dependencies. A quarter of the corpus is held
-// out by a fixed seed and never trained on; METRICS are computed on that quarter only.
+// out by a fixed seed and never trained on; METRICS are computed on that quarter only. The 52
+// scripted attack texts (ATTACK_TEXTS) are not in the corpus at all and are scored as a second
+// unseen set, so the red team count is never a score on training data.
 // The classifier adds a risk score to the rule gate in framing.ts, it never replaces it.
 
-import { CORPUS } from "./corpus";
+import { ATTACK_TEXTS, CORPUS } from "./corpus";
+import { wilson, fmtInterval, type Interval } from "../stats";
 
 export const SEED = 20251020;
 export const BUCKETS = 1 << 14;
@@ -17,7 +20,14 @@ const L2 = 1e-5;
 const NGRAMS = [1, 2, 3];
 
 export interface Classification { p: number; label: "attack" | "benign"; topFeatures: string[] }
-export interface GateMetrics { trainN: number; testN: number; accuracy: number; precision: number; recall: number; f1: number; falseAlarmRate: number; seed: number; threshold: number; heldOut: string }
+export interface GateMetrics { trainN: number; testN: number; accuracy: number; precision: number; recall: number; f1: number; falseAlarmRate: number; seed: number; threshold: number; heldOut: string;
+  // Wilson 95 percent intervals with k and n, on the held out quarter.
+  counts: { tp: number; fp: number; tn: number; fn: number };
+  precisionCI: Interval; recallCI: Interval; falseAlarmCI: Interval;
+  // The 52 scripted attack texts, never trained on: how many the classifier alone labels as
+  // attack (p above 0.5) and how many it alone would hold (p above THRESHOLD).
+  scripted: { n: number; labelled: Interval; held: Interval; note: string };
+}
 
 // mulberry32: a small seeded PRNG so the split and the shuffles are the same on every load.
 export function rng(seed: number): () => number {
@@ -129,6 +139,10 @@ function evaluate(): GateMetrics {
     else fn++;
   }
   const n = split.test.length;
+  const precisionCI = wilson(tp, tp + fp), recallCI = wilson(tp, tp + fn), falseAlarmCI = wilson(fp, fp + tn);
+  const ps = ATTACK_TEXTS.map((t) => sigmoid(dot(features(t))));
+  const labelled = wilson(ps.filter((p) => p > 0.5).length, ps.length);
+  const held = wilson(ps.filter((p) => p > THRESHOLD).length, ps.length);
   const r3 = (v: number) => Math.round(v * 1000) / 1000;
   const precision = tp + fp ? tp / (tp + fp) : 0;
   const recall = tp + fn ? tp / (tp + fn) : 0;
@@ -138,7 +152,9 @@ function evaluate(): GateMetrics {
     accuracy: r3((tp + tn) / n), precision: r3(precision), recall: r3(recall), f1: r3(f1),
     falseAlarmRate: r3(fp + tn ? fp / (fp + tn) : 0),
     seed: SEED, threshold: THRESHOLD,
-    heldOut: `${n} of ${CORPUS.length} messages held out by seed ${SEED}, never trained on`,
+    heldOut: `${n} of ${CORPUS.length} messages held out by seed ${SEED}, never trained on; the ${ATTACK_TEXTS.length} scripted attack texts are excluded from training. Precision ${fmtInterval(precisionCI)}, recall ${fmtInterval(recallCI)}, false alarm ${fmtInterval(falseAlarmCI)}. On the ${ATTACK_TEXTS.length} unseen scripted attack texts the classifier alone labels ${labelled.k} as attacks and would hold ${held.k} at threshold ${THRESHOLD}; the 52 of 52 red team result is the full pipeline (rule gate, classifier, policy engine, contract mirrors)`,
+    counts: { tp, fp, tn, fn }, precisionCI, recallCI, falseAlarmCI,
+    scripted: { n: ps.length, labelled, held, note: "classifier alone on the scripted attack texts of attacks.ts, none of them in the training corpus" },
   };
 }
 
