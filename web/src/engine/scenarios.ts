@@ -38,7 +38,7 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-export interface RunOpts { fast?: boolean; real?: boolean; lang?: Lang; signal?: AbortSignal }
+export interface RunOpts { fast?: boolean; real?: boolean; fiscoOnly?: boolean; lang?: Lang; signal?: AbortSignal }
 
 // The live state of each scenario, so the button route can act on the same bond and lease.
 export interface RunState { chain: Chain; bond: BondContract; lease: LeaseContract; board: JobBoard; log: IntentLog; policy: PolicyEngine; m: MachineState }
@@ -142,6 +142,12 @@ const DEMO_LEASE = { total: DEMO.droneCost, rate: DEMO.leaseRate, balance: 650 }
 const DEMO_SETUP: Setup = { keys: ["fleet", "neighbour"], scope: "fleet", policy: DEFAULT_POLICY, lease: DEMO_LEASE, reserve: DEMO.reserveRule, machine: { muDone: 13_580, muTotal: DEMO.leaseMu } };
 
 // The loop. Every scenario is open, plan, inject or run each job, close.
+// Chinese for an oracle channel reason ("battery channel missing, log held").
+function channelZh(r: string): string {
+  const ch = r.startsWith("battery") ? "电池" : r.startsWith("altitude") ? "高度" : r.split(" ")[0];
+  return r.includes("missing") ? `${ch}通道缺失` : `${ch}通道数据异常`;
+}
+
 class Session {
   readonly d: number;
   readonly lang: Lang;
@@ -160,7 +166,7 @@ class Session {
   constructor(readonly setup: Setup, readonly opts: RunOpts) {
     this.d = opts.fast ? 60 : 1100;
     this.lang = opts.lang ?? "en";
-    this.chain = makeChain({ real: opts.real });
+    this.chain = makeChain({ real: opts.real, fiscoOnly: opts.fiscoOnly });
     this.s = new Settler(this.chain);
     this.board = new JobBoard(this.chain);
     this.bond = new BondContract({ min: DEMO.bondMin, slashAmount: DEMO.pilotSlash, startFloor: DEMO.startFloor, vendor: { balance: 0, penalty: DEMO.vendorPenalty, dailyCap: DEMO.vendorDailyCap } }, this.chain, this.log, this.board);
@@ -325,13 +331,26 @@ class Session {
     const flight = fl ? plausible(job.id, fl.trackM, fl.seconds, fl.swathM, fl.claimedMu, fl.batteryPct, fl.altVar) : honestLog(job.id, f.mu);
     yield { t: "telemetry", ...flight, at: now() };
     if (!flight.ok) {
-      // Moment 3: a faked log. The fee is held, no instalment is taken, the lender is told.
-      yield { t: "narration", text: t("n.fakedLog", { claimed: flight.claimedMu, seconds: flight.seconds, swath: flight.swathM, track: flight.trackM, area: flight.areaMu, ratio: flight.ratio }), at: now() };
-      const fv = { claimed: flight.claimedMu, area: flight.areaMu, ratio: flight.ratio };
-      yield { t: "attack", name: tr("en", "a.fakedLog"), nameZh: tr("zh", "a.fakedLog"), blocked: true, where: "plausibility check", detail: tr("en", "a.fakedLog.detail", fv), detailZh: tr("zh", "a.fakedLog.detail", fv), standard: "hallucination prevention", at: now() };
+      // Moment 3: a held log. The fee is held, no instalment is taken, the lender is told.
+      // A log held for a missing or degraded sensor channel is not called faked: the narration
+      // names the channel the oracle reported.
+      const channel = (flight.reasons ?? []).filter((r) => /channel (missing|degraded)/.test(r));
+      if (channel.length) {
+        const en = channel.map((r) => r.replace(/, log held$/, "")).join("; ");
+        const zh = channel.map(channelZh).join("；");
+        yield { t: "narration", text: lang === "zh" ? `飞行日志已冻结：${zh}。缺少必需的传感器数据，日志无法核验，因此不判定为伪造。费用已冻结，出租方已收到警报。` : `Flight log held: ${en}. A required sensor reading is missing or out of range, so the log cannot be checked. It is not called faked. The fee is held and the lender is alerted.`, at: now() };
+        yield { t: "attack", name: "Flight log with a missing sensor channel", nameZh: "飞行日志缺少传感器通道", blocked: true, where: "plausibility check", detail: en, detailZh: zh, standard: "hallucination prevention", at: now() };
+      } else {
+        yield { t: "narration", text: t("n.fakedLog", { claimed: flight.claimedMu, seconds: flight.seconds, swath: flight.swathM, track: flight.trackM, area: flight.areaMu, ratio: flight.ratio }), at: now() };
+        const fv = { claimed: flight.claimedMu, area: flight.areaMu, ratio: flight.ratio };
+        yield { t: "attack", name: tr("en", "a.fakedLog"), nameZh: tr("zh", "a.fakedLog"), blocked: true, where: "plausibility check", detail: tr("en", "a.fakedLog.detail", fv), detailZh: tr("zh", "a.fakedLog.detail", fv), standard: "hallucination prevention", at: now() };
+      }
       yield this.tx(await board.refund(job.id));
       yield { t: "job", job: { ...board.jobs.get(job.id)! }, at: now() };
-      yield { t: "agent.message", from: "lender", to: "machine", text: t("m.lenderPlaus", { jobId: job.id, ratio: flight.ratio, fee, lease: lease.balance }), untrusted: false, source: "template", grounded: true, at: now() };
+      const lenderText = channel.length
+        ? (lang === "zh" ? `飞行任务 ${job.id} 已冻结：${channel.map(channelZh).join("；")}。费用 ${fee} 元已冻结，未扣分期款。租赁余额保持 ${lease.balance} 元。` : `Flight ${job.id} held: ${channel.map((r) => r.replace(/, log held$/, "")).join("; ")}. Fee ${fee} yuan held, no instalment taken. Lease balance stays at ${lease.balance} yuan.`)
+        : t("m.lenderPlaus", { jobId: job.id, ratio: flight.ratio, fee, lease: lease.balance });
+      yield { t: "agent.message", from: "lender", to: "machine", text: lenderText, untrusted: false, source: "template", grounded: true, at: now() };
       this.held += 1;
       m.status = "held"; yield this.emitM(); await this.wait(d); yield* this.s.tick();
       m.status = "idle"; return;

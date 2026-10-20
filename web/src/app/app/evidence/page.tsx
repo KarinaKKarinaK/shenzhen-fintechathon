@@ -1,3 +1,4 @@
+import { hasKey } from "@/engine/model";
 import { realChainFunded } from "@/engine/chain";
 import * as attacksMod from "@/engine/attacks";
 import { EvidenceView } from "@/components/EvidenceView";
@@ -14,6 +15,6 @@ export default async function Page() {
   const b = await Promise.resolve(mod.runBenign?.());
   const benign = b ? { passed: b.passed, total: b.total } : undefined;
   const chainReal = (await realChainFunded()).funded;
-  const modelReal = !!(process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY);
+  const modelReal = hasKey();
   return <EvidenceView results={results} benign={benign} chainReal={chainReal} modelReal={modelReal} />;
 }

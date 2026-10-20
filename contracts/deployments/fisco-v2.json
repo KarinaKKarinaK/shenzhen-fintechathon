@@ -1,0 +1,310 @@
+{
+  "network": "FISCO BCOS (local)",
+  "chainId": 20200,
+  "ranAt": "2026-10-20T12:54:18Z",
+  "script": "contracts/script/fisco_v2.sh",
+  "evmVersion": "paris",
+  "contracts": {
+    "IntentLogV2": {
+      "address": "0xA4e3313cD42eaa14Fe4b6EE627FAeF84A541eac2",
+      "deployTx": "0x7cfe4639dbb49e2680a348bd2ac70f41e6fd5ead0514b6050ef93d991f7ec854",
+      "block": 138,
+      "status": "success"
+    },
+    "BondV2": {
+      "address": "0xaABE0669A13be1bDCdD7Dd16C95231d01bF8B838",
+      "deployTx": "0xe6a71d70be15b6b65f3de719a0a4bd2d85b617f5bb913cfcc9b34e54ec4260e6",
+      "block": 139,
+      "status": "success"
+    },
+    "Lease": {
+      "address": "0x2f64Db2c0180D117Be883DB9E5e0aAcbed79ee08",
+      "deployTx": "0x459545aa7b850f84cc5bb0a9b770c4f20f12012724e347f42dd826db2e9c4380",
+      "block": 140,
+      "status": "success"
+    },
+    "JobBoard": {
+      "address": "0x89458f4bF72Fd71c8360CEFe35e148BE6C92C77b",
+      "deployTx": "0xfff8c0e17f8cc5e3e93205fca2234d5f1a7e8fd1816b43f29cb35cc4e6a31546",
+      "block": 141,
+      "status": "success"
+    }
+  },
+  "roles": {
+    "deployer (treasury, rail, operator)": "0xC9E4C312E90cda14354340DFd7b9569d820C1201",
+    "vendor": "0xaedF16ed8Ab0Ee0e365e7d2c4C5729B26f13a23C",
+    "agent": "0x6C6b1B68023A1A30C49b73de7e2262150bFF242A",
+    "other registered agent": "0x697f4Ba2c7Fddcb67EA7d9571c884eE9b1d081A5",
+    "lender (party)": "0xf592274c993C719ac57e52dc921C64F3DC0917F9",
+    "farmer (requester and verifier)": "0x41a043C93718FD4607831abd2b93C98315a0C9B6",
+    "stranger": "0x0ca0f125a3f00Fe49F6453b0333a6BeFB769463C"
+  },
+  "agentJobId": 1,
+  "otherAgentJobId": 2,
+  "rogueIntentHash": "0x5e875f4736cd4100b0aec2e8de01bfd2a9343fa05bfa583450e15db345d992ed",
+  "steps": [
+    {
+      "step": "wire 1",
+      "contract": "BondV2",
+      "function": "setBoard",
+      "from": "deployer",
+      "valueWei": "0",
+      "tx": "0xe21370c8d06a512eff90b8036199450f6d0974b6d4c7a7e4c4a45a7c488e2e2a",
+      "block": 142,
+      "gasUsed": 31765,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "wire 2",
+      "contract": "IntentLogV2",
+      "function": "setBoard",
+      "from": "deployer",
+      "valueWei": "0",
+      "tx": "0x08db5ee91877054e4467616719d5aece203c3d189bb5fad9d8610a4b22cab266",
+      "block": 143,
+      "gasUsed": 31674,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund VENDOR",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "21000000000",
+      "tx": "0x15dba893c7e76116ee7d4fc122b82029c36489f25855d5620a6bc375a89ad158",
+      "block": 144,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund AGENT",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x6e7530b570e4a8755f6693350ae7c7eaf6172a8dad5cd713a77558229e4188e7",
+      "block": 145,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund OTHER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0xe31f410120329a0848f050380b850fb53fbdcb95bc5b220080281a6e2a1047bb",
+      "block": 146,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund LENDER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x6235c9bdb576ca75973478fc8b907483995d8da1edf33a5a885f529e56ffbd0b",
+      "block": 147,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund FARMER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "201000000000",
+      "tx": "0xabe1d5aa071bab5b9fcbd09efade71643f5812b2a213c7b64c2a2e691b3605f0",
+      "block": 148,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "fund STRANGER",
+      "contract": "EOA",
+      "function": "transfer",
+      "from": "deployer",
+      "valueWei": "1000000000",
+      "tx": "0x7c37660c92d3b1c09c671e574a67ee3cff3b0265b005cff38d3c2af090c459b7",
+      "block": 149,
+      "gasUsed": 21000,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 1",
+      "contract": "BondV2",
+      "function": "postVendorBond",
+      "from": "vendor",
+      "valueWei": "20000000000",
+      "tx": "0x29ee3846df0abc7daae32547e230bb1e47cbaccbb82a6a49021d723a417f42f6",
+      "block": 150,
+      "gasUsed": 43057,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 2",
+      "contract": "BondV2",
+      "function": "register",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x81f42ac1db8dbc91fc4c223118777566f22e6ac81cb418e9ba3b4cb646ee25d0",
+      "block": 151,
+      "gasUsed": 65764,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 3",
+      "contract": "BondV2",
+      "function": "register",
+      "from": "other agent",
+      "valueWei": "0",
+      "tx": "0x8a12157ddc7adfb324077af7ed5f40a0fa9eba9e9c42f03ad2ebf8f421d24511",
+      "block": 152,
+      "gasUsed": 65764,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 4",
+      "contract": "Lease",
+      "function": "open",
+      "from": "lender",
+      "valueWei": "0",
+      "tx": "0x8f7593a6b96b8f5d84597a42a3c279b50a9b4e9b3b61c681810948e3a5b21262",
+      "block": 153,
+      "gasUsed": 112183,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 5",
+      "contract": "JobBoard",
+      "function": "post",
+      "from": "farmer",
+      "valueWei": "100000000000",
+      "tx": "0x571f405ad6e754fcd18abfe35e3a4ed4e364e6bb660d76ce07c87233e7fed4c0",
+      "block": 154,
+      "gasUsed": 81254,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "setup 6",
+      "contract": "JobBoard",
+      "function": "post",
+      "from": "farmer",
+      "valueWei": "100000000000",
+      "tx": "0x05ffc671199f2ff49bdc1a6d1765afcaa87b1e180a98c570de35265da2cdf16e",
+      "block": 155,
+      "gasUsed": 81254,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "demo 1",
+      "contract": "IntentLogV2",
+      "function": "commit",
+      "from": "stranger (front-run, agent's job id)",
+      "valueWei": "0",
+      "tx": "0x6e03c46f1965eea30852a260676e23637363a6c837fcf8f4194cb5a3aace975b",
+      "block": 156,
+      "gasUsed": 42828,
+      "status": "reverted",
+      "expected": "reverted"
+    },
+    {
+      "step": "demo 2",
+      "contract": "IntentLogV2",
+      "function": "commit",
+      "from": "other registered agent (front-run, its own job id)",
+      "valueWei": "0",
+      "tx": "0x9542228687cfabe9c732879c4dfa0d1cb14becc54aab85b2f7720e5a1a8f5244",
+      "block": 157,
+      "gasUsed": 59350,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "demo 3",
+      "contract": "IntentLogV2",
+      "function": "commit",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x973aff1b7f6d366e686d5bdcf1feeed643377909e143f41d802ad071afadcfb7",
+      "block": 158,
+      "gasUsed": 59350,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "demo 4",
+      "contract": "BondV2",
+      "function": "slashByProof",
+      "from": "lender (party)",
+      "valueWei": "0",
+      "tx": "0xab5864fac7c8c0dc323b6d37b4a788d9b397dee46257ba523e0a30b7226f6129",
+      "block": 159,
+      "gasUsed": 169251,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "demo 5",
+      "contract": "JobBoard",
+      "function": "start",
+      "from": "agent",
+      "valueWei": "0",
+      "tx": "0x6e72c7be528c25163988e598685a700295703e17b944ff8556587bbbd0e5aff6",
+      "block": 160,
+      "gasUsed": 56081,
+      "status": "success",
+      "expected": "success"
+    },
+    {
+      "step": "demo 6",
+      "contract": "BondV2",
+      "function": "slashByProof",
+      "from": "lender (party), intent never committed",
+      "valueWei": "0",
+      "tx": "0x1d0c7c0ea539c03dcbaf7e67dc6f073924957c4955c55ab0d668c64ac9a02073",
+      "block": 161,
+      "gasUsed": 170893,
+      "status": "success",
+      "expected": "success"
+    }
+  ],
+  "checks": [
+    {
+      "check": "log slot (stranger, hash) committedAt",
+      "value": "0"
+    },
+    {
+      "check": "log slot (other agent, hash) committedAt",
+      "value": "1792500855814"
+    },
+    {
+      "check": "log slot (agent, hash) committedAt",
+      "value": "1792500856320"
+    },
+    {
+      "check": "vendor bond slashed by demo 4 (wei)",
+      "value": "10000000000"
+    },
+    {
+      "check": "vendor bond slashed by demo 6, never committed (wei)",
+      "value": "10000000000"
+    }
+  ],
+  "note": "V2 front-running demonstration. In v1 IntentLog anyone could commit the agent's intent hash first, the slot was taken with the wrong agent and Bond.slashByProof failed 'not in log'. Here: demo 1, a stranger commits the agent's hash under the agent's job and the chain rejects it ('not the job's agent', reverted on purpose). Demo 2, another registered agent commits the same hash under its own job: it succeeds but only fills that agent's own (agent, hash) slot. Demo 3, the real agent commits into its own slot, and demo 4 the lender, a party of the job, slashes by proof: the vendor bond pays the penalty to the treasury. Demo 5 and 6 show the missing commit case: the agent starts the job and never commits a second rogue intent, and the slash still lands because BondV2 accepts the agent's signature plus the JobBoard record that this agent's job went live. The v1 contracts in fisco-bcos.json are untouched. FISCO charges no gas price; block.timestamp is in milliseconds."
+}

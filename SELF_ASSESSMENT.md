@@ -78,4 +78,4 @@ Run all of it: `cd web && pnpm test && pnpm lint`, `cd contracts && forge test`.
 | Chain reorg | `RealChain` waits for a receipt and two confirmations on Base | `chain.ts` | Consortium chain finality (FISCO BCOS PBFT is final at commit) |
 | FISCO BCOS | Running as a single local node in Docker with receipts in `docs/FISCO_EVIDENCE.md`; the public demo cannot reach it. FISCO block time is in milliseconds, so JobBoard windows need a unit fix there | `contracts/script/fisco.sh` | A node run by the lessor in a consortium group |
 | Physical damage | Out of scope; the bonds cover rule breaks only | `JobBoard.flag` hold | Drone insurance plus a human dispute path |
-| Model outage | Built fallback: no key, timeout or error means template text; the model never moves money | `model.ts`, `agents.ts` | Same |
+| Model outage or cost | Free models only: ids must end in `:free` or they are dropped, so the key cannot route to a paid model; at most 10 calls a minute; no key, a 9 second timeout or an error means labelled template text; the model never moves money | `model.ts`, `agents.ts` | A contracted model with an SLA, same fallback |

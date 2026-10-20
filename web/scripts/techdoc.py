@@ -533,7 +533,7 @@ def section_05(w: Writer):
     ], widths=[1.6, 5.1])
     w.p("Environment variables, all optional; the app runs fully without them with scripted explanations and a simulated, labelled chain. No real value is written anywhere in the repository; web/.env.example lists them empty.")
     w.table(["Variable", "Purpose"], [
-        ["AI_GATEWAY_API_KEY or ANTHROPIC_API_KEY", "The model writes explanations and reads messages into fields. Decisions never depend on it."],
+        ["OPENROUTER_API_KEY (or an OpenRouter key in AI_GATEWAY_API_KEY)", "Free models only (ids ending in :free, enforced in code): the model writes explanations, reads messages into fields and rewords the ask the agent replies. Decisions never depend on it."],
         ["SURETY_PRIVATE_KEY", "A funded Base Sepolia key. Real mode commits intents to IntentLog and anchors money events."],
         ["BASE_SEPOLIA_RPC", "JSON-RPC endpoint, default https://sepolia.base.org"],
         ["DEMO_TOKEN", "Real mode only for requests carrying this token as the x-zishi-demo header. Unset means the funded key is never used."],

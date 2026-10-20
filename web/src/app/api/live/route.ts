@@ -1,5 +1,5 @@
 import { live } from "@/engine/scenarios";
-import { demoAuthorised } from "@/engine/chain";
+import { demoAuthorised, publicFisco } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 
@@ -23,6 +23,7 @@ export async function GET(req: Request) {
   const every = Number(q.get("every") ?? 8);
   const seed = q.get("seed") === null ? undefined : Number(q.get("seed"));
   const real = demoAuthorised(req.headers);
+  const fiscoOnly = !real && (await publicFisco());
   const ctrl = new AbortController();
   req.signal.addEventListener("abort", () => ctrl.abort(), { once: true });
   const enc = new TextEncoder();
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     async start(controller) {
       const send = (ev: unknown) => { try { controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`)); } catch { ctrl.abort(); } };
       try {
-        for await (const ev of live({ fast, real, lang, signal: ctrl.signal, maxMs: SEGMENT_MS, every: Number.isFinite(every) ? every : 8, seed: seed !== undefined && Number.isFinite(seed) ? Math.floor(Math.abs(seed)) : undefined })) {
+        for await (const ev of live({ fast, real: real || fiscoOnly, fiscoOnly, lang, signal: ctrl.signal, maxMs: SEGMENT_MS, every: Number.isFinite(every) ? every : 8, seed: seed !== undefined && Number.isFinite(seed) ? Math.floor(Math.abs(seed)) : undefined })) {
           if (ctrl.signal.aborted) break;
           send(ev);
         }

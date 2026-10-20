@@ -81,7 +81,7 @@ After a job is declined, the pilot can ask the agent why, on the Fleet page. The
 > **Pilot:** Lower the reserve for this job.
 > **Agent:** I cannot. The reserve rule is the lender's floor in the lease terms; a rule change needs the operator key (L3, the physical button) and the lender. A rate of 3.7 clears it.
 
-It works with no model key (labelled template wording). With a key the model may reword the explanation, but every number and decision comes from code (`web/src/engine/ask.ts`, `POST /api/ask`).
+It works with no model key (labelled template wording). The live app runs free models on OpenRouter, which may reword the explanation, but every number and decision comes from code (`web/src/engine/ask.ts`, `POST /api/ask`).
 
 ## By the numbers
 
@@ -398,7 +398,7 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
 | Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |
-| Model | Scripted explanations unless an AI gateway key is set. Decisions never depend on it |
+| Model | Free models on OpenRouter only (ids ending in `:free`, enforced in `model.ts`), live in the public app: explanations, message reading, the ask the agent replies. Up to 10 calls a minute, then labelled template text. Every number is checked against the facts. Decisions never depend on it |
 | Learned components | Trained on seeded synthetic data, labelled as such. Held out metrics asserted in CI |
 | Telemetry and actors | Signed by demo keys. Production: the drone's secure element and the farmer's app |
 

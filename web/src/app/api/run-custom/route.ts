@@ -1,5 +1,5 @@
 import { custom } from "@/engine/scenarios";
-import { demoAuthorised } from "@/engine/chain";
+import { demoAuthorised, publicFisco } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 import { InputError, parseRunInput, type RunInput } from "@/engine/schema";
@@ -52,11 +52,12 @@ export async function POST(req: Request) {
   const lang = pickLang(url.searchParams.get("lang") ?? input.lang);
   // Real chain mode only for a caller holding the demo token. Everyone else gets the simulation.
   const real = demoAuthorised(req.headers);
+  const fiscoOnly = !real && (await publicFisco());
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const ev of custom(input, { fast, real, lang, signal: req.signal })) {
+        for await (const ev of custom(input, { fast, real: real || fiscoOnly, fiscoOnly, lang, signal: req.signal })) {
           controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
         }
       } catch (e) {

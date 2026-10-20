@@ -231,10 +231,32 @@ export function demoAuthorised(headers: Headers): boolean {
   return headers.get("x-zishi-demo") === token;
 }
 
-export function makeChain(opts: { real?: boolean } = {}): Chain {
+// Public FISCO mode: with ZISHI_PUBLIC_FISCO=1 and the FISCO target set, a visitor without the demo
+// token runs on the real FISCO BCOS chain instead of the simulation. FISCO charges no gas, so each
+// run signs with a fresh random key (no funds at risk, no nonce clash between runs). If the node does
+// not answer within 3 seconds the run falls back to the labelled simulation.
+let fiscoUp: { at: number; up: boolean } | null = null;
+export async function publicFisco(): Promise<boolean> {
+  const cfg = fiscoConfig();
+  if (process.env.ZISHI_PUBLIC_FISCO !== "1" || !cfg) return false;
+  if (fiscoUp && Date.now() - fiscoUp.at < 30_000) return fiscoUp.up;
+  let up = false;
+  try {
+    const res = await fetch(cfg.rpc, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }), signal: AbortSignal.timeout(3000) });
+    up = typeof ((await res.json()) as { result?: string }).result === "string";
+  } catch { up = false; }
+  fiscoUp = { at: Date.now(), up };
+  return up;
+}
+
+export function makeChain(opts: { real?: boolean; fiscoOnly?: boolean } = {}): Chain {
   const pk = process.env.SURETY_PRIVATE_KEY as `0x${string}` | undefined;
   const rpc = process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";
   const fisco = fiscoConfig();
+  if (opts.fiscoOnly && fisco) {
+    const fresh = keccak256(toHex(`zishi-public-run:${Date.now()}:${Math.random()}:${Math.random()}`));
+    return new RealChain(fresh, fisco.rpc, fiscoNet(fisco));
+  }
   const mirror = fisco ? new RealChain(fisco.pk, fisco.rpc, fiscoNet(fisco)) : undefined;
   if (opts.real && pk && realChainAvailable()) return new RealChain(pk, rpc, BASE_SEPOLIA, mirror);
   if (opts.real && mirror) return mirror; // FISCO only: the consortium ledger is the one chain

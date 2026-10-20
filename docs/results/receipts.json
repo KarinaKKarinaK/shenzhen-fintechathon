@@ -1,0 +1,69 @@
+{
+  "ranAt": "2026-10-20T12:54:51.658Z",
+  "script": "web/scripts/verify-all.ts (pnpm verify:all)",
+  "checks": "receipt exists, status success, block matches the source where recorded, IntentLog.commit calldata carries the recorded intent hash",
+  "total": 228,
+  "verified": 228,
+  "failed": 0,
+  "skipped": 0,
+  "intentHashesMatched": 46,
+  "sources": [
+    {
+      "name": "Base Sepolia deployments",
+      "chain": "base",
+      "claimed": 7,
+      "verified": 7,
+      "failed": 0
+    },
+    {
+      "name": "Base Sepolia full job",
+      "chain": "base",
+      "claimed": 21,
+      "verified": 21,
+      "failed": 0
+    },
+    {
+      "name": "Base Sepolia captured run real-run-2026-10-20.sse",
+      "chain": "base",
+      "claimed": 40,
+      "verified": 40,
+      "failed": 0
+    },
+    {
+      "name": "Base Sepolia evidence run-2026-10-20T11-58-26-050Z.json",
+      "chain": "base",
+      "claimed": 39,
+      "verified": 39,
+      "failed": 0
+    },
+    {
+      "name": "FISCO mirror in dual run run-2026-10-20T11-58-26-050Z.json",
+      "chain": "fisco",
+      "claimed": 15,
+      "verified": 15,
+      "failed": 0
+    },
+    {
+      "name": "FISCO BCOS deployments",
+      "chain": "fisco",
+      "claimed": 12,
+      "verified": 12,
+      "failed": 0
+    },
+    {
+      "name": "FISCO BCOS full job",
+      "chain": "fisco",
+      "claimed": 16,
+      "verified": 16,
+      "failed": 0
+    },
+    {
+      "name": "FISCO BCOS evidence fisco/run-2026-10-20T11-21-48-467Z.json",
+      "chain": "fisco",
+      "claimed": 78,
+      "verified": 78,
+      "failed": 0
+    }
+  ],
+  "failures": []
+}

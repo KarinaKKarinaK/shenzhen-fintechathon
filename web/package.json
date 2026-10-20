@@ -10,6 +10,7 @@
     "test": "tsx src/engine/selfcheck.ts",
     "evidence": "tsx scripts/evidence.ts",
     "verify": "tsx scripts/verify.ts",
+    "verify:all": "tsx scripts/verify-all.ts",
     "fisco": "tsx scripts/fisco.ts",
     "bench": "tsx scripts/bench.ts",
     "charts": "tsx scripts/charts.ts",
@@ -17,6 +18,7 @@
     "shots": "tsx scripts/shots.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "3.0.74",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@react-three/postprocessing": "3.0.4",

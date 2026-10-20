@@ -1,5 +1,5 @@
 import { SCENARIOS } from "@/engine/scenarios";
-import { demoAuthorised } from "@/engine/chain";
+import { demoAuthorised, publicFisco } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
 import { append, chainHead, newRunId } from "@/engine/replay/log";
@@ -17,13 +17,15 @@ export async function GET(req: Request) {
   const lang = pickLang(url.searchParams.get("lang"));
   // Real chain mode only for a caller holding the demo token. Everyone else gets the simulation.
   const real = demoAuthorised(req.headers);
+  // No token: the real FISCO BCOS chain when the public FISCO mode is on and the node answers.
+  const fiscoOnly = !real && (await publicFisco());
   const gen = SCENARIOS[name] ?? SCENARIOS.fleet;
   const runId = newRunId(name);
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const ev of gen({ fast, real, lang })) {
+        for await (const ev of gen({ fast, real: real || fiscoOnly, fiscoOnly, lang })) {
           append(runId, ev);
           controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
         }
