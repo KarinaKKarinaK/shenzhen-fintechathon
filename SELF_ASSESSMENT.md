@@ -4,6 +4,8 @@ Zishi, 2026 Shenzhen International FinTech Competition, International Track, Top
 
 ## 01 Permission Model
 
+### Roles, operations and permission boundaries
+
 **Who can do what.** Four tiers, enforced in `PolicyEngine.evaluate()` (`web/src/engine/policy.ts`) on every signed intent, and again on chain by the contracts.
 
 | Tier | Who | Can | Cannot |
@@ -30,6 +32,20 @@ Zishi, 2026 Shenzhen International FinTech Competition, International Track, Top
 | Operator to engine | Cap and top up | Operator only rule, button step, demo token on the route, band check |
 | Learned components to engine | Risk score, anomaly score, plan, strategy numbers | Scores can only add a hold; plan re-checked per job by `economics()`; the ratchet cannot cross the reserve rule |
 
+### Confirmation, verification and rollback mechanisms
+
+| Mechanism | What it does | Where |
+|---|---|---|
+| Typed signature on every intent | Every action is an EIP-712 intent; the signer is recovered and must be the actor's key, the hash must be unspent | `policy.ts` signature and replay lines, `Bond.sol` spent set |
+| Policy before money | 21 rule lines run before anything moves; a failed line means nothing moves | `PolicyEngine.evaluate()` |
+| Human confirmation for L3 | Cap and top up changes need the operator's button step, one displayed action at a time, behind the demo token | `/api/button`, operator only rule |
+| Farmer confirmation | A fee is released only after the verifier confirms the job on chain | `JobBoard.confirm` |
+| 24 hour hold and flag | Part of every fee is held; the farmer can flag bad work for a human arbiter inside the window | `JobBoard.flag`, `releaseHold` |
+| Oracle hold | An implausible or incomplete flight log keeps the fee locked instead of paying | `oracle.ts`, scenario hold branch |
+| Rollback by contract | A job that cannot start is cancelled on chain and the farmer gets the whole fee back (`JobBoard.cancel`); a failed call is retried with a fresh nonce, a revert goes to compensation | `settle.ts` recovery states, drills in `web/evidence/fisco/recovery-*.json` |
+| Freeze | The lender can freeze the lease on a slash or tampered data | `Lease.freeze` |
+| Audit head | The hash chained event log's head is committed to the FISCO IntentLog at the end of each real run | `anchorAuditHead` in `chain.ts` |
+
 **Threat model (STRIDE), per asset.**
 
 | Threat | Example against Zishi | Control | Evidence |
@@ -45,6 +61,8 @@ Zishi, 2026 Shenzhen International FinTech Competition, International Track, Top
 
 ## 02 Security Tests
 
+### Prompt injection, social engineering, privilege escalation and failure recovery tests
+
 | Test | What it covers | Where | Result |
 |---|---|---|---|
 | Attack set | 52 cases at three layers: message (injection, impersonation, payee in text, Chinese variants), policy (over cap, off allowlist, lookalike, replay, forged signer), contract (slash rules, not a party, proof reuse, not in log) | `web/src/engine/attacks.ts`, run in `pnpm test` and on every load of the Evidence page | 52 of 52 blocked by the full pipeline; see `docs/RED_TEAM.md` (generated) |
@@ -59,11 +77,22 @@ Zishi, 2026 Shenzhen International FinTech Competition, International Track, Top
 | Static analysis | Slither 0.11.6 over every contract, v1 and v2 | `docs/SECURITY_SCAN.md`, `web/scripts/security-scan.sh` | 42 findings triaged: 0 true issues of medium or higher; v1 Lease.pay reentrancy accepted with reason (balance cut before the call) |
 | Dependencies | `pnpm audit` on the app | `docs/SECURITY_SCAN.md` | 0 vulnerabilities in production dependencies; one dev only lint dependency without a patched version, accepted |
 | Secrets | gitleaks over the whole git history and the working tree | `docs/SECURITY_SCAN.md` | 0 leaks; keys live only in gitignored local files and deployment secrets |
+| Failure recovery | Retry then success, revert then compensation, retries exhausted; drilled on chain with `ZISHI_FAULT=confirm-once` and `start-revert` | `selfcheck.ts` recovery check, `web/evidence/fisco/recovery-*.json` | Both drills passed; the farmer got the whole fee back by `JobBoard.cancel` |
 | Route auth | The L3 button and real mode refuse without the demo token | `selfcheck.ts` | Refused |
 
 Run all of it: `cd web && pnpm test && pnpm lint`, `cd contracts && forge test`.
 
 ## 03 Data and Privacy
+
+### Data provenance, consent, minimisation, storage and deletion
+
+| Aspect | In this build | In production |
+|---|---|---|
+| Provenance | Job offers, flight logs and messages are synthetic and labelled; the out of domain oracle check uses 92 public PX4 flight logs (CC-BY, credited by log id); the FATE data is seeded and synthetic | Signed flight logs from the drone's secure element, job terms signed by the farmer |
+| Consent | No real person's data is processed | Consent in the job terms for the parties of the job; the pilot consents to credit scoring by the lessor |
+| Minimisation | On chain only hashes, addresses and amounts in demo units; the model receives only the numbers of one decision | Same; field coordinates never leave the parties |
+| Storage | Nothing personal is stored; uploaded jobs are processed in memory for one run; the run log lives in server memory; committed evidence files hold synthetic data and hashes only | Job data with the parties and the lessor, under the lessor's retention policy |
+| Deletion | In memory logs end with the server instance; evidence files are synthetic | Deletion on request off chain; on chain hashes cannot be reversed to personal data |
 
 **On chain, hashes only.** `IntentLog` stores an intent hash, a job id hash, the committing address and a time. No field location, telemetry, name or phone number goes on chain. The full intent is delivered only to the parties of the job (farmer, pilot, lender, vendor). This is how the design meets the Personal Information Protection Law (PIPL) and the Data Security Law: field coordinates can be personal or business data, so they stay among the parties.
 
@@ -97,7 +126,9 @@ Run all of it: `cd web && pnpm test && pnpm lint`, `cd contracts && forge test`.
 
 ## 04 Known Risks
 
-| Risk | Status | Where | Planned fix |
+### Risk, impact, mitigation and planned improvement
+
+| Risk | Impact and mitigation today | Where | Planned improvement |
 |---|---|---|---|
 | `IntentLog.commit` can be front run | Fixed in V2 on FISCO BCOS, open on the Base Sepolia v1 deployment. V2: `IntentLogV2` accepts a commit only from the agent JobBoard lists for the job and keys entries by (agent, hash); `BondV2` also slashes an agent that skipped the commit on a job it ran. Demonstrated on FISCO (`contracts/deployments/fisco-v2.json`), 16 Foundry tests. In v1: `commit` is permissionless and first writer wins per hash with `agentOf = msg.sender`. Anyone who sees an intent hash can commit it first, and `slashByProof` then fails "not in log". A compromised agent can also simply not commit. Mitigation today: the engine commits before the policy engine decides, and parties receive the full intent | `contracts/src/IntentLog.sol` | Redeploy V2 on Base Sepolia |
 | Actor keys in software | Random per server instance and in memory (fixed only for tests and replays); still software keys on one server, not a secure element per actor | `keys.ts`, `/api/keys` | Per actor keys in secure hardware, one signer per party |

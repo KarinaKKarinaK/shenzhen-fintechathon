@@ -4,7 +4,7 @@ Pitch deck text, twelve slides, under ten minutes. The slides are `docs/Zishi_Pi
 
 ## 1. Title
 
-Zishi 自食其力. A wallet for a drone on hire purchase. The AI participates, the money rules live in code. 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F: AI as a Financial Participant. Built on WeBank's FISCO BCOS and FATE.
+Zishi 自食其力. A wallet for a drone on hire purchase. The AI participates, the money rules live in code. 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F: Agent Wallet (theme: AI as a Financial Participant). Built on WeBank's FISCO BCOS and FATE.
 
 Live demo: zishi-fintechathon.vercel.app
 

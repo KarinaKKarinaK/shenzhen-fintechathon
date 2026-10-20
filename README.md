@@ -30,7 +30,7 @@
 
 Zishi is a wallet for a machine. An agricultural drone on hire purchase earns per mu sprayed, repays its lender from every fee, fills a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. **Money decisions are made in code. The model explains, it never decides.**
 
-Entry to the 2026 Shenzhen International FinTech Competition, International Track, Topic F: AI as a Financial Participant.
+Entry to the 2026 Shenzhen International FinTech Competition, International Track, Topic F: Agent Wallet (theme: AI as a Financial Participant).
 
 **Built on WeBank's stack.** The same four contracts run on **FISCO BCOS**, WeBank's consortium chain, as the licensed lender's ledger, and every intent is committed there with the same hash as on public Base Sepolia. Three lenders train the pilot credit model together in **FATE** without sharing a single repayment record, and that model's fingerprint is pinned on FISCO. [How it works](#built-on-webanks-stack-fisco-bcos-and-fate), [FISCO evidence](docs/FISCO_EVIDENCE.md), [FATE experiment](fate/README.md).
 

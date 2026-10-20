@@ -22,6 +22,8 @@ DOCS = [
     ("docs/JUDGES_GUIDE.md", "Judges guide"),
     ("docs/EXECUTION_EVIDENCE.md", "Execution evidence"),
     ("docs/FISCO_EVIDENCE.md", "FISCO BCOS evidence"),
+    ("docs/EXECUTION_EVIDENCE_SUMMARY.md", "Execution evidence, official template"),
+    ("SUBMISSION.md", "Submission index"),
     ("docs/RED_TEAM.md", "Red team report"),
     ("docs/EVALUATION.md", "Evaluation"),
     ("docs/DECK.md", "Deck"),

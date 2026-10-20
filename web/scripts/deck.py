@@ -1,23 +1,35 @@
-"""Builds the Zishi pitch deck from one slide spec.
+"""Builds the Zishi pitch deck on the official FinTechathon template.
 
-Outputs docs/Zishi_Pitch_Deck.pptx (python-pptx, speaker notes included) and
-docs/pdf/Zishi_Pitch_Deck.pdf (the same layout as HTML, printed by the system Chrome).
+Reads docs/template/presentation-template.pptx (from fintechathon.g-ican.com/templates/presentation-template.pptx),
+keeps its cover, contents and THANKS slides and its layouts, drops its sample slide, and adds the content slides
+on the template's content layout (dark banner with the FinTechathon logo, white body).
+Outputs docs/Zishi_Pitch_Deck.pptx (speaker notes included) and docs/pdf/Zishi_Pitch_Deck.pdf, drawn from that same
+pptx (template backgrounds, every shape at its position) and printed by the system Chrome.
 Every number on the slides comes from README.md "By the numbers", docs/EXECUTION_EVIDENCE.md,
 SELF_ASSESSMENT.md and web/evidence/fisco/settled-run-*.json.
 
-Run: python web/scripts/deck.py [--png DIR]   (needs python-pptx and pillow)
+Run: python web/scripts/deck.py [--png DIR]   (needs python-pptx, pillow, Google Chrome; --png also needs pdftoppm)
 """
-import html, json, subprocess, sys, tempfile
+import json, subprocess, sys, tempfile
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+TEMPLATE = DOCS / "template/presentation-template.pptx"
 W, H = 13.333, 7.5
-RED, INK, GOLD, BG, GREY, CARD, LINE = "c8102e", "1a1a1a", "d4a017", "f7f3ec", "5c5c5c", "ffffff", "e4ddd0"
+# template palette: the banner's red, the contents slide's blue 6779C6, white body
+RED, INK, GOLD, GREY, CARD, LINE = "c8102e", "1a1a1a", "6779c6", "5c5c5c", "ffffff", "dfe2ee"
 FONT = "Arial"
 M = 0.75  # side margin, inches
+DY = -0.5  # content moved up: the template banner ends at 1.17 in
+
+# cover and contents text
+TEAM = "Zishi"
+TRACK = "International AI Track, Topic F: Agent Wallet"
+DATE = "20 October 2026"
+URL = "zishi-fintechathon.vercel.app"
+CONTENTS = ["The pilot", "How it works", "Live demo", "Safety", "On chain", "Proof and next"]
 
 # fisco settled run: read the numbers straight from the evidence file
 _settled = sorted((ROOT / "web/evidence/fisco").glob("settled-run-*.json"))[-1]
@@ -48,7 +60,9 @@ def I(x, y, w, path, crop=None):
     return dict(k="i", x=x, y=y, w=w, h=w * im.height / im.width, path=str(out))
 
 def header(kicker, title, tsize=34):
-    return [T(M, 0.55, 11.5, 0.35, kicker.upper(), 13, RED, True), T(M, 0.88, 11.8, 1.0, title, tsize, INK, True)]
+    # sits in the template banner (dark, 1.17 in tall); the FinTechathon logo takes the right 2.5 in
+    return [dict(T(0.48, 0.17, 9.9, 0.3, kicker.upper(), 12, "ff6b8b", True), fixed=True),
+            dict(T(0.48, 0.45, 10.0, 0.6, title, 24, "ffffff", True), fixed=True)]
 
 def stat(x, y, w, big, label, color=RED, bsize=40, lsize=15):
     return [R(x, y, 0.06, 1.55, color), T(x + 0.25, y - 0.05, w - 0.25, 0.8, big, bsize, INK, True),
@@ -65,10 +79,10 @@ def slide(els, notes):
     SLIDES.append(dict(els=els, notes=notes))
 
 # 1 title
-slide([I(0, 0.35, W, DOCS / "brand/banner.png"),
-       T(M + 0.35, 4.75, 11.5, 0.5, "A wallet for a drone on hire purchase. The AI participates, the money rules live in code.", 18, INK),
-       T(M + 0.35, 5.45, 11.5, 0.9, "2026 Shenzhen International FinTech Competition (FinTechathon)\nInternational Track, Topic F: AI as a Financial Participant. Built on WeBank's FISCO BCOS and FATE.", 14, GREY, space=2),
-       T(M + 0.35, 6.4, 11.5, 0.4, "Live demo  zishi-fintechathon.vercel.app", 15, RED, True)],
+# on the template cover: project name and team name are the template's own fields, set in build_pptx
+slide([T(0.74, 5.12, 6.6, 0.6, "A wallet for a drone on hire purchase. The AI participates, the money rules live in code.", 16, "ffffff", space=2),
+       T(0.80, 6.1, 8.0, 0.5, f"{TRACK}  |  {DATE}\nBuilt on WeBank's FISCO BCOS and FATE.", 14, "dfe2ee", space=2),
+       T(0.80, 6.65, 8.0, 0.3, f"Live demo  {URL}", 15, "ff6b8b", True)],
       "Zishi, 自食其力, means to live by your own labour. It is software that lets a machine pay for itself. "
       "Our first machine is an agricultural spraying drone on hire purchase. The AI is a real financial participant: "
       "it plans jobs, signs payment intents and repays a lender, but every money rule lives in code and on chain. (30 seconds)")
@@ -104,8 +118,8 @@ slide(header("Live demo", "One drone, five moments, about three minutes")
 # 5 ask the agent
 def bubble(y, who, text, h, agent):
     x = M + (1.2 if agent else 0)
-    return [R(x, y, 7.3, h, CARD if agent else "efe6d6", LINE), R(x, y, 0.06, h, RED if agent else GOLD),
-            T(x + 0.25, y + 0.1, 6.9, 0.35, who, 12, RED if agent else "8a6d00", True),
+    return [R(x, y, 7.3, h, CARD if agent else "eef0fa", LINE), R(x, y, 0.06, h, RED if agent else GOLD),
+            T(x + 0.25, y + 0.1, 6.9, 0.35, who, 12, RED if agent else "4a5bb0", True),
             T(x + 0.25, y + 0.42, 6.9, h - 0.5, text, 15, INK)]
 slide(header("Ask the agent why", "The pilot can question a decision")
       + bubble(2.15, "PILOT", "Why was this job declined?", 0.95, False)
@@ -203,77 +217,144 @@ slide(header("Honest about what is real", "What runs today, and what comes next"
       "The drone is the first machine; the same rail fits any machine whose paid work can be verified. Try it at the live demo. Thank you. (50 seconds)")
 
 
-# ---------- common frame ----------
-def frame(i):
-    els = [R(0, 0, W, H, BG)]
-    if i > 0:
-        els += [R(0, H - 0.09, W * 0.7, 0.09, RED), R(W * 0.7, H - 0.09, W * 0.3, 0.09, GOLD),
-                T(W - M - 2.0, H - 0.5, 2.0, 0.3, f"{i + 1} / {len(SLIDES)}", 11, GREY, align="right"),
-                T(M, H - 0.5, 4.0, 0.3, "Zishi 自食其力", 11, GREY)]
-    else:
-        els += [R(0, H - 0.09, W * 0.7, 0.09, RED), R(W * 0.7, H - 0.09, W * 0.3, 0.09, GOLD)]
-    return els
-
-
-# ---------- pptx ----------
+# ---------- pptx on the template ----------
 def build_pptx(out):
     from pptx import Presentation
     from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
     from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
     from pptx.enum.shapes import MSO_SHAPE
-    prs = Presentation()
-    prs.slide_width, prs.slide_height = Inches(W), Inches(H)
-    for i, s in enumerate(SLIDES):
-        sl = prs.slides.add_slide(prs.slide_layouts[6])
-        for e in frame(i)[:1] + s["els"] + frame(i)[1:]:
-            if e["k"] == "r":
-                sh = sl.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(e["x"]), Inches(e["y"]), Inches(e["w"]), Inches(e["h"]))
-                sh.fill.solid(); sh.fill.fore_color.rgb = RGBColor.from_string(e["fill"])
-                if e["line"]:
-                    sh.line.color.rgb = RGBColor.from_string(e["line"]); sh.line.width = Pt(0.75)
-                else:
-                    sh.line.fill.background()
-                sh.shadow.inherit = False
-            elif e["k"] == "i":
-                sl.shapes.add_picture(e["path"], Inches(e["x"]), Inches(e["y"]), Inches(e["w"]), Inches(e["h"]))
+    prs = Presentation(TEMPLATE)
+    cover, toc, sample, thanks = list(prs.slides)
+    ids = prs.slides._sldIdLst
+
+    def drop(slide):
+        for sid in list(ids):
+            if prs.part.related_part(sid.rId) is slide.part:
+                prs.part.drop_rel(sid.rId); ids.remove(sid)
+
+    def put(sl, e, dy=0.0):
+        y = e["y"] + (0 if e.get("fixed") else dy)
+        if e["k"] == "r":
+            sh = sl.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(e["x"]), Inches(y), Inches(e["w"]), Inches(e["h"]))
+            sh.fill.solid(); sh.fill.fore_color.rgb = RGBColor.from_string(e["fill"])
+            if e["line"]:
+                sh.line.color.rgb = RGBColor.from_string(e["line"]); sh.line.width = Pt(0.75)
             else:
-                tb = sl.shapes.add_textbox(Inches(e["x"]), Inches(e["y"]), Inches(e["w"]), Inches(e["h"]))
-                tf = tb.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.TOP
-                tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
-                for j, line in enumerate(e["text"].split("\n")):
-                    p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
-                    p.alignment = {"left": PP_ALIGN.LEFT, "right": PP_ALIGN.RIGHT, "center": PP_ALIGN.CENTER}[e["align"]]
-                    p.space_after = Pt(e["space"]); p.line_spacing = 1.1
-                    r = p.add_run(); r.text = line
-                    f = r.font; f.size = Pt(e["size"]); f.bold = e["bold"]; f.name = FONT
-                    f.color.rgb = RGBColor.from_string(e["color"])
+                sh.line.fill.background()
+            sh.shadow.inherit = False
+        elif e["k"] == "i":
+            sl.shapes.add_picture(e["path"], Inches(e["x"]), Inches(y), Inches(e["w"]), Inches(e["h"]))
+        else:
+            tb = sl.shapes.add_textbox(Inches(e["x"]), Inches(y), Inches(e["w"]), Inches(e["h"]))
+            tf = tb.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.TOP
+            tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
+            for j, line in enumerate(e["text"].split("\n")):
+                p = tf.paragraphs[0] if j == 0 else tf.add_paragraph()
+                p.alignment = {"left": PP_ALIGN.LEFT, "right": PP_ALIGN.RIGHT, "center": PP_ALIGN.CENTER}[e["align"]]
+                p.space_after = Pt(e["space"]); p.line_spacing = 1.1
+                r = p.add_run(); r.text = line
+                f = r.font; f.size = Pt(e["size"]); f.bold = e["bold"]; f.name = FONT
+                f.color.rgb = RGBColor.from_string(e["color"])
+
+    def retext(shape, text, size=None, width=None):
+        # keep the template's run formatting, swap the words
+        p = shape.text_frame.paragraphs[0]
+        runs = p.runs
+        runs[0].text = text
+        for r in runs[1:]:
+            r._r.getparent().remove(r._r)
+        if size:
+            runs[0].font.size = Pt(size)
+        if width:
+            shape.width = Inches(width)
+
+    # cover: the template's two fields (作品名 project name, 团队名 team name) plus track, date, demo link
+    title_box, team_box = list(cover.shapes)
+    retext(title_box, "Zishi 自食其力")
+    title_box.top = Inches(4.5)
+    retext(team_box, f"Team {TEAM}", 18)
+    team_box.top = Inches(5.68)
+    first = SLIDES[0]
+    for e in first["els"]:
+        put(cover, e)
+    cover.notes_slide.notes_text_frame.text = first["notes"]
+
+    # contents: the template's six numbered entries
+    boxes = {sh.text_frame.text: [] for sh in toc.shapes}
+    for sh in toc.shapes:
+        boxes[sh.text_frame.text].append(sh)
+    for sh, label in zip(boxes["目录内容"], CONTENTS):
+        retext(sh, label, 22, 2.6)
+        sh.top = sh.top + Inches(0.08)
+    toc.notes_slide.notes_text_frame.text = "Six parts: the pilot, how it works, the live demo, safety, on chain, proof and next. (5 seconds, or skip)"
+
+    layout = next(l for l in prs.slide_layouts if l.name == "标题和内容")
+    n = len(SLIDES) + 2
+    for i, s in enumerate(SLIDES[1:], start=2):
+        sl = prs.slides.add_slide(layout)
+        for e in s["els"]:
+            put(sl, e, DY)
+        put(sl, T(M, H - 0.45, 4.0, 0.3, "Zishi 自食其力", 11, GREY))
+        put(sl, T(W - M - 2.0, H - 0.45, 2.0, 0.3, f"{i + 1} / {n}", 11, GREY, align="right"))
         sl.notes_slide.notes_text_frame.text = s["notes"]
+
+    # THANKS last, with the demo link
+    put(thanks, T(0.85, 5.9, 8.0, 0.4, f"Live demo  {URL}", 18, "ffffff", True))
+    thanks.notes_slide.notes_text_frame.text = "Thank you. Questions welcome; the live demo is open at " + URL + "."
+    for sid in list(ids):
+        if prs.part.related_part(sid.rId) is thanks.part:
+            ids.remove(sid); ids.append(sid)
+    drop(sample)  # last, so new slide part names do not clash with the template's
     prs.save(out)
 
 
-# ---------- html / pdf ----------
-def build_html(only=None):
-    px = 96
+# ---------- pdf / png: the built pptx drawn as HTML, printed by the system Chrome ----------
+# No office renderer here (Keynote scripting fails on this machine), so each slide is redrawn from the pptx itself:
+# the layout's background picture from the template, then every shape at its exact position, size, font size and colour.
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+
+def pptx_html(pptx, only=None):
+    import base64, html
+    from pptx import Presentation
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+    from pptx.enum.dml import MSO_COLOR_TYPE
+    prs = Presentation(pptx)
+    px = 96 / 914400  # emu to css px
+    uri = lambda blob, ct: f"data:{ct};base64,{base64.b64encode(blob).decode()}"
     pages = []
-    for i, s in enumerate(SLIDES):
+    for i, sl in enumerate(prs.slides):
         if only is not None and i != only:
             continue
         divs = []
-        for e in frame(i)[:1] + s["els"] + frame(i)[1:]:
-            pos = f"left:{e['x']*px:.1f}px;top:{e['y']*px:.1f}px;width:{e['w']*px:.1f}px;height:{e['h']*px:.1f}px"
-            if e["k"] == "r":
-                border = f"box-shadow:inset 0 0 0 1px #{e['line']};" if e["line"] else ""
-                divs.append(f'<div style="{pos};background:#{e["fill"]};{border}"></div>')
-            elif e["k"] == "i":
-                divs.append(f'<img src="{Path(e["path"]).as_uri()}" style="{pos}">')
-            else:
-                ps = "".join(f'<p style="margin:0 0 {e["space"]*4/3:.1f}px 0">{html.escape(l)}</p>' for l in e["text"].split("\n"))
-                divs.append(f'<div class="t" style="{pos};font-size:{e["size"]*4/3:.2f}px;color:#{e["color"]};'
-                            f'font-weight:{700 if e["bold"] else 400};text-align:{e["align"]}">{ps}</div>')
-        pages.append('<section>' + "".join(divs) + '</section>')
-    css = (f"@page{{size:{W*px:.0f}px {H*px:.0f}px;margin:0}}html,body{{margin:0;background:#{BG}}}"
-           f"section{{position:relative;width:{W*px:.0f}px;height:{H*px:.0f}px;overflow:hidden;page-break-after:always}}"
+        shapes = [sh for sh in sl.slide_layout.shapes if sh.shape_type == MSO_SHAPE_TYPE.PICTURE] + list(sl.shapes)
+        for sh in shapes:
+            pos = f"left:{sh.left*px:.1f}px;top:{sh.top*px:.1f}px;width:{sh.width*px:.1f}px;height:{sh.height*px:.1f}px"
+            if sh.shape_type == MSO_SHAPE_TYPE.PICTURE:
+                divs.append(f'<img src="{uri(sh.image.blob, sh.image.content_type)}" style="{pos}">')
+            elif sh.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
+                fill = f"#{sh.fill.fore_color.rgb}" if sh.fill.type == 1 else "transparent"
+                line = f"box-shadow:inset 0 0 0 1px #{sh.line.color.rgb};" if sh.line.fill.type == 1 else ""
+                divs.append(f'<div style="{pos};background:{fill};{line}"></div>')
+            elif sh.has_text_frame:
+                tf = sh.text_frame
+                nowrap = "white-space:nowrap;" if tf.word_wrap is False or tf._txBody.bodyPr.get("wrap") == "none" else ""
+                ps = []
+                for para in tf.paragraphs:
+                    spans = []
+                    for r in para.runs:
+                        f = r.font
+                        c = f"#{f.color.rgb}" if f.color.type == MSO_COLOR_TYPE.RGB else "#ffffff"
+                        size = (f.size.pt if f.size else 18) * 4 / 3
+                        spans.append(f'<span style="font-size:{size:.1f}px;color:{c};font-weight:{700 if f.bold else 400}">{html.escape(r.text)}</span>')
+                    sa = para.space_after.pt * 4 / 3 if para.space_after is not None else 0
+                    al = {2: "center", 3: "right"}.get(para.alignment, "left") if para.alignment else "left"
+                    ps.append(f'<p style="margin:0 0 {sa:.1f}px 0;text-align:{al}">{"".join(spans) or "&nbsp;"}</p>')
+                divs.append(f'<div class="t" style="{pos};{nowrap}">{"".join(ps)}</div>')
+        pages.append("<section>" + "".join(divs) + "</section>")
+    css = (f"@page{{size:{W*96:.0f}px {H*96:.0f}px;margin:0}}html,body{{margin:0;background:#fff}}"
+           f"section{{position:relative;width:{W*96:.0f}px;height:{H*96:.0f}px;overflow:hidden;page-break-after:always}}"
            f"section>*{{position:absolute;box-sizing:border-box}}.t{{font-family:{FONT},'PingFang SC',sans-serif;line-height:1.15}}")
     return f'<!doctype html><html><head><meta charset="utf-8"><style>{css}</style></head><body>{"".join(pages)}</body></html>'
 
@@ -284,16 +365,15 @@ def chrome(*args):
 
 
 def main():
-    build_pptx(DOCS / "Zishi_Pitch_Deck.pptx")
+    pptx = DOCS / "Zishi_Pitch_Deck.pptx"; pdf = DOCS / "pdf/Zishi_Pitch_Deck.pdf"
+    build_pptx(pptx)
     tmp = Path(tempfile.gettempdir()) / "zishi-deck"; tmp.mkdir(exist_ok=True)
-    page = tmp / "deck.html"; page.write_text(build_html())
-    chrome("--no-pdf-header-footer", f"--print-to-pdf={DOCS / 'pdf/Zishi_Pitch_Deck.pdf'}", page.as_uri())
+    page = tmp / "deck.html"; page.write_text(pptx_html(pptx))
+    chrome("--no-pdf-header-footer", f"--print-to-pdf={pdf}", page.as_uri())
     if "--png" in sys.argv:
         out = Path(sys.argv[sys.argv.index("--png") + 1]); out.mkdir(parents=True, exist_ok=True)
-        for i in range(len(SLIDES)):
-            p = tmp / f"s{i + 1}.html"; p.write_text(build_html(i))
-            chrome("--window-size=1280,720", f"--screenshot={out / f'slide-{i + 1:02d}.png'}", p.as_uri())
-    print(f"{len(SLIDES)} slides: docs/Zishi_Pitch_Deck.pptx, docs/pdf/Zishi_Pitch_Deck.pdf")
+        subprocess.run(["pdftoppm", "-png", "-r", "96", str(pdf), str(out / "slide")], check=True)
+    print(f"{len(SLIDES) + 2} slides: docs/Zishi_Pitch_Deck.pptx, docs/pdf/Zishi_Pitch_Deck.pdf")
 
 
 if __name__ == "__main__":

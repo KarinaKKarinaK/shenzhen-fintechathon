@@ -33,7 +33,7 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 REPO = "https://github.com/KarinaKKarinaK/shenzhen-fintechathon"
 LIVE = "https://zishi-fintechathon.vercel.app"
 TEAM = "Zishi"
-TRACK = "International AI Track, Topic F: AI as a Financial Participant (Agent Wallet)"
+TRACK = "International AI Track, Topic F: Agent Wallet"
 
 # ---------- inputs -------------------------------------------------------------------------
 
@@ -303,7 +303,7 @@ def section_01a(w: Writer):
         ["The agent's vendor (us)", "Posts a bond that pays for the agent's own rule breaks, with a fixed penalty and a daily cap. Earns a rail fee per released job."],
     ], widths=[1.8, 4.9])
     w.h2("Selected topic")
-    w.p("Topic F, AI as a Financial Participant. The agent holds a wallet, earns, repays a loan, posts a bond and can be slashed. It is presented as an inclusive finance (普惠金融) story: credit reaches a pilot who has nothing to pledge because the machine is the borrower and its work is the collateral.")
+    w.p("Topic F, Agent Wallet, under the theme AI as a Financial Participant. The agent holds a wallet, earns, repays a loan, posts a bond and can be slashed. It is presented as an inclusive finance (普惠金融) story: credit reaches a pilot who has nothing to pledge because the machine is the borrower and its work is the collateral.")
 
 
 def section_01b(w: Writer):
