@@ -1,6 +1,6 @@
 # Third party notices
 
-Open source software used by Zishi, with its licence. The full licence texts are in `web/node_modules/<package>/LICENSE` after `pnpm install`, and in `contracts/lib/forge-std/LICENSE-MIT` and `LICENSE-APACHE`. Zishi itself is MIT, see `LICENSE`.
+Open source software used by Zishi, with its licence. The full licence texts are in `web/node_modules/<package>/LICENSE` after `pnpm install`, and in `contracts/lib/forge-std/LICENSE-MIT` and `LICENSE-APACHE`. Zishi itself is under the PolyForm Noncommercial License 1.0.0 (see `LICENSE`); the deployed contracts in `contracts/` are MIT (`contracts/LICENSE`).
 
 ## Application (`web/package.json`)
 
@@ -45,3 +45,11 @@ Open source software used by Zishi, with its licence. The full licence texts are
 | Sourcify | Source verification of the deployed contracts |
 | Vercel | Hosting of the demo |
 | Vercel AI Gateway or Anthropic API, optional | Written explanations only when a key is set; decisions never depend on it |
+
+## Chain and federated learning (run, not vendored)
+
+| Component | Version | Licence | Source |
+|---|---|---|---|
+| FISCO BCOS node | 3.16.3 | Apache-2.0 | https://github.com/FISCO-BCOS/FISCO-BCOS |
+| FATE | 2.2.0 | Apache-2.0 | https://github.com/FederatedAI/FATE |
+| @ai-sdk/openai-compatible | 3.0.74 | Apache-2.0 | https://github.com/vercel/ai |

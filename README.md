@@ -13,7 +13,7 @@
   <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-84%20tests-d4a017">
   <img alt="Attack set" src="https://img.shields.io/badge/attacks-52%20of%2052%20blocked-1a1a1a">
   <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-d4a017">
-  <img alt="Licence" src="https://img.shields.io/badge/licence-MIT-1a1a1a">
+  <img alt="Licence" src="https://img.shields.io/badge/licence-PolyForm%20Noncommercial-1a1a1a">
 </p>
 
 <p align="center">
@@ -456,4 +456,4 @@ SECURITY.md          reporting a vulnerability
 DESIGN.md            product design and economics
 ```
 
-MIT licence. Third party licences in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[PolyForm Noncommercial 1.0.0](LICENSE): free to read, run, test and evaluate for noncommercial purposes; commercial use needs a licence from the team, which keeps the IP. The deployed Solidity contracts in `contracts/` stay MIT, as verified on chain. Third party licences in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
