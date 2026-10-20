@@ -19,7 +19,8 @@ async function main() {
   const rows: EvidenceRow[] = [];
   const proofs: ProofRow[] = [];
   const states: Record<string, { initial: MachineState | null; final: MachineState | null }> = {};
-  for (const [name, gen] of [["fleet", fleet], ["neighbour", neighbour]] as const) {
+  const only = process.env.EVIDENCE_SCENARIOS?.split(","); // e.g. fleet, to keep a real run small
+  for (const [name, gen] of ([["fleet", fleet], ["neighbour", neighbour]] as const).filter(([n]) => !only || only.includes(n))) {
     states[name] = { initial: null, final: null };
     for await (const ev of gen({ fast: true, real }) as AsyncGenerator<EngineEvent>) {
       if (ev.t === "machine") { if (!states[name].initial) states[name].initial = ev.state; states[name].final = ev.state; }

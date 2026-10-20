@@ -197,6 +197,22 @@ The other machines become a single closing line: *"The same rail works for any m
 | Market figures | Each one is checked against its source before going on a slide. |
 | Market section argued for insurance revenue | Replaced with the financing story: a fee per financed machine, a small cut of repayments, and a 2% fee per job. |
 
+### 11. Running the same contracts on FISCO BCOS
+
+**The problem.** WeBank's consortium chain speaks the Ethereum JSON-RPC, but not exactly. Out of the box, forge and viem could not deploy to it.
+
+| What broke | Fix |
+|---|---|
+| solc 0.8.26 emits PUSH0, which FISCO's EVM does not run | A `fisco` Foundry profile with `evm_version = "paris"`; the default profile and its 44 tests are unchanged |
+| The newest official Docker image (3.12.1, amd64 only) crashed under emulation, kept the nonce at 0 and put contracts at other addresses | FISCO 3.16.3, the native arm64 binary, in a plain Ubuntu 24.04 container |
+| FISCO 3.16.4 refuses any Web3 transaction from an account with zero balance | Pinned to 3.16.3; native balances switched on with the chain admin key so value calls work too |
+| The node returns `logsBloom: "0x"`, leaves block header fields out and rejects requests without `params` | `contracts/script/fisco_rpc_proxy.py`, a 60 line shim that fills them in and sends one request at a time |
+| A call to an address with no code fails, so the calldata anchor Base uses cannot work | On FISCO a money event's digest is committed to the IntentLog instead, one contract call per event |
+| `eth_call` and gas estimation ignore the sender, so calls guarded by `msg.sender` fail in simulation | The smoke flow sends with an explicit gas limit where that matters |
+| `block.timestamp` is in milliseconds | Documented; JobBoard's windows need a unit fix before live jobs run there |
+
+**The result.** One script (`contracts/script/fisco.sh`) brings the chain up, deploys, runs a smoke flow with real value and anchors the FATE model hash. The engine commits the same intent hash to Base Sepolia and FISCO in one run. See [FISCO_EVIDENCE.md](FISCO_EVIDENCE.md).
+
 ---
 
 ## What is still open
@@ -205,3 +221,4 @@ The other machines become a single closing line: *"The same rail works for any m
 - **Real losses**: if money actually leaves the wallet, someone has to establish the loss, and a contract can't see that. This is out of the build; the policy engine blocks payments before money moves, so the demo only needs penalties.
 - **The Hard Button**: proposed rule is that anything the pilot approves on the physical button is the pilot's responsibility.
 - **Seasonal minimum** (problem 9): decided but not built.
+- **FISCO in the public demo** (problem 11): the node runs locally, so the live app cannot reach it yet. It needs a hosted node.

@@ -36,6 +36,17 @@ until cast block-number --rpc-url "$RPC" >/dev/null 2>&1; do sleep 1; done
 [ -f "$DIR/deployer.key" ] || cast wallet new --json | python3 -c "import json,sys;d=json.load(sys.stdin);d=d.get('data',d) if isinstance(d,dict) else d;print(d[0]['private_key'])" > "$DIR/deployer.key"
 KEY=$(cat "$DIR/deployer.key"); ME=$(cast wallet address "$KEY")
 
+# 3b. native balances: turn the feature on with the chain admin key build_chain made, then fund the
+# deployer, so payable calls (vendor bond, job fee and refund) move real FISCO value
+ADMIN_PEM=$(ls "$DIR"/nodes/ca/accounts/*.pem | grep -v public | head -1)
+ADMIN=0x$(openssl ec -in "$ADMIN_PEM" -text -noout 2>/dev/null | sed -n '/priv:/,/pub:/p' | grep -v 'priv\|pub' | tr -d ' :\n' | tail -c 64)
+if [ "$(cast balance "$ME" --rpc-url "$RPC")" = 0 ]; then
+  for f in feature_balance feature_balance_precompiled; do
+    cast send 0x0000000000000000000000000000000000001000 "setValueByKey(string,string)" "$f" 1 --rpc-url "$RPC" --private-key "$ADMIN" --legacy --gas-limit 3000000 >/dev/null
+  done
+  cast send 0x0000000000000000000000000000000000001011 "addBalance(address,uint256)" "$ME" 1000000ether --rpc-url "$RPC" --private-key "$ADMIN" --legacy --gas-limit 3000000 >/dev/null
+fi
+
 # 4. deploy with the same script as Base Sepolia, paris EVM (no PUSH0)
 FOUNDRY_PROFILE=fisco forge script script/Deploy.s.sol --rpc-url "$RPC" --private-key "$KEY" --broadcast --legacy --slow >"$DIR/deploy.log"
 RUN=broadcast/Deploy.s.sol/$(cast chain-id --rpc-url "$RPC")/run-latest.json
@@ -48,9 +59,17 @@ send() { local fn=$1; shift; local h; h=$(cast send --rpc-url "$RPC" --private-k
   printf '%s\t%s\n' "$fn" "$(cast receipt "$h" --rpc-url "$RPC" --json)" >>"$DIR/smoke.tsv"; }
 JOB=$(cast keccak "zishi-fisco-smoke-job-$(date +%s)"); INTENT=$(cast keccak "zishi-fisco-smoke-intent-$(date +%s)")
 send "IntentLog.commit" "$LOG" "commit(bytes32,bytes32)" "$JOB" "$INTENT"
-send "Bond.postVendorBond" "$BOND" "postVendorBond(uint256,uint256)" 1ether 2ether
+send "Bond.postVendorBond" "$BOND" "postVendorBond(uint256,uint256)" 1ether 2ether --value 5ether
 send "Bond.register" "$BOND" "register(address,address,address,uint256,uint256,uint256,address[],bytes)" "$ME" "$ME" "$ME" 200ether 50ether 1ether "[]" 0x
 send "Lease.open" "$LEASE" "open(address,address,uint256,uint16,uint16,uint16,uint256)" "$ME" "$ME" 10000ether 500 300 800 100ether
+# A paid job: 60 units locked in JobBoard, then cancelled after its window and refunded. FISCO's
+# block.timestamp is in milliseconds, so a window ending at 1 is long closed.
+BEFORE=$(cast balance "$ME" --rpc-url "$RPC")
+send "JobBoard.post" "$BOARD" "post(address,address,uint256,bytes32,uint64,uint64,bool)" "$ME" 0x000000000000000000000000000000000000dEaD 0 "$JOB" 0 1 false --value 60ether
+[ "$(cast balance "$BOARD" --rpc-url "$RPC")" = 60000000000000000000 ] || { echo "job fee not locked"; exit 1; }
+send "JobBoard.cancel" "$BOARD" "cancel(uint256)" 1   # job ids start at 1
+[ "$(cast balance "$BOARD" --rpc-url "$RPC")" = 0 ] && [ "$(cast balance "$ME" --rpc-url "$RPC")" = "$BEFORE" ] || { echo "refund missing"; exit 1; }
+[ "$(cast balance "$BOND" --rpc-url "$RPC")" = 5000000000000000000 ] || { echo "vendor bond not held"; exit 1; }
 [ "$(cast call "$LOG" "agentOf(bytes32)(address)" "$INTENT" --rpc-url "$RPC")" = "$ME" ] || { echo "IntentLog read back failed"; exit 1; }
 
 # 6. deployments/fisco-bcos.json from the broadcast and the smoke receipts

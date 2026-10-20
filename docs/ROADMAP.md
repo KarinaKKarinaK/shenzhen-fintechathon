@@ -16,7 +16,7 @@ What is built, what is next, and what it would take. Dates are targets, not prom
 | Contracts in the loop | The engine calls Bond, JobBoard and Lease through their ABIs instead of the TypeScript mirrors; the mirrors become the test oracle | A funded key per actor on the test network, about two weeks of work |
 | Real flight logs | Signed logs from a real spraying drone through the same oracle, with the gap between synthetic and real reported | One pilot willing to share logs; a secure element or a signing dongle on the drone |
 | A lessor in a sandbox | One licensed lessor as lender of record for ten drones, Zishi servicing the contract, repayment per mu reported weekly | A sandbox agreement; a bank money settlement rail |
-| Consortium chain | The same contracts on FISCO BCOS with bank money, no public token | Access to a FISCO BCOS node; the contracts need no change beyond the chain id in the EIP-712 domain |
+| Consortium chain | Done locally: the four contracts run on a FISCO BCOS 3.16.3 node and the engine commits every intent there ([evidence](FISCO_EVIDENCE.md)). Next: a hosted node the public demo can reach, JobBoard windows in FISCO's millisecond time, bank money instead of demo units | A FISCO BCOS node with a public RPC, ideally the lender's own consortium group |
 
 ## Six to twelve months
 

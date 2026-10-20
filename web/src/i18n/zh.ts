@@ -114,7 +114,7 @@ export const zh: Dict = {
   panels: {
     kinds: { fee_in: "费用入账", instalment: "分期款", energy: "充电", rail: "通道费", cover: "保障", bond_fill: "保证金注入", slash: "罚没", bounty: "赏金", title: "所有权转移", lock: "费用锁定", release: "释放", refund: "冻结", top_up: "补足", hold: "暂扣", vendor_bond: "供应商保证金", compensation: "赔付", log: "意图上链" },
     txStatus: { pending: "待确认", confirmed: "已确认", finalised: "已最终确认" },
-    onExplorer: "在区块浏览器查看 {hash}", block: "区块 {n}", sim: " 模拟", sent: "发送于 {t}", confirmedAt: "确认于 {t}", finalisedAt: "最终确认于 {t}",
+    onExplorer: "在区块浏览器查看 {hash}", fisco: "同一哈希已写入 FISCO BCOS {hash}", onFisco: "在 FISCO BCOS 上", fiscoBadge: "FISCO", block: "区块 {n}", sim: " 模拟", sent: "发送于 {t}", confirmedAt: "确认于 {t}", finalisedAt: "最终确认于 {t}",
     noTx: "暂无交易。请开始一次运行。", titleWord: "所有权",
     gate: "门控", pending: "待定", hide: "收起", how: "智能体看到的样子",
     gateActions: { pass: "放行", redact: "脱敏", hold: "暂留", refuse: "拒绝" },

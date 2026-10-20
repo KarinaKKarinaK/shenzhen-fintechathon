@@ -5,12 +5,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { createPublicClient, hexToString, http } from "viem";
+import { createPublicClient, decodeFunctionData, hexToString, http, parseAbi } from "viem";
 import { baseSepolia } from "viem/chains";
 import { ADDR } from "../src/engine/keys";
 import type { EvidenceRow } from "./evidence";
 import type { MachineState } from "../src/engine/types";
 
+const COMMIT_ABI = parseAbi(["function commit(bytes32 jobId, bytes32 intentHash)"]);
 const round = (n: number) => Math.round(n * 100) / 100;
 
 async function main() {
@@ -18,7 +19,8 @@ async function main() {
   const runs = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^run-.*\.json$/.test(f) && !f.endsWith(".state.json")).sort() : [];
   if (!runs.length) { console.error("no evidence runs, run pnpm evidence first"); process.exit(1); }
   const latest = runs[runs.length - 1];
-  const rows = JSON.parse(fs.readFileSync(path.join(dir, latest), "utf8")) as EvidenceRow[];
+  // A real tx is recorded at each state (pending, confirmed, finalised) under one hash; keep its last row.
+  const rows = [...new Map((JSON.parse(fs.readFileSync(path.join(dir, latest), "utf8")) as EvidenceRow[]).map((r) => [r.hash, r])).values()];
   const state = JSON.parse(fs.readFileSync(path.join(dir, latest.replace(/\.json$/, ".state.json")), "utf8")) as { states: Record<string, { initial: MachineState; final: MachineState }> };
   let bad = 0;
   const me = ADDR.machine.toLowerCase();
@@ -44,6 +46,15 @@ async function main() {
       let status = "ok";
       try {
         const tx = await client.getTransaction({ hash: r.hash as `0x${string}` });
+        if (r.claim.startsWith("IntentLog.commit")) {
+          // A contract call, not a calldata anchor: decode it and compare the committed hash.
+          const { args } = decodeFunctionData({ abi: COMMIT_ABI, data: tx.input });
+          if (r.intentHash && args[1].toLowerCase() !== r.intentHash.toLowerCase()) status = "HASH MISMATCH";
+          if (Number(tx.blockNumber) !== r.block) status = "BLOCK MISMATCH";
+          if (status !== "ok") bad += 1;
+          table.push({ claim: r.claim.slice(0, 40), kind: r.kind, amount: r.amount, hash: r.hash.slice(0, 14), block: r.block, onChain: status });
+          continue;
+        }
         const body = JSON.parse(hexToString(tx.input)) as { kind: string; amount: number; from: string; to: string };
         if (body.kind !== r.kind || body.amount !== r.amount || body.from !== r.from || body.to !== r.to) status = "CALLDATA MISMATCH";
         if (Number(tx.blockNumber) !== r.block) status = "BLOCK MISMATCH";

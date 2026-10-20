@@ -31,12 +31,15 @@ export function ChainFeed({ txs, compact = false }: { txs: TxView[]; compact?: b
                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDot[status]}`} title={P.txStatus[status]} />
                 <span className="shrink-0 text-sm font-medium">{(P.kinds as Record<string, string>)[tx.kind] ?? tx.kind}</span>
                 <span className="min-w-0 flex-1 truncate text-xs text-muted">{tx.label}</span>
+                {tx.fiscoHash || tx.network === "fisco" ? <span className="shrink-0 rounded border border-gold px-1 text-[10px] text-gold-deep" title={P.onFisco}>{P.fiscoBadge}</span> : null}
                 <span className={`shrink-0 text-sm tabular-nums ${danger.has(tx.kind) ? "text-red" : inbound.has(tx.kind) ? "text-red-deep" : "text-slate"}`}>{tx.kind === "title" ? P.titleWord : `${inbound.has(tx.kind) ? "+" : "-"}${yuan(tx.amount)}`}</span>
               </button>
               {isOpen ? (
                 <div className="mono mt-1 flex flex-wrap gap-x-3 text-[10px] text-muted">
                   {tx.explorer && !tx.simulated ? <a className="underline decoration-gold hover:text-red-deep" href={tx.explorer} target="_blank" rel="noreferrer">{t("panels.onExplorer", { hash: short(tx.hash) })}</a> : <span title={tx.hash}>{short(tx.hash)}</span>}
                   <span>{t("panels.block", { n: tx.block })}{tx.simulated ? P.sim : ""}</span>
+                  {tx.network === "fisco" ? <span className="text-gold-deep">{P.onFisco}</span> : null}
+                  {tx.fiscoHash ? <span className="text-gold-deep" title={tx.fiscoHash}>{t("panels.fisco", { hash: short(tx.fiscoHash) })}</span> : null}
                   <span>{P.txStatus[status]}</span>
                   <span>{t("panels.sent", { t: timeOf(tx.seenAt) })}</span>
                   {status === "finalised" ? <span className="text-gold-deep">{t("panels.finalisedAt", { t: timeOf(tx.finalisedAt) })}</span> : null}

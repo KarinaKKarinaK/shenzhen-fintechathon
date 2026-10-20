@@ -42,6 +42,9 @@ def load_json(p: Path):
 
 R = {k: load_json(DOCS / "results" / f"{k}.json") for k in ["classifier", "oracle", "economics", "ratchet", "credit", "drift"]}
 DEPLOY = load_json(ROOT / "contracts" / "deployments" / "base-sepolia.json")
+FISCO = load_json(ROOT / "contracts" / "deployments" / "fisco-bcos.json")
+FATE = load_json(ROOT / "fate" / "results.json")
+FISCO_EVIDENCE = (DOCS / "FISCO_EVIDENCE.md").read_text(encoding="utf8")
 EVIDENCE = (DOCS / "EXECUTION_EVIDENCE.md").read_text(encoding="utf8")
 RED = (DOCS / "RED_TEAM.md").read_text(encoding="utf8")
 
@@ -386,7 +389,24 @@ def section_02b(w: Writer):
         ["Lease", "Hire purchase, freeze, title", DEPLOY["contracts"]["Lease"]["address"]],
         ["Sourcify", "Source verification of the four contracts, exact match", "https://sourcify.dev"],
         ["Vercel", "Hosting of the demo", LIVE],
+        [f"FISCO BCOS {FISCO['nodeVersion']}, chain id {FISCO['chainId']}", "WeBank's consortium chain, the lender's ledger: the same four contracts, every intent committed to its IntentLog", f"IntentLog {FISCO['contracts']['IntentLog']['address']}"],
+        [f"FATE {FATE['fate_version']}", "WeBank's federated learning framework: three lenders train one pilot credit model", "offline, fate/run.sh"],
     ], widths=[1.5, 3.0, 2.2], font=8)
+
+    # Every figure below comes from contracts/deployments/fisco-bcos.json, docs/FISCO_EVIDENCE.md and fate/results.json.
+    fm = re.search(r"(\d+) transactions, (\d+) with a successful receipt in the recorded block, (\d+) IntentLog commits, (\d+) of them read back", FISCO_EVIDENCE)
+    dual = re.search(r"(\d+) of (\d+) pairs have a successful receipt on both chains", FISCO_EVIDENCE)
+    m = FATE["metrics_on_held_out"]; pe = FATE["prior_effect"]["rateErrorBps"]["after_0_jobs"]
+    w.h2("Built on WeBank's stack: FISCO BCOS and FATE")
+    w.bullets([
+        f"FISCO BCOS. The four contracts run unchanged on a FISCO BCOS {FISCO['nodeVersion']} node in Docker, compiled with evm_version {FISCO['evmVersion']} because FISCO's EVM has no PUSH0. The engine reaches it through FISCO's Web3 JSON-RPC with viem, the same code path as Base Sepolia."
+        + (f" A full run sent {fm.group(1)} transactions to FISCO, {fm.group(2)} with a successful receipt; all {fm.group(4)} of {fm.group(3)} IntentLog commits read back with the engine's intent hash." if fm else ""),
+        "Two ledgers, one hash. With both chains set, every intent is committed to the IntentLog on Base Sepolia, public and checkable by anyone, and on FISCO BCOS, the licensed lender's consortium ledger, and the feed shows both hashes."
+        + (f" In one real run {dual.group(1)} of {dual.group(2)} intents have a successful receipt on both chains with the same hash." if dual else ""),
+        f"FATE. Three lenders train one pilot default model with FATE {FATE['fate_version']} HomoLR and secure aggregation, no repayment records shared. Held out AUC goes from {m['local_only_lender_a']['auc']:.3f} for one lender alone to {m['fate_federated']['auc']:.3f} federated; the model sets a new pilot's starting credit score and cuts the instalment share error from {pe['flat_mae']:.0f} to {pe['fate_mae']:.0f} basis points. Data is synthetic and seeded.",
+        f"Model provenance. The FATE model's sha256 is committed to the FISCO IntentLog (tx {FISCO['fateModel']['tx'][:12]}..., block {FISCO['fateModel']['block']}) and read back, so a lender can prove which model priced each pilot.",
+        "Scope. The FISCO node runs locally and is reproduced with contracts/script/fisco.sh; the public demo cannot reach it, so it shows FISCO through the evidence file. FISCO's block time is in milliseconds, so JobBoard's windows need a unit fix before live jobs run there.",
+    ])
 
 
 def section_03a(w: Writer):

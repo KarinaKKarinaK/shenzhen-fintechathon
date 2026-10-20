@@ -263,7 +263,7 @@ flowchart LR
   E -->|same hash| IL2[IntentLog on FISCO BCOS, the lender's consortium chain]
 ```
 
-**FISCO BCOS, the lender's ledger.** The four contracts are deployed on a FISCO BCOS 3.16 chain, compiled with the same solc 0.8.26 source and `evm_version` paris through the `fisco` Foundry profile. The engine has a FISCO target: set `FISCO_RPC_URL`, `FISCO_PRIVATE_KEY` and `FISCO_INTENT_LOG` and every intent is committed to IntentLog on FISCO, next to Base Sepolia when both are set. One full run of the fleet and neighbour scenarios sent 78 transactions to FISCO, all with a successful receipt. Its 30 IntentLog commits were read back from the contract and equal the engine's intent hashes, and 15 of them are the same hashes as in the Base Sepolia run. Same contract, same hash format, two ledgers: the public one for anyone to check, the consortium one for the lender and its regulator. Receipts in [`docs/FISCO_EVIDENCE.md`](docs/FISCO_EVIDENCE.md), addresses in [`contracts/deployments/fisco-bcos.json`](contracts/deployments/fisco-bcos.json).
+**FISCO BCOS, the lender's ledger.** The four contracts are deployed on a FISCO BCOS 3.16.3 chain, compiled with the same solc 0.8.26 source and `evm_version` paris through the `fisco` Foundry profile. The engine has a FISCO target: set `FISCO_RPC_URL`, `FISCO_PRIVATE_KEY` and `FISCO_INTENT_LOG` and every intent is committed to IntentLog on FISCO, next to Base Sepolia when both are set. One full run of the fleet and neighbour scenarios sent 78 transactions to FISCO, all with a successful receipt. Its 30 IntentLog commits were read back from the contract and equal the engine's intent hashes, and 15 of them are the same hashes as in the Base Sepolia run. Then one real fleet run went to both ledgers at once, with the funded Base Sepolia key and the FISCO target set: 15 of 15 intents have a successful receipt on Base and on FISCO, with the same hash in both IntentLogs. Same contract, same hash format, two ledgers: the public one for anyone to check, the consortium one for the lender and its regulator. Value moves on FISCO too: native balances are switched on with the chain admin key, and the smoke flow posts a 5 unit vendor bond, locks a 60 unit job fee in JobBoard and refunds it on cancel, every balance checked. When a run uses FISCO, the transaction feed marks each card FISCO and shows the FISCO hash. Receipts in [`docs/FISCO_EVIDENCE.md`](docs/FISCO_EVIDENCE.md), addresses in [`contracts/deployments/fisco-bcos.json`](contracts/deployments/fisco-bcos.json).
 
 **FATE, credit across lenders.** A new pilot has no history, so the rate band starts from a guess. Three lenders train one pilot credit model with FATE 2.2 homo logistic regression and FATE's secure aggregation; each lender's rows stay in its own process. On a held out set of 3,000 synthetic pilots:
 
@@ -277,11 +277,15 @@ The federated model now sets each pilot's starting credit score in the engine. F
 
 **The model on chain.** The sha256 of the exported FATE model is committed to the FISCO IntentLog, so a lender or regulator can prove which model priced each pilot. The Evidence page shows the prior, the FATE version and the model hash.
 
-Scope, stated plainly: the FISCO chain is a single node we run in Docker, so judges reproduce it with one script rather than click a public explorer; Base Sepolia stays the public proof. FISCO reports block time in milliseconds, so the JobBoard time windows need a unit fix before money flows through JobBoard there; today the engine uses the FISCO IntentLog. FATE trains offline on seeded synthetic data and the live app reads its exported coefficients.
+Scope, stated plainly: the FISCO chain is a single node we run in Docker, so judges reproduce it with one script rather than click a public explorer; Base Sepolia stays the public proof. FISCO reports block time in milliseconds, so JobBoard's start and hold windows would need a unit fix before live jobs run through it there; today the engine uses the FISCO IntentLog, and the smoke job uses an already closed window. The live Vercel app cannot reach a laptop node, so the public demo shows FISCO through this evidence, not live. FATE trains offline on seeded synthetic data and the live app reads its exported coefficients.
 
 ```bash
-bash contracts/script/fisco.sh   # FISCO BCOS node in Docker, deploy the four contracts, smoke calls
-cd web && pnpm fisco             # full run on FISCO, receipts and hashes read back into docs/FISCO_EVIDENCE.md
+bash contracts/script/fisco.sh   # FISCO BCOS node in Docker, deploy, smoke calls with value, FATE model hash on chain
+cd web
+export FISCO_RPC_URL=http://127.0.0.1:8545 FISCO_PRIVATE_KEY=$(cat ../contracts/.fisco/deployer.key)
+export FISCO_INTENT_LOG=$(node -p "require('../contracts/deployments/fisco-bcos.json').contracts.IntentLog.address")
+SURETY_PRIVATE_KEY= JIXIN_REAL=1 pnpm evidence   # full run with FISCO as the only chain
+pnpm fisco                       # every receipt and IntentLog hash read back into docs/FISCO_EVIDENCE.md
 ./fate/run.sh                    # FATE training across three lenders, model export, prior study
 ```
 
@@ -368,7 +372,7 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 | Layer | Status |
 |---|---|
 | Contracts | Deployed and source verified on Base Sepolia, 44 Foundry tests. The engine calls IntentLog; Bond, JobBoard and Lease rules run in mirrors, their calls are next |
-| FISCO BCOS | Four contracts on a local FISCO BCOS 3.16 node; the engine commits every intent there when its env is set. Reproducible with one script |
+| FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; not reachable from the public demo |
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
 | Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |

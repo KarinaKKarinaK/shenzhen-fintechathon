@@ -110,7 +110,7 @@ export const en = {
   panels: {
     kinds: { fee_in: "Fee in", instalment: "Instalment", energy: "Energy", rail: "Rail fee", cover: "Cover", bond_fill: "Bond fill", slash: "Slash", bounty: "Bounty", title: "Title transfer", lock: "Fee locked", release: "Release", refund: "Held", top_up: "Top up", hold: "Hold", vendor_bond: "Vendor bond", compensation: "Compensation", log: "Intent logged" },
     txStatus: { pending: "pending", confirmed: "confirmed", finalised: "finalised" },
-    onExplorer: "{hash} on the explorer", block: "block {n}", sim: " sim", sent: "sent {t}", confirmedAt: "confirmed {t}", finalisedAt: "finalised {t}",
+    onExplorer: "{hash} on the explorer", fisco: "same hash on FISCO BCOS {hash}", onFisco: "on FISCO BCOS", fiscoBadge: "FISCO", block: "block {n}", sim: " sim", sent: "sent {t}", confirmedAt: "confirmed {t}", finalisedAt: "finalised {t}",
     noTx: "No transactions yet. Start a run.", titleWord: "title",
     gate: "gate", pending: "pending", hide: "hide", how: "How the agent sees it",
     gateActions: { pass: "pass", redact: "redact", hold: "hold", refuse: "refuse" },

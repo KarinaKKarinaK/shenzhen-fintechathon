@@ -23,7 +23,7 @@ const ABI = [
 const short = (h: string) => `${h.slice(0, 10)}…${h.slice(-4)}`;
 
 async function main() {
-  const dep = JSON.parse(readFileSync(join(ROOT, "contracts", "deployments", "fisco-bcos.json"), "utf8")) as { chainId: number; nodeVersion: string; evmVersion: string; deployer: string; group: string; contracts: Record<string, { address: string; tx: string; gasUsed: number; block: number }>; fateModel?: { sha256: string; jobId: string; tx: string; block: number; gasUsed: number } };
+  const dep = JSON.parse(readFileSync(join(ROOT, "contracts", "deployments", "fisco-bcos.json"), "utf8")) as { chainId: number; nodeVersion: string; evmVersion: string; deployer: string; group: string; contracts: Record<string, { address: string; tx: string; gasUsed: number; block: number }>; fateModel?: { sha256: string; jobId: string; tx: string; block: number; gasUsed: number }; smoke: { function: string; tx: string; block: number; status: string }[] };
   const log = dep.contracts.IntentLog.address as `0x${string}`;
   const dir = join(process.cwd(), "evidence", "fisco");
   const runs = existsSync(dir) ? readdirSync(dir).filter((f) => /^run-.*\.json$/.test(f) && !f.endsWith(".state.json")).sort() : [];
@@ -44,6 +44,7 @@ async function main() {
   }
   const base = createPublicClient({ chain: baseSepolia, transport: http(process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org") });
 
+  const logsUsed = new Set<string>();
   let bad = 0, receiptsOk = 0, commits = 0, matched = 0, onBase = 0, baseChecked = 0;
   const table: string[] = [];
   for (const [i, r] of rows.entries()) {
@@ -56,10 +57,13 @@ async function main() {
       const tx = await fisco.getTransaction({ hash: r.hash as `0x${string}` });
       const { args } = decodeFunctionData({ abi: ABI, data: tx.input });
       const [jobId, h] = args as readonly [`0x${string}`, `0x${string}`];
-      const at = await fisco.readContract({ address: log, abi: ABI, functionName: "committedAt", args: [h] });
-      const agent = await fisco.readContract({ address: log, abi: ABI, functionName: "agentOf", args: [h] });
-      const job = await fisco.readContract({ address: log, abi: ABI, functionName: "jobOf", args: [h] });
-      const same = h.toLowerCase() === r.intentHash.toLowerCase() && at > BigInt(0) && agent.toLowerCase() === tx.from.toLowerCase() && job === jobId && (tx.to ?? "").toLowerCase() === log.toLowerCase();
+      // Read the IntentLog the tx went to: a run made before fisco.sh last redeployed stays checkable.
+      const runLog = tx.to as `0x${string}`;
+      logsUsed.add(runLog);
+      const at = await fisco.readContract({ address: runLog, abi: ABI, functionName: "committedAt", args: [h] });
+      const agent = await fisco.readContract({ address: runLog, abi: ABI, functionName: "agentOf", args: [h] });
+      const job = await fisco.readContract({ address: runLog, abi: ABI, functionName: "jobOf", args: [h] });
+      const same = h.toLowerCase() === r.intentHash.toLowerCase() && at > BigInt(0) && agent.toLowerCase() === tx.from.toLowerCase() && job === jobId;
       if (same) matched += 1; else bad += 1;
       let baseNote = "not in Base capture";
       if (baseHashes.has(h.toLowerCase())) {
@@ -98,6 +102,39 @@ async function main() {
     console.log(`FATE model ${f.sha256.slice(0, 10)}... on FISCO: ${ok ? "read back ok" : "MISMATCH"}`);
   }
 
+  // One real run on both ledgers: Base Sepolia as the primary chain, each IntentLog commit mirrored
+  // to FISCO (fiscoHash). Base receipts from Base, FISCO receipts and calldata from FISCO.
+  const dual: string[] = [];
+  const evDir = join(process.cwd(), "evidence");
+  const baseRuns = readdirSync(evDir).filter((f) => /^run-.*\.json$/.test(f) && !f.endsWith(".state.json")).sort();
+  for (const f of baseRuns.reverse()) {
+    const all = JSON.parse(readFileSync(join(evDir, f), "utf8")) as EvidenceRow[];
+    const pairs = [...new Map(all.filter((r) => r.fiscoHash && r.network === "base-sepolia").map((r) => [r.hash, r])).values()];
+    if (!pairs.length) continue;
+    let both = 0;
+    const rowsMd: string[] = [];
+    for (const [i, r] of pairs.entries()) {
+      const b = await base.getTransactionReceipt({ hash: r.hash as `0x${string}` }).catch(() => null);
+      const fr = await fisco.getTransactionReceipt({ hash: r.fiscoHash as `0x${string}` });
+      const ftx = await fisco.getTransaction({ hash: r.fiscoHash as `0x${string}` });
+      const { args } = decodeFunctionData({ abi: ABI, data: ftx.input });
+      const fh = (args as readonly string[])[1];
+      const fiscoCommit = fh.toLowerCase() === (r.intentHash ?? "").toLowerCase();
+      const ok = b?.status === "success" && fr.status === "success" && fiscoCommit;
+      if (ok) both += 1; else bad += 1;
+      const baseKind = r.claim.startsWith("IntentLog.commit") ? "commit" : "already in the Base log, anchored";
+      rowsMd.push(`| ${i + 1} | ${r.claim.split(",")[0].replace("IntentLog.commit: ", "")} | \`${short(r.intentHash ?? "")}\` | [\`${short(r.hash)}\`](https://sepolia.basescan.org/tx/${r.hash}) ${baseKind}, ${b?.status ?? "not found"} | \`${short(r.fiscoHash!)}\` block ${Number(fr.blockNumber)}, ${fr.status} | ${fiscoCommit ? "same hash" : "MISMATCH"} |`);
+    }
+    dual.push(
+      "## 4. One real run on both ledgers", "",
+      `\`evidence/${f}\`: the fleet scenario in real mode with the funded Base Sepolia key and the FISCO target both set. Every intent went to the Base IntentLog and the same hash to the FISCO IntentLog in the same step; ${both} of ${pairs.length} pairs have a successful receipt on both chains and the same intent hash on FISCO. Intents whose hash the Base log already held from the earlier Base run fall back to a calldata anchor on Base, as the engine does on any repeat.`, "",
+      "| # | Intent | Intent hash | Base Sepolia | FISCO BCOS | Check |", "|---|---|---|---|---|---|",
+      ...rowsMd, "",
+    );
+    console.log(`both ledgers (${f}): ${both} of ${pairs.length} intents on Base and FISCO with the same hash`);
+    break;
+  }
+
   const md = [
     "# FISCO BCOS evidence",
     "",
@@ -119,7 +156,14 @@ async function main() {
     "| Contract | Address | Deploy transaction | Block | Gas |", "|---|---|---|---|---|",
     ...Object.entries(dep.contracts).map(([n, c]) => `| ${n} | \`${c.address}\` | \`${short(c.tx)}\` | ${c.block} | ${c.gasUsed.toLocaleString("en-US")} |`),
     "",
+    "Smoke flow from `contracts/script/fisco.sh`, receipts fetched by the script. Native balances are switched on with the chain admin key `build_chain.sh` generates, so value moves for real: the vendor bond holds 5 units in Bond, the job fee of 60 units is locked in JobBoard and refunded on cancel, and the script checks every balance.",
+    "",
+    "| Call | Transaction | Block | Status |", "|---|---|---|---|",
+    ...dep.smoke.map((x) => `| ${x.function} | \`${x.tx}\` | ${x.block} | ${x.status} |`),
+    "",
     "## 3. A real run on FISCO: the fleet scenario (the five moments) and the neighbour scenario",
+    "",
+    `FISCO is the only chain in this run. IntentLog used: ${[...logsUsed].map((a) => `\`${a}\``).join(", ") || "none"}${[...logsUsed].some((a) => a.toLowerCase() !== log.toLowerCase()) ? " (an earlier deployment on the same chain, before \`fisco.sh\` last redeployed; it is still live and was read back now)" : ""}.`,
     "",
     `${rows.length} transactions, ${receiptsOk} with a successful receipt in the recorded block, ${commits} IntentLog commits, ${matched} of them read back from the FISCO IntentLog with the engine's hash. ${onBase} of these hashes also appear in the captured Base Sepolia run, ${baseChecked} confirmed in the Base IntentLog by a read call: both ledgers hold the same EIP-712 intent hash under the same \`commit(bytes32 jobId, bytes32 intentHash)\` format.`,
     "",
@@ -127,7 +171,8 @@ async function main() {
     ...table,
     "",
     ...fate,
-    `## ${fate.length ? 5 : 4}. Reproduce`,
+    ...dual.map((l) => l.replace("## 4. One real run", `## ${fate.length ? 5 : 4}. One real run`)),
+    `## ${4 + (dual.length ? 1 : 0) + (fate.length ? 1 : 0)}. Reproduce`,
     "",
     "```",
     "bash contracts/script/fisco.sh     # node in Docker, deploy, smoke, FATE model hash, contracts/deployments/fisco-bcos.json",

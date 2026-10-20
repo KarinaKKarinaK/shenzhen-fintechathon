@@ -8,71 +8,85 @@
   "solc": "0.8.26",
   "rpc": "http://127.0.0.1:8545",
   "deployer": "0xC9E4C312E90cda14354340DFd7b9569d820C1201",
-  "deployedAt": "2026-10-20T11:16:40Z",
+  "deployedAt": "2026-10-20T11:55:35Z",
   "contracts": {
     "IntentLog": {
-      "address": "0xf86ced0c9738894079ca4fe9b48339b589d91990",
-      "tx": "0xec39c5b3a0ab4091156d17f345de0bf219d290bf7f1fd1bf22eed33cc1975d8f",
+      "address": "0x9555c12c2789e44868070d0d877f9baadabe4f54",
+      "tx": "0xb1152d675e040beb9547ba18738874dca2ebc54cdbfd8abb57e3a935c9f8dd30",
       "gasUsed": 13783,
-      "block": 10
+      "block": 71
     },
     "Bond": {
-      "address": "0x5d946c777ca6eaf1c796cb865c4d0effbe7b8faf",
-      "tx": "0x327a345ffac2f1b2845aa6f58b5d1d89b1f291f97f1d399ffffdeafd1073a90b",
+      "address": "0xe3f2011697301e15e4cf829b0aeb189fab754029",
+      "tx": "0x2465a40fe73c4086db064c1c3682c2f4894e35cd8b42b7ad881df032bad3ff72",
       "gasUsed": 181346,
-      "block": 11,
+      "block": 72,
       "args": {
         "treasury": "0xC9E4C312E90cda14354340DFd7b9569d820C1201",
-        "log": "0xf86ced0c9738894079ca4fe9b48339b589d91990",
+        "log": "0x9555c12c2789e44868070d0d877f9baadabe4f54",
         "startFloor": "200 ether"
       }
     },
     "Lease": {
-      "address": "0xa0cd7e68d4d5f83f5ee55673d4d20844ad3d2591",
-      "tx": "0xf1be5f3e15b07c0da0b86f2abc22e797eee896074e1952ff304018917a22d0db",
+      "address": "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601",
+      "tx": "0xfbc077117e1477cb70d48ffdbe514e3c2380e8e12568bba62475afade737e50b",
       "gasUsed": 74181,
-      "block": 12
+      "block": 73
     },
     "JobBoard": {
-      "address": "0xe9e8903a9e52f022abdf3c647ff2a669c15e347c",
-      "tx": "0x367d2c7766f224a52dc867ebb2f128f26b142a43a55e90942569133fad364e55",
+      "address": "0x20dc56e80b73f6066208a9d8197748f861579d37",
+      "tx": "0xd97cdec18ee572d25f4cbec08a2da705347e261995859c648588494d809992f2",
       "gasUsed": 142813,
-      "block": 13,
+      "block": 74,
       "args": {
-        "bond": "0x5d946c777ca6eaf1c796cb865c4d0effbe7b8faf",
-        "lease": "0xa0cd7e68d4d5f83f5ee55673d4d20844ad3d2591",
+        "bond": "0xe3f2011697301e15e4cf829b0aeb189fab754029",
+        "lease": "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601",
         "rail": "0xC9E4C312E90cda14354340DFd7b9569d820C1201"
       }
     }
   },
-  "setBoardTx": "0x1853f785068dccf348974cee174c2fa6ac04dc1e2e000bcbe5626c5188bacfb9",
+  "setBoardTx": "0xb0f6cd2e921fdc3631eb38289e5002c18acfa74be8a4d582b9e963c78263fed9",
   "smoke": [
     {
       "function": "IntentLog.commit",
-      "tx": "0xd9bab26138fb4713548bd409ffdb57a035034311efe6d4f6459be9b60dd40249",
-      "block": 15,
+      "tx": "0xba66470cb8f03e9a84a6d28edda849c9355c44ae9748c06084e1552057268892",
+      "block": 76,
       "gasUsed": 38104,
       "status": "success"
     },
     {
       "function": "Bond.postVendorBond",
-      "tx": "0x1336cbd9e34c466fd66a2087eb10c5e78cdbcbed601f4df344c4408ece8d4170",
-      "block": 16,
+      "tx": "0xd6a16deee7c1342224f07b768475623755bd382fe441322b19fada8c6cb7b8ac",
+      "block": 77,
       "gasUsed": 43057,
       "status": "success"
     },
     {
       "function": "Bond.register",
-      "tx": "0xd69a2963dd1b059c46bb906b11dd9d2d926dd451a163f5bc10fc161b83b8b42f",
-      "block": 17,
+      "tx": "0xddfdc559bdf4bb0e7f43013ce23c395afde6db140e9f2f0dc153efc3027a62f5",
+      "block": 78,
       "gasUsed": 58261,
       "status": "success"
     },
     {
       "function": "Lease.open",
-      "tx": "0xad14f779db1cf50d77c0d06183823d41957c81235cab523545139f8815c23b5c",
-      "block": 18,
+      "tx": "0x90e6634b35d395681b9a4c10ffc6cd25bb38b9db22f4d8ea4765aecaaf955cf6",
+      "block": 79,
       "gasUsed": 112183,
+      "status": "success"
+    },
+    {
+      "function": "JobBoard.post",
+      "tx": "0xf2abfe207dd864f860615fa2ae562f13ec9def4837143ee5c267af277fe1abba",
+      "block": 80,
+      "gasUsed": 81254,
+      "status": "success"
+    },
+    {
+      "function": "JobBoard.cancel",
+      "tx": "0x1378d34e62c52f8f3e21a0e0555a09a29171859ff5c022dab4d98124c42af128",
+      "block": 81,
+      "gasUsed": 50192,
       "status": "success"
     }
   ],
@@ -82,11 +96,11 @@
     "sha256": "0x3f321ae68cdfed7e1eb4d01fc6b41b30dc2851d20e51d80df75c8a5343de314f",
     "jobId": "0xe83832c97db5735e2627f5e1f29531b7d08a724c2f00f81cad56609ab2dd6b6a",
     "jobIdPreimage": "fate-model",
-    "tx": "0x536cb4af9efc0b248f1d1dae3ce3c764c86eac3b2612e8458c9f3db1341aefa2",
-    "block": 53,
+    "tx": "0x6a6be28d9178e3ab3403acb4e54e341cfb8119cc4e4c30aff1c0ba32d01da2e6",
+    "block": 82,
     "gasUsed": 38104,
     "status": "success",
-    "committedAt": 1792495832517,
+    "committedAt": 1792497335845,
     "readBack": true
   }
 }
