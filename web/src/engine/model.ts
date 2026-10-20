@@ -7,22 +7,19 @@ import { generateObject, generateText, type LanguageModel } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
-// Free models only, through OpenRouter. Every id must end in ":free"; anything else is dropped, so
-// a misconfigured list can never route to a paid model. The first that answers wins; the rest are
-// fallbacks for rate limits or outages. Override with ZISHI_MODELS (comma separated, still :free only).
-// Measured on OpenRouter on 2026-10-20: minimax flash answers plain text in about 8 s and stays on
-// the facts; the nemotron models return structured fields in 3 to 8 s but spend text output on
-// reasoning, so text and structured calls use different lists.
-const freeOnly = (list: string) => list.split(",").map((m) => m.trim()).filter((m) => m.endsWith(":free"));
-export const FREE_TEXT_MODELS = freeOnly(process.env.ZISHI_TEXT_MODELS || "minimax/minimax-m3.1-flash:free,poolside/laguna-s-2.1:free");
-export const FREE_OBJECT_MODELS = freeOnly(process.env.ZISHI_OBJECT_MODELS || "nvidia/nemotron-3.5-super-vl:free,nvidia/nemotron-3.5-lightning:free");
+// Models through OpenRouter (paid, picked for speed). The first that answers wins; the rest are
+// fallbacks for rate limits or outages. Override with ZISHI_TEXT_MODELS / ZISHI_OBJECT_MODELS
+// (comma separated OpenRouter ids).
+const ids = (list: string) => list.split(",").map((m) => m.trim()).filter(Boolean);
+export const FREE_TEXT_MODELS = ids(process.env.ZISHI_TEXT_MODELS || "anthropic/claude-haiku-5.5,google/gemini-3.8-flash");
+export const FREE_OBJECT_MODELS = ids(process.env.ZISHI_OBJECT_MODELS || "anthropic/claude-haiku-5.5,google/gemini-3.8-flash");
 export const FREE_MODELS = [...FREE_TEXT_MODELS, ...FREE_OBJECT_MODELS];
 export let MODEL = FREE_TEXT_MODELS[0] ?? "none";
 const TIMEOUT_MS = Number(process.env.ZISHI_MODEL_TIMEOUT_MS || 9000);
 // Free models are slow and rate limited, so a run uses the model for the first calls in each minute
 // and labelled template text after that. The cap keeps a run inside the free tier and inside the
 // serverless time limit; every reply says which source wrote it.
-const PER_MINUTE = Number(process.env.ZISHI_MODEL_CALLS_PER_MIN || 10);
+const PER_MINUTE = Number(process.env.ZISHI_MODEL_CALLS_PER_MIN || 120);
 const recent: number[] = [];
 function budget(): boolean {
   const now = Date.now();
