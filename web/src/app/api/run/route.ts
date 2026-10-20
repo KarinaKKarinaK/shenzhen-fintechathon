@@ -2,6 +2,7 @@ import { SCENARIOS } from "@/engine/scenarios";
 import { anchorAuditHead, demoAuthorised, publicFisco } from "@/engine/chain";
 import { allow, begin, end, ipOf, tooMany } from "@/engine/ratelimit";
 import { pickLang, tr } from "@/engine/i18n";
+import { hasKey, MODEL } from "@/engine/model";
 import { append, chainHead, newRunId } from "@/engine/replay/log";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ export async function GET(req: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        // Name the model up front so the badge is right before the first model reply arrives.
+        if (hasKey()) controller.enqueue(enc.encode(`data: ${JSON.stringify({ t: "model", name: MODEL.split("/").pop(), at: Date.now() })}\n\n`));
         for await (const ev of gen({ fast, real: real || fiscoOnly, fiscoOnly, lang })) {
           append(runId, ev);
           controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
