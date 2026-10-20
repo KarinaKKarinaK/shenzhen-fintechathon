@@ -20,7 +20,7 @@ export const en = {
     howTitle: "How it works",
     howLink: "Watch it live",
     how: [["It earns", "A farmer posts a spraying job. The fee is paid per mu, and only after the farmer confirms the work."], ["It repays", "Every fee pays an instalment to the lender automatically. When the lease reaches zero, the drone belongs to the pilot."], ["It answers for mistakes", "A slice of each fee builds a bond. Prove a rule was broken and the bond is slashed. The AI's mistakes come out of the vendor's bond, never the pilot's."]] as [string, string][],
-    stats: [["attacks blocked", "every case in the set"], ["contracts", "40 tests passing"], ["bonds", "pilot and vendor"], ["human decisions", "on the normal path"]] as [string, string][],
+    stats: [["attacks blocked", "every case in the set"], ["contracts", "44 tests passing"], ["bonds", "pilot and vendor"], ["human decisions", "on the normal path"]] as [string, string][],
     castTitle: "Who's who",
     cast: [["Farmer", "Posts a spraying job and pays per mu, only after confirming the work."], ["Pilot", "Flies the drone and keeps the profit. Owns the drone once the lease is paid."], ["Lender", "Pays for the drone up front and is repaid from every fee, automatically."], ["AI vendor", "Built the agent that runs the money. Its own bond pays for the agent's mistakes."]] as [string, string][],
     bondsTitle: "Two bonds, two kinds of mistake",
