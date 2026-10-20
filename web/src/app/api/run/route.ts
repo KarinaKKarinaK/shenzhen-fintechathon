@@ -27,7 +27,7 @@ export async function GET(req: Request) {
         const send = (ev: unknown) => controller.enqueue(enc2.encode(`data: ${JSON.stringify(ev)}\n\n`));
         send({ t: "narration", text: `Replay of a recorded run on FISCO BCOS (${evs.capturedAt}). Every transaction hash below is real and can be checked on the chain.`, at: Date.now() });
         for (const ev of evs.events) {
-          await new Promise((r) => setTimeout(r, ev.t === "narration" ? 1800 : ev.t === "chain" ? 200 : 90));
+          await new Promise((r) => setTimeout(r, ev.t === "narration" ? 750 : ev.t === "chain" ? 85 : 40));
           if (req.signal.aborted) break;
           send({ ...ev, at: Date.now() });
         }
