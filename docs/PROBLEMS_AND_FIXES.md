@@ -209,7 +209,7 @@ The other machines become a single closing line: *"The same rail works for any m
 | The node returns `logsBloom: "0x"`, leaves block header fields out and rejects requests without `params` | `contracts/script/fisco_rpc_proxy.py`, a 60 line shim that fills them in and sends one request at a time |
 | A call to an address with no code fails, so the calldata anchor Base uses cannot work | On FISCO a money event's digest is committed to the IntentLog instead, one contract call per event |
 | `eth_call` and gas estimation ignore the sender, so calls guarded by `msg.sender` fail in simulation | The smoke flow sends with an explicit gas limit where that matters |
-| `block.timestamp` is in milliseconds | Documented; JobBoard's windows need a unit fix before live jobs run there |
+| `block.timestamp` is in milliseconds | The settlement adapter and the scripts convert job windows and holds to milliseconds on FISCO |
 
 **The result.** One script (`contracts/script/fisco.sh`) brings the chain up, deploys, runs a smoke flow with real value and anchors the FATE model hash. The engine commits the same intent hash to Base Sepolia and FISCO in one run. See [FISCO_EVIDENCE.md](FISCO_EVIDENCE.md).
 

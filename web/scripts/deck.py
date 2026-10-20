@@ -36,7 +36,7 @@ _settled = sorted((ROOT / "web/evidence/fisco").glob("settled-run-*.json"))[-1]
 _s = json.loads(_settled.read_text())
 _checks = {c["check"]: c for c in _s["checks"]}
 WEI = 1e9  # 1 yuan = 1e9 wei in that run
-FISCO_CALLS = _checks["every contract call succeeded"]["value"]
+FISCO_CALLS = f"{sum(1 for r in _s['rows'] if not r['call'].startswith('fund') and r['status'] == 'success')} calls"
 LENDER_YUAN = int(int(_checks["lender received from the run (wei)"]["value"]) / WEI)
 VB_DETAIL = _checks["vendor bond decreased by the penalty (wei)"]["detail"]  # "posted X, now Y"
 VB_FROM, VB_TO = [int(int(p.split()[-1]) / WEI) for p in VB_DETAIL.split(",")]
@@ -201,7 +201,7 @@ slide(header("Measured, not asserted", "Learned components, held out sets, 95% i
 # 12 honest, next, close
 real = ("Contracts deployed and verified on Base Sepolia; full jobs with value on Base and FISCO.\n"
         "Real FATE training, free models live in the public app.\n"
-        "On FISCO the engine settles every payment on the contracts, with retries and refunds.\n"
+        "On FISCO the engine settles each job's money on the contracts, with retries and refunds.\n"
         "Still limited: Base runs anchor payments to spare a small wallet; FISCO is one node of ours; "
         "spraying telemetry is synthetic, real flights only used to test the oracle.")
 nxt = ("One licensed lessor pilot with ten drones.\nReal flight logs through the same oracle.\nA FISCO BCOS node run by the lessor.\n"
@@ -212,7 +212,7 @@ slide(header("Honest about what is real", "What runs today, and what comes next"
       + [R(0, 6.1, W, 0.8, INK),
          T(M, 6.25, 6.2, 0.5, "zishi-fintechathon.vercel.app", 19, "ffffff", True),
          T(M + 5.6, 6.3, 6.25, 0.5, "github.com/KarinaKKarinaK/shenzhen-fintechathon", 15, "ffffff", False, "right")],
-      "To be clear about what is real: the contracts are deployed and verified, and full jobs moved value on both chains. On FISCO the engine itself settles every payment on the contracts and recovers when a call fails; "
+      "To be clear about what is real: the contracts are deployed and verified, and full jobs moved value on both chains. On FISCO the engine itself settles each job's money on the contracts and recovers when a call fails; "
       "on Base we anchor payments to spare a small test wallet, FISCO is our own node, and spraying telemetry is synthetic. Next is one licensed lessor with ten drones and real flight logs. "
       "The drone is the first machine; the same rail fits any machine whose paid work can be verified. Try it at the live demo. Thank you. (50 seconds)")
 

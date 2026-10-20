@@ -45,6 +45,13 @@ DEPLOY = load_json(ROOT / "contracts" / "deployments" / "base-sepolia.json")
 FISCO = load_json(ROOT / "contracts" / "deployments" / "fisco-bcos.json")
 FATE = load_json(ROOT / "fate" / "results.json")
 FISCO_EVIDENCE = (DOCS / "FISCO_EVIDENCE.md").read_text(encoding="utf8")
+RECEIPTS = load_json(DOCS / "results" / "receipts.json")
+SCAN = load_json(DOCS / "results" / "security-scan.json")
+REALF = load_json(DOCS / "results" / "realflights.json")
+import glob as _glob
+_SET = sorted(_glob.glob(str(ROOT / "web" / "evidence" / "fisco" / "settled-run-*Z.json")))
+SETTLED = load_json(Path(_SET[-1])) if _SET else None
+SETTLED_SUM = load_json(Path(_SET[-1].replace(".json", "-summary.json"))) if _SET else None
 EVIDENCE = (DOCS / "EXECUTION_EVIDENCE.md").read_text(encoding="utf8")
 RED = (DOCS / "RED_TEAM.md").read_text(encoding="utf8")
 
@@ -405,7 +412,7 @@ def section_02b(w: Writer):
         + (f" In one real run {dual.group(1)} of {dual.group(2)} intents have a successful receipt on both chains with the same hash." if dual else ""),
         f"FATE. Three lenders train one pilot default model with FATE {FATE['fate_version']} HomoLR and secure aggregation, no repayment records shared. Held out AUC goes from {m['local_only_lender_a']['auc']:.3f} for one lender alone to {m['fate_federated']['auc']:.3f} federated; the model sets a new pilot's starting credit score and cuts the instalment share error from {pe['flat_mae']:.0f} to {pe['fate_mae']:.0f} basis points. Data is synthetic and seeded.",
         f"Model provenance. The FATE model's sha256 is committed to the FISCO IntentLog (tx {FISCO['fateModel']['tx'][:12]}..., block {FISCO['fateModel']['block']}) and read back, so a lender can prove which model priced each pilot.",
-        "Scope. The FISCO node runs locally and is reproduced with contracts/script/fisco.sh; the public demo reaches it through a tunnel and settles every money event on the deployed contracts there, falling back to the labelled simulation when the node is down. FISCO's block time is in milliseconds, so JobBoard's windows need a unit fix before live jobs run there.",
+        "Scope. The FISCO node runs locally and is reproduced with contracts/script/fisco.sh; the public demo reaches it through a tunnel and settles each job's money on the deployed contracts there, falling back to the labelled simulation when the node is down. FISCO's block time is in milliseconds; the settlement adapter converts job windows and holds.",
     ])
 
 
@@ -452,6 +459,13 @@ def section_03b(w: Writer, det_png: Path, loss_png: Path):
         "Never pay more than verified output times rate: the fee released by JobBoard.confirm is the locked fee, the locked fee is the listing, and a claimed area above what the track supports is held, not paid.",
         "Never drop below the reserve: a task starts only if the bond plus the floor covers a quarter of the fee (Bond.covers), and a job is accepted only if the margin clears the reserve rule. The ratchet and the MDP cannot cross the reserve rule; it is a hard constraint, not a cost.",
     ])
+    w.h2("Dialogue: ask the agent why")
+    w.p("After a declined job the pilot can ask the agent why (web/src/engine/ask.ts, POST /api/ask). The agent answers from the engine's own numbers in English or Chinese, asks one clarifying question with concrete choices (accept at the break even rate, propose a rate, keep it declined), recomputes any correction with the same planner and policy engine, and refuses what the rules forbid while naming the rule and who can change it. It works without a model; with the free model the wording may change, never the numbers or the decision.")
+    if SETTLED:
+        calls = [r for r in SETTLED["rows"] if not r["call"].startswith("fund")]
+        ok = sum(1 for r in SETTLED["rows"] if r["status"] == "success")
+        w.h2("Settlement on the contracts, with recovery")
+        w.p(f"On FISCO BCOS the engine settles each job's money on the deployed contracts in the same loop (engine/settle.ts): vendor bond, fee locked in JobBoard, confirmed and split, instalments through Lease.pay, slash by proof, title transfer. In the recorded run {len(calls)} contract calls and {len(SETTLED['rows']) - len(calls)} funding transfers to fresh role wallets, {ok} of {len(SETTLED['rows'])} successful; a free model read {SETTLED_SUM['offersReadByModel']} of {SETTLED_SUM['offers']} job offers and code accepted {SETTLED_SUM['readingsAcceptedByCode']} readings against the signed listings. Every call goes through one recovery wrapper: sent, confirmed or failed, retried with a fresh nonce on network errors, compensated on a revert (JobBoard.cancel refunds the farmer), or given up with an alert. Both fault drills (a failed confirm, a reverted start) recovered on chain.")
     w.h2("Evaluation approach")
     w.p("Synthetic data with injected tampering, a held out split chosen by a fixed seed before any fitting, and both the detection rate and the false alarm rate reported. The agent has no write path to the corpus, the seed or the threshold. pnpm test fails if any number falls below its floor; pnpm bench and pnpm charts recompute the table and the charts; the Evidence page in the app shows the same numbers live.")
     by = O["byTamper"]
@@ -502,8 +516,18 @@ def section_04b(w: Writer):
     w.p("The agent has no intent kind for rule changes, unfreezing or the allowlist, so there is nothing to escalate into. A machine signed set_cap or top_up is denied by the operator only rule and waits for the button. A stranger's signature, a replayed signature and a signature over edited fields are rejected by the policy engine and by Bond.slashByProof. The model process holds no key, so a jailbroken model can at most write a wrong sentence, which the grounding check replaces with a template.")
     w.h2("Red team results")
     w.p(f"{ATT_TOTAL} attack cases across the three layers, run at request time on the Evidence page and in pnpm test: {ATT_BLOCKED} of {ATT_TOTAL} blocked. {BEN_PASS} of {BEN_TOTAL} ordinary farmer messages pass the same gate. The same inputs through a naive wallet that reads addresses out of text: it pays the attacker in {NAIVE_FELL} of {ATT_TOTAL} cases. The full list is in Appendix C and in docs/RED_TEAM.md.")
+    w.h2("Security tests and scans")
+    sl = SCAN["slither"]
+    w.bullets([
+        f"Static analysis: Slither over every contract, {sl['total']} findings triaged, 0 true issues of medium or higher; details in docs/SECURITY_SCAN.md.",
+        "Dependencies: pnpm audit, 0 vulnerabilities in production dependencies; secrets: gitleaks over the whole git history, 0 leaks.",
+        f"Receipts: pnpm verify:all re-fetched {RECEIPTS['verified']} of {RECEIPTS['total']} claimed transactions on Base Sepolia and FISCO BCOS and matched {RECEIPTS['intentHashesMatched']} intent hashes in calldata.",
+        "Threat model (STRIDE) with a control and evidence per threat, and the official self-assessment template, in docs/Zishi_Security_Self_Assessment.docx.",
+        "Failure recovery: retry, compensation and give up paths tested in pnpm test and drilled on chain.",
+    ])
     w.h2("Privacy")
     w.p("Machine data (a track hash, an area, a battery figure) is not personal data under PIPL. The farmer's name and field are the job's data and stay with the parties of the job; only an intent hash, a track hash and a confirmation go on chain, so nothing personal is published. Ownership is defined in the job terms: the flight log belongs to the pilot, the confirmation to the farmer, and the lessor receives the hashes and the verdicts, not the raw track. Nothing uploaded on the Live page is stored.")
+    w.p("Automated decisions (PIPL Article 24): every money decision is rule based and the person affected can ask why through the ask the agent panel; held logs and slashes have a human dispute path. A short impact assessment under Articles 55 and 56 is in the security self-assessment.")
     w.h2("Compliance")
     w.bullets([
         "The agent services the lease; it does not lend. The lender of record is a licensed lessor in a regulatory sandbox, and the wallet is a sub account of the pilot's business.",

@@ -10,7 +10,7 @@ Topic F, Agent Wallet. Zishi is an AI wallet for an agricultural spraying drone 
 
 ### What the evidence demonstrates
 
-- The engine itself settles every money event on the deployed contracts on FISCO BCOS in one loop: 26 of 26 transactions successful (fee locked in JobBoard, confirmed and split, instalments through Lease.pay, the rogue intent slashed by proof from the vendor bond, the title moved to the pilot).
+- The engine itself settles each job's money on the deployed contracts on FISCO BCOS in one loop: 16 contract calls plus 10 funding transfers to fresh role wallets, 26 of 26 transactions successful (fee locked in JobBoard, confirmed and split, instalments through Lease.pay, the rogue intent slashed by proof from the vendor bond, the title moved to the pilot).
 - A free AI model read the job offers in that run: 5 of 5 read by the model, 5 accepted by code against the signed listings.
 - One full job against the deployed contracts on public Base Sepolia: 9 of 9 contract calls with real value.
 - Every intent hash is committed to the IntentLog before the policy engine decides; in one real run each intent went to Base Sepolia and FISCO BCOS in the same step with the same hash (15 of 15).

@@ -7,14 +7,14 @@ Live app: https://zishi-fintechathon.vercel.app. English and Simplified Chinese 
 | Minute | Where | What you see |
 |---|---|---|
 | 0 to 1 | Home | The drone, the lender, the farmer, the two bonds, in one screen. The idiom 自食其力: to feed yourself by your own labour |
-| 1 to 4 | Dashboard, press Start | The five moments: a job declined on economics, a paid flight with the fee split, a faked flight log held, a compromised intent slashed by proof, the title moving to the pilot at zero |
+| 1 to 4 | Fleet page, press Start | The five moments on the real FISCO BCOS chain: a job declined on economics, then ask the agent why (clarifying question, correction, refusal, in English or 中文), a paid flight whose fee is locked, confirmed and split by the JobBoard and Lease contracts (cards labelled "Contract:" with a FISCO badge), a faked flight log held, a compromised intent slashed by proof from the vendor bond, the title moving to the pilot at zero |
 | 4 to 6 | Live | A seeded feed of new jobs every few seconds with the odd injection attempt, or your own jobs as JSON or CSV. Same engine, your data |
 | 6 to 9 | Evidence | 52 attacks run while you watch, the benign set, the naive wallet baseline, ten learned components with held out numbers, the drift monitors, the contracts with explorer links |
 | 9 to 10 | Repository | `docs/EXECUTION_EVIDENCE.md`: 40 real transactions from one run, every receipt fetched back from Base Sepolia. `docs/FISCO_EVIDENCE.md`: the same contracts and intent hashes on FISCO BCOS, and the FATE model fingerprint on chain |
 
 ## 2. What to click
 
-- **Any transaction hash** in the Dashboard ledger. In simulated mode it is labelled simulated. In real mode it opens Basescan: `IntentLog.commit` calls go to the contract, money events are anchored as calldata on the demo wallet.
+- **Any transaction hash** in the ledger. Public runs are on FISCO BCOS (badge FISCO; check them with `pnpm verify:all` or `docs/FISCO_EVIDENCE.md`); if the node is down the run is labelled simulated. With the demo token from the submission form, runs are on Base Sepolia and open Basescan: `IntentLog.commit` calls go to the contract, money events are anchored as calldata on the demo wallet.
 - **A policy decision** in the Dashboard. Every rule line is listed with its verdict; the signer is recovered from the EIP-712 signature.
 - **The proof receipt** at moment four. The intent hash, the signature check, the rule, which bond paid, who was paid and that no bounty was paid on a live job.
 - **Learned components** on the Evidence page. Each card states its seed, its held out split and what it may and may not do (hold, never allow).
