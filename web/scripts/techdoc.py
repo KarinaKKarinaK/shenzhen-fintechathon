@@ -516,7 +516,7 @@ def section_04b(w: Writer):
     ])
     w.h2("Known risks")
     w.bullets([
-        "IntentLog.commit is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing; slashByProof then fails as not in log. Planned fix: commits restricted to the job's registered agent or bound to the job escrow, with Foundry tests, then redeploy.",
+        "IntentLog.commit in v1 is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing. Fixed in IntentLogV2 and BondV2 (commit only by the job's agent, entries keyed by agent and hash, a skipped commit on a running job still slashable), deployed and demonstrated on FISCO BCOS with 16 Foundry tests; Base Sepolia keeps v1 until the redeploy.",
         "Demo keys are derived from fixed public strings so runs replay identically; anyone can derive them. Production keys live in the secure element, a hardware device and HSMs.",
         "Bond, JobBoard and Lease run as TypeScript mirrors in the live engine; a Foundry script runs one full job against the deployed contracts with its own evidence table.",
     ])

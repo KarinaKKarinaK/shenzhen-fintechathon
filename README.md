@@ -10,7 +10,7 @@
   <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Contracts on Base Sepolia" src="https://img.shields.io/badge/contracts-Base%20Sepolia%2C%20verified-1a1a1a">
   <img alt="WeBank stack" src="https://img.shields.io/badge/WeBank%20stack-FISCO%20BCOS%20%2B%20FATE-c8102e">
-  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-68%20tests-d4a017">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-84%20tests-d4a017">
   <img alt="Attack set" src="https://img.shields.io/badge/attacks-52%20of%2052%20blocked-1a1a1a">
   <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-d4a017">
   <img alt="Licence" src="https://img.shields.io/badge/licence-MIT-1a1a1a">
@@ -42,7 +42,7 @@ Entry to the 2026 Shenzhen International FinTech Competition, International Trac
 | 3 | Same page, **Your data** tab | Your own jobs and flight logs as JSON or CSV, run through the same rules |
 | 4 | [Evidence page](https://zishi-fintechathon.vercel.app/app/evidence) | 52 attacks run while the page loads; type your own attack at the agent |
 
-No wallet to connect, nothing to install. The public link runs on a simulated chain and labels every hash; real Base Sepolia mode is unlocked with a demo token we hand to the judges.
+No wallet to connect, nothing to install. The public link runs on the real FISCO BCOS chain (WeBank's consortium chain, our node reached through a tunnel; every visitor run signs with a fresh key, FISCO charges no gas) with free AI models writing the explanations. If the node is unreachable it falls back to the labelled simulation. Real Base Sepolia mode is unlocked with a demo token we hand to the judges.
 
 ![The landing page](docs/screenshots/landing.png)
 
@@ -90,8 +90,9 @@ Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and
 | | |
 |---|---|
 | **4** contracts on Base Sepolia | Source verified on Sourcify, exact match |
+| **267 of 267** receipts re-verified | `pnpm verify:all` re-fetches every transaction this repository claims, on Base Sepolia and FISCO BCOS, and decodes 46 intent hashes from calldata ([`docs/results/receipts.json`](docs/results/receipts.json)) |
 | **9 of 9** contract calls in one full job | Fee locked in JobBoard, confirmed, instalment paid to the lender through Lease, vendor bond slashed by proof, title moved to the pilot at zero; real value, every receipt on Base Sepolia, and the same job on FISCO BCOS |
-| **68** Foundry tests | The 15 contract layer attacks ported to Solidity, 9 Lease tests, three fuzzed over amounts, nonces and payees |
+| **84** Foundry tests | The 15 contract layer attacks ported to Solidity, 9 Lease tests, 16 for the agent bound IntentLogV2, three fuzzed over amounts, nonces and payees |
 | **52 of 52** attacks blocked | By the full pipeline (gate, policy engine, contracts); 7 of 7 benign messages pass. The classifier alone, never trained on these texts, holds 13 of 52: the rules and the policy do the rest |
 | **21** policy rule lines | Over 7 intent kinds and 4 trust tiers, checked on every signed intent |
 | **30 of 30** intents on FISCO BCOS | Every hash read back from the FISCO IntentLog equals the engine's; 15 match Base Sepolia one for one |
@@ -285,6 +286,8 @@ flowchart LR
 
 **FISCO BCOS, the lender's ledger.** The four contracts are deployed on a FISCO BCOS 3.16.3 chain, compiled with the same solc 0.8.26 source and `evm_version` paris through the `fisco` Foundry profile. The engine has a FISCO target: set `FISCO_RPC_URL`, `FISCO_PRIVATE_KEY` and `FISCO_INTENT_LOG` and every intent is committed to IntentLog on FISCO, next to Base Sepolia when both are set. One full run of the fleet and neighbour scenarios sent 78 transactions to FISCO, all with a successful receipt. Its 30 IntentLog commits were read back from the contract and equal the engine's intent hashes, and 15 of them are the same hashes as in the Base Sepolia run. Then one real fleet run went to both ledgers at once, with the funded Base Sepolia key and the FISCO target set: 15 of 15 intents have a successful receipt on Base and on FISCO, and the same hash sits in both IntentLogs (on Base from the earlier Base run, so this run anchored it there as calldata; on FISCO it was committed in the same step). Same contract, same hash format, two ledgers: the public one for anyone to check, the consortium one for the lender and its regulator. Value moves on FISCO too: native balances are switched on with the chain admin key, and the smoke flow posts a 5 unit vendor bond, locks a 60 unit job fee in JobBoard and refunds it on cancel, every balance checked. When a run uses FISCO, the transaction feed marks each card FISCO and shows the FISCO hash. Receipts in [`docs/FISCO_EVIDENCE.md`](docs/FISCO_EVIDENCE.md), addresses in [`contracts/deployments/fisco-bcos.json`](contracts/deployments/fisco-bcos.json).
 
+**The front running fix, on FISCO.** In the v1 IntentLog anyone can commit an agent's intent hash first and block the slash. `IntentLogV2` accepts a commit only from the agent JobBoard lists for that job and keys entries by agent and hash; `BondV2` also slashes an agent that skipped the commit on a job it ran. Deployed on FISCO with a demonstration: a stranger's commit reverts, the agent commits, the slash succeeds, and a never committed intent on a running job is still slashed ([`contracts/deployments/fisco-v2.json`](contracts/deployments/fisco-v2.json), 16 Foundry tests). Base Sepolia keeps v1 until the redeploy.
+
 **FATE, credit across lenders.** A new pilot has no history, so the rate band starts from a guess. Three lenders train one pilot credit model with FATE 2.2 homo logistic regression and FATE's secure aggregation; each lender's rows stay in its own process. On a held out set of 3,000 synthetic pilots:
 
 | Model | AUC | F1 |
@@ -393,7 +396,7 @@ Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. 
 
 | Layer | Status |
 |---|---|
-| Contracts | Deployed and source verified on Base Sepolia, 68 Foundry tests including the 15 contract layer attacks. One full job ran against the deployed contracts with value moving ([evidence](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts)). Inside the live engine only IntentLog is called; Bond, JobBoard and Lease rules run in mirrors there |
+| Contracts | Deployed and source verified on Base Sepolia, 84 Foundry tests including the 15 contract layer attacks. One full job ran against the deployed contracts with value moving ([evidence](docs/EXECUTION_EVIDENCE.md#3-one-full-job-against-the-deployed-contracts)). Inside the live engine only IntentLog is called; Bond, JobBoard and Lease rules run in mirrors there |
 | FISCO BCOS | Four contracts on a local FISCO BCOS 3.16.3 node; the engine commits every intent there when its env is set, on its own or next to Base. Value transfers tested. Reproducible with one script; not reachable from the public demo |
 | FATE | Real FATE 2.2 federated training across three lenders on synthetic data; the engine scores with the exported model |
 | Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
@@ -432,7 +435,7 @@ pnpm report       # rewrites the execution evidence, red team and evaluation rep
 pnpm shots        # retakes docs/screenshots against a build on port 3111
 
 cd ../contracts
-forge test        # 68 tests, forge-std vendored in contracts/lib
+forge test        # 84 tests, forge-std vendored in contracts/lib
 forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --private-key $SURETY_PRIVATE_KEY --broadcast
 ```
 
@@ -445,7 +448,7 @@ web/                 Next.js app: engine, API routes, interface, English and Chi
   src/engine/        policy, gate, agents, planner, oracle, mirrors, chain, ml, fusion, economics, credit, drift, replay
   src/app/api/       run, run-custom, live, samples, judge, attacks, button, metrics, ratchet, replay
   scripts/           evidence, verify, bench, charts, report, shots, pdf, techdoc
-contracts/           IntentLog, Bond, JobBoard, Lease, 68 tests, deploy scripts, deployments/
+contracts/           IntentLog, Bond, JobBoard, Lease, V2 log and bond, 84 tests, deploy scripts, deployments/
 docs/                technical document, judges' guide, reports, charts, screenshots, brand, pdf
 TECHNICAL.md         technical documentation
 SELF_ASSESSMENT.md   security self assessment

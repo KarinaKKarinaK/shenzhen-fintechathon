@@ -46,11 +46,21 @@ async function receipt(hash: string): Promise<Receipt | null> {
   return { status: r.status, blockNumber: r.blockNumber, gasUsed: parseInt(r.gasUsed, 16), to: r.to, logs: r.logs.length };
 }
 
+// The main table uses the first real capture (the one whose intent hashes were new on the Base
+// IntentLog, so every intent is a contract call). Later captures are summarised in section 2b.
+function captures(): string[] {
+  const dir = join(__dirname, "..", "evidence");
+  return readdirSync(dir).filter((f) => /^real-run-.*\.sse$/.test(f)).sort((a, b) => a.length - b.length || a.localeCompare(b));
+}
+function loadCapture(file: string): { file: string; events: EngineEvent[] } {
+  const events = readFileSync(join(__dirname, "..", "evidence", file), "utf8").split("\n").filter((l) => l.startsWith("data: ")).map((l) => JSON.parse(l.slice(6)) as EngineEvent);
+  return { file, events };
+}
 function latestCapture(): { file: string; events: EngineEvent[] } | null {
   const dir = join(__dirname, "..", "evidence");
-  const files = readdirSync(dir).filter((f) => /^real-run-.*\.sse$/.test(f)).sort();
+  const files = captures();
   if (!files.length) return null;
-  const file = files[files.length - 1];
+  const file = files[0];
   const events = readFileSync(join(dir, file), "utf8").split("\n").filter((l) => l.startsWith("data: ")).map((l) => JSON.parse(l.slice(6)) as EngineEvent);
   return { file, events };
 }
@@ -78,7 +88,7 @@ async function executionEvidence() {
   const rows = [...last.values()].sort((a, b) => a.order - b.order);
   const first = cap.events.find((e) => e.t === "chain");
   const t0 = first ? first.at : 0;
-  out.push("## 2. A real run of the fleet scenario", "", `Captured from the public app in real mode (\`${cap.file}\`): ${cap.events.length} events, ${intents} signed intents, ${decisions} policy decisions (${denies} denied), ${gates} inbound messages through the gate (${refused} refused or held), ${holds} flight log held by the oracle, ${proofs} proof submitted, ${rows.length} transactions. Every intent hash was committed to the deployed IntentLog by a contract call before the policy engine decided; every money event was anchored on the same chain with the event as calldata.`, "");
+  out.push("## 2. A real run of the fleet scenario", "", `Captured from the public app in real mode (\`${cap.file}\`): ${cap.events.length} events, ${intents} signed intents, ${decisions} policy decisions (${denies} denied), ${gates} inbound messages through the gate (${refused} refused or held), ${holds} flight log held by the oracle, ${proofs} proof submitted, ${rows.length} transactions. ${(() => { const txs = [...new Map(cap.events.filter((e) => e.t === "chain").map((e) => [(e as { tx: ChainTx }).tx.hash, (e as { tx: ChainTx }).tx])).values()]; const commits = txs.filter((t) => t.label.startsWith("IntentLog.commit")).length; const repeats = txs.filter((t) => t.label.includes("already in the log")).length; return `Every intent hash goes to the deployed IntentLog before the policy engine decides: ${commits} were new commits by contract call${repeats ? `, ${repeats} were already in the log from an earlier run on the same key (intent hashes are deterministic for a seeded scenario), so the engine anchored them as calldata instead` : ""}. Every money event was anchored on the same chain with the event as calldata. `; })()}${(() => { const src = cap.events.map((e) => (e as { source?: string }).source).filter(Boolean); const m = src.filter((x) => x === "model").length; const tpl = src.filter((x) => x === "template").length; const fh = new Set(cap.events.filter((e) => e.t === "chain" && (e as { tx: ChainTx }).tx.fiscoHash).map((e) => (e as { tx: ChainTx }).tx.hash)).size; return `${m ? `${m} explanations were written by a free model on OpenRouter and passed the number check, ${tpl} are labelled template text (the free tier allows about ten model calls a minute).` : `No model key was set for this run, so all ${tpl} explanations are labelled template text; section 2b is a run with the free model on.`}${fh ? ` ${fh} intent commits carry a FISCO BCOS hash: the same intent hash went to the FISCO IntentLog in the same step.` : ""}`; })()}`, "");
   out.push("| # | Seconds | Event | Kind | Sent to | Status | Block | Gas | Events | Transaction |", "|---|---|---|---|---|---|---|---|---|---|");
   let gas = 0, ok = 0, commits = 0, missing = 0;
   for (const [i, r] of rows.entries()) {
@@ -89,6 +99,18 @@ async function executionEvidence() {
     out.push(`| ${i + 1} | ${((r.at - t0) / 1000).toFixed(1)} | ${r.tx.label.replace(/\|/g, "/")} | ${r.tx.kind} | ${toName} | ${rc ? (rc.status === "0x1" ? "success" : "reverted") : "missing"} | ${rc ? parseInt(rc.blockNumber, 16).toLocaleString("en-US") : ""} | ${rc ? rc.gasUsed.toLocaleString("en-US") : ""} | ${rc ? rc.logs : ""} | [${short(r.tx.hash)}](${explorerTx(r.tx.hash)}) |`);
   }
   out.push("", `Checked ${rows.length} hashes against the chain: ${ok} succeeded, ${missing} not found, ${commits} were \`IntentLog.commit\` calls with a \`Committed\` event each, ${gas.toLocaleString("en-US")} gas in total (${(gas * 0.006e-9).toFixed(7)} ETH at 0.006 gwei).`, "");
+  // Later real captures: the free model and the FISCO mirror switched on.
+  for (const f of captures().slice(1)) {
+    const c = loadCapture(f);
+    const txs = [...new Map(c.events.filter((e) => e.t === "chain").map((e) => [(e as { tx: ChainTx }).tx.hash, (e as { tx: ChainTx }).tx])).values()];
+    let ok = 0;
+    for (const t of txs) { const r = await receipt(t.hash); if (r?.status === "0x1") ok += 1; }
+    const src = c.events.map((e) => (e as { source?: string }).source).filter(Boolean);
+    const m = src.filter((x) => x === "model").length, tpl = src.filter((x) => x === "template").length;
+    const fh = txs.filter((t) => t.fiscoHash).length;
+    out.push("## 2b. A second real run: free model and FISCO mirror on", "", `\`${f}\`, captured from the public app with the demo token after the free model and the FISCO target were switched on: ${c.events.length} events, ${txs.length} transactions, ${ok} of ${txs.length} receipts fetched again now with status success. ${m} explanations were written by a free model on OpenRouter and passed the number check, ${tpl} are labelled template text (about ten model calls a minute on the free tier). ${fh} intents carry a FISCO BCOS hash next to the Base one. The intent hashes were already in the Base IntentLog from the run above, so on Base they were anchored as calldata; \`pnpm verify:all\` re-checks every one of these receipts.`, "");
+  }
+
   // One full job against the deployed contracts (contracts/script/fulljob.sh base): value moving
   // contract calls, kept apart from the calldata anchors above. Every receipt fetched again now.
   const fj = JSON.parse(readFileSync(join(ROOT, "contracts", "deployments", "base-sepolia-fulljob.json"), "utf8")) as { steps: { step: string; contract: string; function: string; from: string; valueWei: string; tx: string; block: number }[]; checks: { check: string; value: string }[]; contracts: Record<string, string> };

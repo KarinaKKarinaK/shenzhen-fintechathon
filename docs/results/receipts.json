@@ -1,9 +1,9 @@
 {
-  "ranAt": "2026-10-20T12:54:51.658Z",
+  "ranAt": "2026-10-20T13:06:28.392Z",
   "script": "web/scripts/verify-all.ts (pnpm verify:all)",
   "checks": "receipt exists, status success, block matches the source where recorded, IntentLog.commit calldata carries the recorded intent hash",
-  "total": 228,
-  "verified": 228,
+  "total": 267,
+  "verified": 267,
   "failed": 0,
   "skipped": 0,
   "intentHashesMatched": 46,
@@ -27,6 +27,13 @@
       "chain": "base",
       "claimed": 40,
       "verified": 40,
+      "failed": 0
+    },
+    {
+      "name": "Base Sepolia captured run real-run-2026-10-20T21.sse",
+      "chain": "base",
+      "claimed": 39,
+      "verified": 39,
       "failed": 0
     },
     {

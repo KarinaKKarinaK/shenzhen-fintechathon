@@ -44,5 +44,5 @@ jobs:
       - name: forge-std
         run: test -f lib/forge-std/src/Test.sol || forge install foundry-rs/forge-std
       - run: forge build
-      - name: forge test (68 tests)
+      - name: forge test (84 tests)
         run: forge test -vv

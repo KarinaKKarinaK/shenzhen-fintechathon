@@ -60,7 +60,7 @@ Pilot credit is learned across three lenders with WeBank's FATE 2.2, no raw reco
 
 ## 9. Honest about what is real
 
-Four contracts deployed and source verified on Base Sepolia, 68 Foundry tests, the 15 contract layer attacks among them. One full job ran against the deployed contracts with value moving: fee locked, confirmed, instalment paid to the lender, the vendor bond slashed by proof, the title moved to the pilot at zero. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
+Four contracts deployed and source verified on Base Sepolia, 84 Foundry tests, the 15 contract layer attacks among them. One full job ran against the deployed contracts with value moving: fee locked, confirmed, instalment paid to the lender, the vendor bond slashed by proof, the title moved to the pilot at zero. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
 
 The same four contracts run on FISCO BCOS 3.16.3, WeBank's consortium chain, as the lender's ledger. A full run committed 30 intents there and every hash read back matches the engine's; in one real run each intent went to Base Sepolia and FISCO in the same step with the same hash. Value moves on FISCO too: a vendor bond held, a job fee locked and refunded. The FISCO node runs in Docker from one script.
 
