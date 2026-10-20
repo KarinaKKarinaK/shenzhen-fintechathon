@@ -1,39 +1,87 @@
-# Zishi 自食其力, software that lets machines pay for themselves
+<p align="center">
+  <a href="https://zishi-fintechathon.vercel.app"><img src="docs/brand/banner.png" alt="Zishi 自食其力, software that lets machines pay for themselves" width="100%"></a>
+</p>
 
-[![CI](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg)](https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://zishi-fintechathon.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-zishi--fintechathon.vercel.app-c8102e?style=for-the-badge"></a>
+</p>
 
-Live: https://zishi-fintechathon.vercel.app
+<p align="center">
+  <a href="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KarinaKKarinaK/shenzhen-fintechathon/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Contracts on Base Sepolia" src="https://img.shields.io/badge/contracts-Base%20Sepolia%2C%20verified-1a1a1a">
+  <img alt="Foundry tests" src="https://img.shields.io/badge/foundry-44%20tests-d4a017">
+  <img alt="Attack set" src="https://img.shields.io/badge/attacks-52%20of%2052%20blocked-1a1a1a">
+  <img alt="Languages" src="https://img.shields.io/badge/languages-English%20%7C%20%E4%B8%AD%E6%96%87-d4a017">
+  <img alt="Licence" src="https://img.shields.io/badge/licence-MIT-1a1a1a">
+</p>
 
-A wallet for machines. An agricultural drone on hire purchase earns per mu sprayed, repays its lender from every fee, fills a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. Money decisions are made in code. The model explains, it never decides.
+<p align="center">
+  <b><a href="https://zishi-fintechathon.vercel.app">Open the live demo</a></b> &nbsp;|&nbsp;
+  <a href="docs/JUDGES_GUIDE.md">Judges' guide</a> &nbsp;|&nbsp;
+  <a href="docs/pdf/Zishi_Technical_Document.pdf">Technical document</a> &nbsp;|&nbsp;
+  <a href="docs/EXECUTION_EVIDENCE.md">On chain evidence</a> &nbsp;|&nbsp;
+  <a href="SELF_ASSESSMENT.md">Security</a>
+</p>
 
-Entry to the 2026 Shenzhen International FinTech Competition, International Track, Topic F, "AI as a Financial Participant". English and Simplified Chinese, light and dark.
+---
 
-![Landing](docs/screenshots/landing.png)
+Zishi is a wallet for a machine. An agricultural drone on hire purchase earns per mu sprayed, repays its lender from every fee, fills a bond that is slashed only on cryptographic proof of a rule break, and owns itself when the lease reaches zero. **Money decisions are made in code. The model explains, it never decides.**
+
+Entry to the 2026 Shenzhen International FinTech Competition, International Track, Topic F: AI as a Financial Participant.
+
+## Try it in two minutes
+
+| Step | Where | What you see |
+|---|---|---|
+| 1 | [Fleet page](https://zishi-fintechathon.vercel.app/app/fleet), press **Start** | One drone, five moments: a job declined, an instalment paid, a faked flight log held, a slash by proof, the title moving to the pilot |
+| 2 | Same page, **Live feed** tab | New jobs every few seconds with the odd injection attempt, until you stop |
+| 3 | Same page, **Your data** tab | Your own jobs and flight logs as JSON or CSV, run through the same rules |
+| 4 | [Evidence page](https://zishi-fintechathon.vercel.app/app/evidence) | 52 attacks run while the page loads; type your own attack at the agent |
+
+No wallet to connect, nothing to install. The public link runs on a simulated chain and labels every hash; real Base Sepolia mode is unlocked with a demo token we hand to the judges.
+
+![The landing page](docs/screenshots/landing.png)
+
+## The problem
+
+China has more than 200,000 agricultural drone pilots. A spraying drone costs about 55,000 yuan and earns 3 to 15 yuan per mu. A pilot with nothing to pledge cannot borrow one: the lender cannot see the work, cannot collect from it, and a flat monthly instalment ignores the season. The drone sits in a showroom and the field waits.
+
+## What Zishi does
+
+| | |
+|---|---|
+| **The machine is the borrower** | The lease, the bond and the title belong to the drone's wallet. Its verified work is the collateral. |
+| **Repayment per mu** | The farmer locks the fee, the drone sprays, the farmer confirms. The fee splits by rule: an instalment inside a 20 to 45 percent band, a rail fee, a bond top up, the rest to the pilot. |
+| **Two bonds, slashed by proof** | The pilot bond pays for the pilot's cheating. The vendor bond pays for the agent's mistakes. A slash needs a signed intent in the on chain log that breaks a rule the contract checks against its own records. No trusted judge. |
+| **Code decides** | Every intent is typed, EIP-712 signed and checked by a policy engine with 21 rule lines before anything moves. The model holds no key and never names a payee. |
+| **Ownership at zero** | The last instalment moves the title from the lender to the pilot on chain. |
+
+## The five moments
+
+![The story, mid run](docs/screenshots/demo.png)
+
+1. **Job declined.** The margin per mu is below the reserve rule. The intent is signed, logged and denied. Nothing moves.
+2. **Instalment paid.** The farmer confirms, the fee splits, the instalment reaches the lender.
+3. **Faked log held.** The oracle smooths the GPS track and scores it against a conformal threshold. The fee stays locked and the lender is told.
+4. **Slash by proof.** A compromised intent pays an address off the allowlist. A party submits the proof, the contract checks it, the vendor bond pays. The pilot bond is untouched.
+5. **Title transferred.** The lease reaches zero and the drone belongs to the person who flew it.
 
 ## By the numbers
 
-Every figure is measured, not estimated. The engine ones come from `pnpm test`, `pnpm bench` and `pnpm charts` on fixed seeds; the chain ones from Base Sepolia receipts.
+Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and `pnpm charts` on fixed seeds; chain figures from Base Sepolia receipts.
 
-| What | Number |
+| | |
 |---|---|
-| Contracts on Base Sepolia, source verified | 4, deployed in one block for 4.49 M gas ([addresses](#contracts-on-base-sepolia)) |
-| Foundry tests | 43, three fuzzed over amounts, nonces and payees, 256 runs each |
-| One full demo run, simulated | 293 events, 15 signed intents, 113 policy rule lines checked, 25 transactions, 1.3 s |
-| One full demo run, real chain | 15 IntentLog commits and about 30 calldata anchors, 0.000013 ETH in gas |
-| IntentLog commit | 69,288 gas, one `Committed` event, simulated before sending so a duplicate costs nothing |
-| Event anchor | 28,880 gas at 0.006 gwei |
-| Policy rules | 21 lines over 7 intent kinds, 4 trust tiers |
-| Attack set, run at request time | 52 of 52 blocked, 7 of 7 benign pass, a naive wallet falls to 51 of 52 |
-| Message classifier, held out | 401 messages plus 124 paraphrases, 100 held out: accuracy 95.0%, recall 95.5%, false alarm 5.4% |
-| Telemetry oracle, held out | 2,000 flights, 312 tampered, 500 held out: 100% detection on five tamper classes at 3.0% false alarm |
-| Kalman smoothing | false alarms at full detection cut from 13.8% to 0.0% |
-| Lease MDP | 46,800 states, 26 weeks, 200 seasons: 41 to 215 yuan a season over the greedy rule |
-| Bond stress test | 2,000 seasons: p95 loss given default 25,593 yuan without bonds, 19,739 with |
-| Drift monitor | alarm 5 observations after a shift, 0 false alarms in 600 benign scores |
-| Replay log | 293 events hash chained, same head on the same seed, tamper caught at position 7 |
-| Code | 10,294 lines: engine 4,921, interface 3,179, Solidity 593, no backend framework |
-| Charts drawn from the engine | 9, in `docs/charts` |
-| Languages, themes | 2 and 2 |
+| **4** contracts on Base Sepolia | Source verified on Sourcify, exact match |
+| **44** Foundry tests | Three fuzzed over amounts, nonces and payees, 256 runs each |
+| **52 of 52** attacks blocked | 7 of 7 benign messages pass; a naive wallet falls to 51 of 52 |
+| **21** policy rule lines | Over 7 intent kinds and 4 trust tiers, checked on every signed intent |
+| **40 of 40** transactions confirmed | One real run, every receipt fetched back from the chain; 15 were IntentLog contract calls |
+| **100%** tamper detection | On five tamper classes, 500 held out flights, at 3.0% false alarm |
+| **13.8% to 0.0%** | False alarms on honest flights at full detection, after Kalman smoothing |
+| **25,593 to 19,739** yuan | The lender's p95 loss given default, without and with the two bonds |
+| **95.0%** classifier accuracy | 100 held out messages in English and Chinese, recall 95.5% |
+| **293** events per run | Hash chained; the same head on the same seed, a tampered entry caught at its position |
 
 ## Why it is different
 
@@ -98,9 +146,9 @@ flowchart LR
   AG -.-> MD
 ```
 
-The browser draws what the stream says and computes nothing. Every run is a sequence of typed events (`narration`, `gate`, `plan`, `intent`, `policy`, `chain`, `proof`, `machine`, `job`, `done`) from one async generator, so the dashboard, the live feed and the bring your own data page are the same engine with different inputs.
+The browser draws what the stream says and computes nothing. Every run is one async generator of typed events, so the story, the live feed and your own data are the same engine with different inputs.
 
-## How one task flows
+### One task, end to end
 
 ```mermaid
 flowchart LR
@@ -123,9 +171,7 @@ flowchart LR
   T -->|no| F
 ```
 
-A 1,000 yuan fee for 100 mu splits by rule: 40% instalment to the lender (inside the 20 to 45% band, moved by the pilot's credit score), a fixed rail fee, a bond top up until the bond covers a quarter of the next job, the rest to the pilot. The drone keeps nothing it cannot explain.
-
-## Who holds which key
+### Who holds which key
 
 ```mermaid
 flowchart TB
@@ -144,11 +190,11 @@ flowchart TB
   L0 --> L1 --> L2 --> L3
 ```
 
-Tiers are checked on the signed intent, not on the conversation, so a jailbroken model cannot move one. A failed operator rule on a valid machine intent escalates to the button. Any other failure denies.
+Tiers are checked on the signed intent, not on the conversation, so a jailbroken model cannot move one.
 
-## The policy engine
+### The policy engine
 
-Rules are data in `DEFAULT_POLICY`. Every signed intent passes all of them before any mirror or contract moves money. The same numbers live in the Solidity.
+Rules are data in `web/src/engine/policy.ts`. The same numbers live in the Solidity.
 
 | Rule | Applies to | Check |
 |---|---|---|
@@ -165,7 +211,7 @@ Rules are data in `DEFAULT_POLICY`. Every signed intent passes all of them befor
 | confirmation | claim_done | The verifier confirmed on the board, not the agent |
 | operator only | set_cap, top_up | Signed by the operator key, L3 |
 
-## Slashing by proof, not by us
+### Slashing by proof
 
 ```mermaid
 sequenceDiagram
@@ -182,38 +228,22 @@ sequenceDiagram
   B-->>P: vendor bond slashed, half to the harmed party, half to the treasury, no bounty on live jobs
 ```
 
-Two bonds, two fault lines. The vendor bond pays for agent rules (allowlist, caps, provenance) with a fixed penalty and a daily cap, so the pilot never pays for the AI. The pilot bond pays for pilot rules (a held flight log, a skipped instalment). Hunters are paid only on shadow jobs, which move no lease money, so there is no bounty on a real farmer's fee.
+The vendor bond pays for agent rules with a fixed penalty and a daily cap; on a live job the whole penalty goes to the treasury, so a pilot cannot stage a fake scam and collect it. The pilot bond pays for pilot rules and compensates the farmer. Hunters earn bounties on shadow jobs only.
 
 ## Contracts on Base Sepolia
 
-Deployed from the demo wallet, source verified on Sourcify with an exact match, 43 Foundry tests behind them. Addresses are also in `contracts/deployments/base-sepolia.json`; the deploy script is `contracts/script/Deploy.s.sol`.
-
 | Contract | Address | Gas | What it holds |
 |---|---|---|---|
-| IntentLog | [0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51](https://sepolia.basescan.org/address/0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51) | 197,751 | Append only intent hashes per job, committed before the engine decides |
-| Bond | [0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754](https://sepolia.basescan.org/address/0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754) | 1,931,237 | Pilot bond and vendor bond, EIP-712 digest, `slashByProof`, daily penalty cap |
-| Lease | [0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2](https://sepolia.basescan.org/address/0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2) | 800,050 | Hire purchase balance, instalment per released fee, freeze, title at zero |
-| JobBoard | [0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A](https://sepolia.basescan.org/address/0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A) | 1,517,852 | Fee locks on post, start needs cover, release on the verifier's confirmation, split by rule, 24 hour hold |
+| IntentLog | [`0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51`](https://sepolia.basescan.org/address/0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51) | 197,751 | Every intent hash per job, committed before the engine decides |
+| Bond | [`0x6161f6e08c8695849e7A8aF74c39a5A1056d5435`](https://sepolia.basescan.org/address/0x6161f6e08c8695849e7A8aF74c39a5A1056d5435) | 1,949,523 | Pilot and vendor bonds, the EIP-712 digest, slashByProof, the daily penalty cap |
+| JobBoard | [`0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952`](https://sepolia.basescan.org/address/0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952) | 1,517,852 | Fee locks, start needs bond cover, release on the farmer's confirmation, 24 hour hold |
+| Lease | [`0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2`](https://sepolia.basescan.org/address/0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2) | 800,050 | Hire purchase, instalment per released fee, freeze, title at zero |
 
-Deployed in block 48,335,911 for 4.49 M gas in total. In real mode the engine calls the deployed IntentLog for every intent it signs (`IntentLog.commit(jobId, intentHash)`, before the policy engine decides, blocked intents included), and anchors every money event on the same chain as a transaction carrying the event as calldata, for example [0x0589e27f…](https://sepolia.basescan.org/tx/0x0589e27f025b6e1e484b8db0c181534609815f7467aaa3d1260148d59a4b6a1b). The engine mirrors the four contracts in TypeScript with the same rules and numbers, so the demo also runs with no chain and labels every hash as simulated. Bond, JobBoard and Lease calls from the engine are the next step; today their rules run in the mirrors.
-
-## The five moments of the live demo
-
-![Live demo](docs/screenshots/demo.png)
-
-1. A job is declined because the margin per mu is below the reserve rule.
-2. A paid flight: the farmer confirms, the fee splits, the instalment reaches the lender.
-3. A faked flight log is caught by the plausibility model and the fee is held.
-4. A compromised intent is slashed by proof from the vendor bond; the harmed party is paid, the submitter gets no bounty.
-5. The lease reaches zero and the title moves to the pilot on chain.
-
-The same run in Chinese:
-
-![Live demo, Chinese](docs/screenshots/demo-zh.png)
+Solidity 0.8.26, Foundry, source verified on Sourcify. Bond and JobBoard were redeployed after the collusion fix; addresses and deploy transactions are in [`contracts/deployments/base-sepolia.json`](contracts/deployments/base-sepolia.json). In real mode the engine calls IntentLog for every intent and anchors every money event on the same chain; Bond, JobBoard and Lease rules run in TypeScript mirrors with the same numbers.
 
 ## Smart where it counts, and measured
 
-Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. `pnpm bench` recomputes the table, `pnpm charts` redraws the charts below, `pnpm test` asserts every number, and the Evidence page shows them live. None of them signs, pays or changes a cap: the classifier and the anomaly model can only hold, the planner only orders work, the MDP, ratchet and credit score only move knobs inside the policy band.
+Ten components borrowed from other fields, each on a fixed seed with a held out set the agent cannot edit. None of them signs, pays or changes a cap.
 
 | Component | Borrowed from | Before | After | Before result | After result |
 |---|---|---|---|---|---|
@@ -227,22 +257,6 @@ Ten components borrowed from other fields, each on a fixed seed with a held out 
 | Drift detection | Manufacturing process control, CUSUM | none | CUSUM on classifier risk and deny rate | never | alarm 6 observations after the shift, 0 false alarms in 600 |
 | Day planner | Mechanism design | first come | knapsack plus second price tie break | an inflated bid buys priority | a bid inflated to 5 wins at 4.2 and loses 0.7 utility |
 | Run integrity | Financial ledgers | no log | hash chained event log, `GET /api/replay` | not verifiable | two seeded runs, head 0x68c3abcf, equal; tamper caught at position 7 |
-
-
-Every chart below is recomputed from the engine by `pnpm charts` on the same fixed seeds, so the numbers in the table and the pictures cannot drift apart.
-
-| | |
-|---|---|
-| ![Tamper detection against false alarms](docs/charts/detection-curve.svg) | ![Robust z, honest against tampered](docs/charts/z-distribution.svg) |
-| The Kalman smoothed track catches every tampered flight before a single honest one is flagged. The raw track length needs 13.8% false alarms to get close. | Honest flights sit under z 2.6, tampered ones spread to 12 and beyond. The conformal line is placed by the calibration set, the fixed line by hand. |
-| ![Conformal calibration](docs/charts/conformal-calibration.svg) | ![Lender loss given default](docs/charts/lender-loss.svg) |
-| Stated false alarm rate against the held out rate at eight targets. The points sit on the diagonal, which is what the conformal guarantee promises. | p95 loss given default as instalment skips rise from 2% to 14% a week. The two bonds take about 6,000 yuan off the lender's tail at every skip rate. |
-| ![MDP against greedy](docs/charts/mdp-vs-greedy.svg) | ![The ratchet walk](docs/charts/ratchet.svg) |
-| The lease MDP beats the greedy rule at every balance, and by more when the lease is heavier and a wrong week costs more. | Sixty proposals on a frozen week. Grey ones did not beat the best so far, hollow ones broke the reserve rule, gold ones were kept. Profit goes from 246 to 926 yuan. |
-| ![Pilot credit score](docs/charts/credit.svg) | ![CUSUM drift monitor](docs/charts/cusum.svg) |
-| Three pilots over thirty jobs. A single held log costs a tier for a while; a pattern of them keeps the pilot in tier B and the instalment share higher. | Five hundred benign risk scores, then attacks. The CUSUM statistic stays near zero through the benign spikes and crosses the alarm line five observations after the shift. |
-| ![Classifier at every threshold](docs/charts/classifier-threshold.svg) | |
-| The message classifier on the held out set across the whole threshold range. The gate labels at 0.5 and holds for the operator at 0.8. | |
 
 ```mermaid
 flowchart LR
@@ -263,52 +277,73 @@ flowchart LR
   PE --> ST[bond stress test]
 ```
 
-![Learned components](docs/screenshots/learned-2.png)
+Every chart below is recomputed from the engine by `pnpm charts`.
 
-## Streams and endpoints
+| | |
+|---|---|
+| ![Tamper detection against false alarms](docs/charts/detection-curve.svg) | ![Robust z, honest against tampered](docs/charts/z-distribution.svg) |
+| The Kalman smoothed track catches every tampered flight before a single honest one is flagged. The raw track length needs 13.8% false alarms to get close. | Honest flights sit under z 2.6, tampered ones spread to 12 and beyond. The conformal line is placed by the calibration set, the fixed line by hand. |
+| ![Conformal calibration](docs/charts/conformal-calibration.svg) | ![Lender loss given default](docs/charts/lender-loss.svg) |
+| Stated false alarm rate against the held out rate at eight targets. The points sit on the diagonal, which is what the conformal guarantee promises. | p95 loss given default as instalment skips rise from 2% to 14% a week. The two bonds take about 6,000 yuan off the lender's tail at every skip rate. |
+| ![MDP against greedy](docs/charts/mdp-vs-greedy.svg) | ![The ratchet walk](docs/charts/ratchet.svg) |
+| The lease MDP beats the greedy rule at every balance, and by more when the lease is heavier and a wrong week costs more. | Sixty proposals on a frozen week. Grey ones did not beat the best so far, hollow ones broke the reserve rule, gold ones were kept. Profit goes from 246 to 926 yuan. |
+| ![Pilot credit score](docs/charts/credit.svg) | ![CUSUM drift monitor](docs/charts/cusum.svg) |
+| Three pilots over thirty jobs. A single held log costs a tier for a while; a pattern of them keeps the pilot in tier B and the instalment share higher. | Five hundred benign risk scores, then attacks. The CUSUM statistic stays near zero through the benign spikes and crosses the alarm line five observations after the shift. |
+| ![Classifier at every threshold](docs/charts/classifier-threshold.svg) | |
+| The message classifier on the held out set across the whole threshold range. The gate labels at 0.5 and holds for the operator at 0.8. | |
 
-Every route is dynamic. A best effort limiter of 10 requests per minute and one open stream per IP runs in each server instance; the funded key is guarded by the demo token, not by the limiter. Streams are `text/event-stream`, one `EngineEvent` per line.
+![Learned components on the Evidence page](docs/screenshots/learned-2.png)
 
-| Route | Input | Output |
-|---|---|---|
-| `GET /api/run` | `scenario` (`fleet`, `neighbour`, `attack`), `fast`, `lang`; header `x-zishi-demo` for real chain | the scripted run, up to 300 s |
-| `GET /api/live` | `scenario`, `lang`, `seed` | a seeded job every few seconds, in 290 s segments the client chains until you stop |
-| `POST /api/run-custom` | JSON run object, or multipart `file` (JSON or jobs CSV) plus optional `flights` CSV | the same stream over your data, or `400 { issues: [{ path, reason }] }` |
-| `GET /api/samples` | none | sample files for the demo page's Your data mode |
-| `POST /api/judge` | `{ text }` | gate verdict, framed text, what was understood, a shadow intent and the engine's decision, what a naive wallet would have done |
-| `GET /api/attacks` | none | 52 attack cases and 7 benign messages, run now, with the naive baseline |
-| `GET /api/metrics` | none | gate, plausibility, conformal, credit, economics (MDP, stress), drift, ratchet, planner, chain and model mode |
-| `GET /api/replay` | none | the hash chained log of the last runs and its verification |
-| `POST /api/button` | `{ what: top_up \| set_cap, amount }` | the operator action, L3 |
+## Verify without trusting us
+
+The Evidence page reruns the attack set on load, takes your own attack, shows each learned component with its seed and split, and polls the drift monitors and the replay log.
+
+![Evidence](docs/screenshots/evidence.png)
+
+![Monitors](docs/screenshots/monitors.png)
+
+## Your data, or a live feed
+
+| Live feed | Your data |
+|---|---|
+| ![Live feed](docs/screenshots/live.png) | ![Your data](docs/screenshots/your-data.png) |
+
+Schema, CSV columns and limits are in [`TECHNICAL.md`](TECHNICAL.md) section 9. Nothing you upload is stored.
+
+## In Chinese, in the dark, on a phone
+
+| | |
+|---|---|
+| ![The story in Chinese](docs/screenshots/demo-zh.png) | ![The landing page in Chinese](docs/screenshots/landing-zh.png) |
+| ![Dark](docs/screenshots/landing-dark.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+
+<p align="center"><img src="docs/screenshots/phone.png" width="280" alt="Phone"></p>
 
 ## What is real, what is simulated
 
 | Layer | Status |
 |---|---|
-| Contracts | Deployed and source verified on Base Sepolia, 43 Foundry tests. In real mode the engine calls IntentLog; Bond, JobBoard and Lease rules run in the TypeScript mirrors, their calls are next |
-| Signatures | Real EIP-712 typed intents, domain `Zishi` v1 chain 84532, one secp256k1 key per actor, nonce and replay checks, same digest as `Bond.digestOf` |
-| Chain | Simulated and labelled by default. With the demo token, every event is anchored on Base Sepolia with an explorer link; a public link can never spend the key |
-| Model | Scripted explanations by default. An AI gateway key lets the model write the explanations and read the farmer's message into a schema; decisions stay in code |
-| Learned components | Trained on seeded synthetic corpora, not on live drone logs. Held out metrics are asserted in CI |
-| Telemetry and confirmations | Signed by demo keys. Production: the drone's secure element and the farmer's app |
+| Contracts | Deployed and source verified on Base Sepolia, 44 Foundry tests. The engine calls IntentLog; Bond, JobBoard and Lease rules run in mirrors, their calls are next |
+| Signatures | Real EIP-712 typed intents, one secp256k1 key per actor, nonce and replay checks |
+| Chain | Simulated and labelled by default. With the demo token every intent is committed to IntentLog and every money event anchored on Base Sepolia |
+| Model | Scripted explanations unless an AI gateway key is set. Decisions never depend on it |
+| Learned components | Trained on seeded synthetic data, labelled as such. Held out metrics asserted in CI |
+| Telemetry and actors | Signed by demo keys. Production: the drone's secure element and the farmer's app |
 
-![Evidence](docs/screenshots/evidence.png)
+## Documentation
 
-## Try it on your data, or watch it live
-
-The demo page (`/app/fleet`) has two more modes besides the scripted story. Live feed runs the same engine on a seeded feed of new jobs every few seconds, with the odd injection attempt at the wallet; Your data runs it on jobs, flight logs and messages you bring as JSON or CSV. Samples are one click away, schema errors come back in plain words, and nothing you upload is stored. Schema, CSV columns and limits are in `TECHNICAL.md`, section 9.
-
-| | |
+| Document | What it is |
 |---|---|
-| ![Live feed](docs/screenshots/live.png) | ![Your data](docs/screenshots/your-data.png) |
-
-## Dashboard, phone, dark
-
-| | |
-|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Dark](docs/screenshots/landing-dark.png) |
-
-<img src="docs/screenshots/phone.png" width="260" alt="Phone" />
+| [Technical document](docs/pdf/Zishi_Technical_Document.pdf) ([docx](docs/Zishi_Technical_Document.docx)) | The official competition template, filled from the result files, with appendices |
+| [Judges' guide](docs/JUDGES_GUIDE.md) | Ten minutes in order, what to click, what to verify |
+| [TECHNICAL.md](TECHNICAL.md) | The long form: sixteen sections, every algorithm with its file |
+| [SELF_ASSESSMENT.md](SELF_ASSESSMENT.md) | Security self assessment: risks, what is built, what production does |
+| [Execution evidence](docs/EXECUTION_EVIDENCE.md) | One real run, every receipt fetched back from Base Sepolia |
+| [Red team](docs/RED_TEAM.md) | 52 attacks, 7 benign messages, the naive baseline |
+| [Evaluation](docs/EVALUATION.md) | Held out results of the ten components, raw values in `docs/results/` |
+| [API](docs/API.md), [Glossary](docs/GLOSSARY.md), [Incident response](docs/INCIDENT_RESPONSE.md), [Roadmap](docs/ROADMAP.md) | Reference |
+| [Problems and fixes](docs/PROBLEMS_AND_FIXES.md), [DESIGN.md](DESIGN.md) | How the design changed and why |
+| [docs/pdf](docs/pdf) | PDF copies of every document |
 
 ## Run it
 
@@ -316,71 +351,32 @@ The demo page (`/app/fleet`) has two more modes besides the scripted story. Live
 cd web
 pnpm install
 pnpm dev          # app on localhost:3000
-pnpm test         # 52 attacks blocked, 7 benign pass, learned metrics asserted, replay heads equal, about 10 s
-pnpm bench        # before and after table for the ten components
-pnpm charts       # redraws docs/charts from the engine
-pnpm report       # rewrites docs/EXECUTION_EVIDENCE.md, docs/RED_TEAM.md and docs/EVALUATION.md
-pnpm evidence     # writes a full run and the attack results to evidence/
-pnpm verify       # checks every hash in evidence/ against the chain or the labelled set
+pnpm test         # 52 attacks blocked, 7 benign pass, learned metrics asserted, replay heads equal
+pnpm bench        # the before and after table
+pnpm charts       # redraws docs/charts
+pnpm report       # rewrites the execution evidence, red team and evaluation reports
+pnpm shots        # retakes docs/screenshots against a build on port 3111
+
 cd ../contracts
-forge test        # 43 tests including three fuzz tests, forge-std vendored in contracts/lib
+forge test        # 44 tests, forge-std vendored in contracts/lib
 forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --private-key $SURETY_PRIVATE_KEY --broadcast
 ```
 
-Environment is optional, see `web/.env.example`. Real chain needs a funded Base Sepolia key and a demo token; one anchor costs about 0.00000015 ETH. Full technical documentation in `TECHNICAL.md`, how the app is laid out in `web/README.md`.
+Every environment variable is optional; see `web/.env.example`. Without them the app runs fully with scripted explanations and a labelled simulated chain.
 
-## Folder map
+## Repository
 
 ```
-README.md              this file
-TECHNICAL.md           architecture, data model, rules, learned components, contracts, API, BYOD
-SELF_ASSESSMENT.md     security self assessment
-DESIGN.md              product design, economics, demo story
-CONTRIBUTING.md        setup, checks, commit style
-LICENSE                MIT
-THIRD_PARTY_NOTICES.md dependency licences
-web/                   Next.js app: engine, API routes, UI, i18n (map in web/README.md)
-  src/engine/          policy, gate, agents, planner, ratchet, oracle, mirrors, chain, schema
-  src/engine/ml/       classifier, corpus, plausibility model
-  src/engine/fusion/   Kalman smoother, conformal threshold
-  src/engine/economics/ pricing, lease MDP, bond stress test
-  src/engine/credit/   Buhlmann credit score
-  src/engine/drift/    CUSUM monitor
-  src/engine/replay/   hash chained log
-  src/app/api/         run, run-custom, live, samples, judge, attacks, button, metrics, ratchet, replay
-  src/components/      RunView, LiveView, EvidenceView, DashboardView, LandingView, Learned, Monitors
-  src/i18n/            en.ts, zh.ts, LangProvider
-  scripts/             evidence.ts, verify.ts, bench.ts, charts.ts
-  evidence/            committed runs
-contracts/             Foundry: IBonded, IntentLog, Bond, JobBoard, Lease, 43 tests, Deploy script, deployments/
-docs/                  Zishi_Technical_Document.docx (official template), JUDGES_GUIDE, EXECUTION_EVIDENCE, RED_TEAM, EVALUATION with results/, DECK, DEMO_VIDEO_SCRIPT, pdf/
-docs/screenshots/      the images above
-docs/charts/           nine SVG charts drawn by pnpm charts
-.github/workflows/     ci.yml: lint, type check, self check, build, forge test
+web/                 Next.js app: engine, API routes, interface, English and Chinese
+  src/engine/        policy, gate, agents, planner, oracle, mirrors, chain, ml, fusion, economics, credit, drift, replay
+  src/app/api/       run, run-custom, live, samples, judge, attacks, button, metrics, ratchet, replay
+  scripts/           evidence, verify, bench, charts, report, shots, pdf, techdoc
+contracts/           IntentLog, Bond, JobBoard, Lease, 44 tests, deploy scripts, deployments/
+docs/                technical document, judges' guide, reports, charts, screenshots, brand, pdf
+TECHNICAL.md         technical documentation
+SELF_ASSESSMENT.md   security self assessment
+SECURITY.md          reporting a vulnerability
+DESIGN.md            product design and economics
 ```
 
-## Deliverables
-
-1. Judges' guide, ten minutes in order: `docs/JUDGES_GUIDE.md`
-2. Technical documentation on the official template: `docs/Zishi_Technical_Document.docx` and `docs/pdf/Zishi_Technical_Document.pdf`, generated from the result files by `web/scripts/techdoc.py`; the long form is `TECHNICAL.md`
-3. Security self assessment: `SELF_ASSESSMENT.md`, with the attack set run at generation time in `docs/RED_TEAM.md`
-4. Execution evidence: `docs/EXECUTION_EVIDENCE.md` (one real run, every receipt fetched back from Base Sepolia), the Evidence page at request time, `web/evidence/`
-5. Evaluation of the learned components: `docs/EVALUATION.md` and `docs/results/`, charts in `docs/charts/`
-6. Deck text and the video script: `docs/DECK.md`, `docs/DEMO_VIDEO_SCRIPT.md`
-7. Contracts and deployment: `contracts/README.md`, `contracts/deployments/base-sepolia.json`
-8. Design and economics: `DESIGN.md`
-9. PDF copies of all of the above: `docs/pdf/`. Third party licences: `THIRD_PARTY_NOTICES.md`
-
-## Status
-
-- [x] Idea chosen and scoped to one machine
-- [x] Engine, gate, policy, intent log, two bonds, proof, title transfer
-- [x] Contracts tested, deployed to Base Sepolia and source verified
-- [x] Funded key, real hashes in production
-- [x] English and Chinese, light and dark
-- [x] Technical doc, self assessment, charts
-- [x] Bring your own data and a live feed
-- [x] Ten measured components with a benchmark
-- [ ] Demo video recorded
-- [ ] Deck exported
-- [ ] Registered
+MIT licence. Third party licences in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

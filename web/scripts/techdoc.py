@@ -108,7 +108,7 @@ def render_mermaid(src: str, name: str, width: int, height: int) -> Path:
         '<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>'
         '<script>mermaid.initialize({startOnLoad:true,theme:"neutral",flowchart:{wrappingWidth:260,htmlLabels:true}});</script></head>'
         f'<body><pre class="mermaid" style="margin:0">{src}</pre></body></html>', encoding="utf8")
-    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2", f"--window-size={width},{height}", "--virtual-time-budget=12000", f"--screenshot={png}", html.as_uri()], check=True, capture_output=True)
+    subprocess.run([CHROME, "--headless=new", "--user-data-dir=/tmp/zishi-chrome", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2", f"--window-size={width},{height}", "--virtual-time-budget=12000", f"--screenshot={png}", html.as_uri()], check=True, capture_output=True)
     return trim(png)
 
 
@@ -648,7 +648,7 @@ def main() -> int:
             r.text = ""
     # Diagrams.
     arch = render_mermaid(mermaid_block(ROOT / "README.md", "## Architecture"), "arch", 1700, 1000)
-    flow = render_mermaid(mermaid_block(ROOT / "README.md", "## How one task flows"), "flow", 2200, 520)
+    flow = render_mermaid(mermaid_block(ROOT / "README.md", "### One task, end to end"), "flow", 2200, 520)
     det = svg_to_png(DOCS / "charts" / "detection-curve.svg")
     loss = svg_to_png(DOCS / "charts" / "lender-loss.svg")
     # Fill each "Write here" in template order, once into the docx and once into the HTML for the PDF.
@@ -681,7 +681,7 @@ def main() -> int:
     html_path = TMP / "techdoc.html"
     prelude = next(p.text for p in doc.paragraphs if p.text.startswith("Required material"))
     html_path.write_text(hw.html("Zishi technical document", [("Team name", TEAM), ("Competition track", TRACK), ("Submission date", date.today().isoformat())], prelude), encoding="utf8")
-    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=8000", f"--print-to-pdf={OUT_PDF}", html_path.as_uri()], check=True, capture_output=True)
+    subprocess.run([CHROME, "--headless=new", "--user-data-dir=/tmp/zishi-chrome", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=8000", f"--print-to-pdf={OUT_PDF}", html_path.as_uri()], check=True, capture_output=True)
     print("wrote", OUT_PDF.relative_to(ROOT), f"{OUT_PDF.stat().st_size // 1024} KB")
     return 0
 

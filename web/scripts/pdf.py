@@ -69,7 +69,7 @@ def main() -> int:
         html = OUT / (src.stem + ".html")
         pdf = OUT / (src.stem + ".pdf")
         html.write_text(to_html(src, title), encoding="utf8")
-        subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=15000", f"--print-to-pdf={pdf}", html.as_uri()], check=True, capture_output=True)
+        subprocess.run([CHROME, "--headless=new", "--user-data-dir=/tmp/zishi-chrome", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=15000", f"--print-to-pdf={pdf}", html.as_uri()], check=True, capture_output=True)
         html.unlink()
         print("wrote", pdf.relative_to(ROOT), f"{pdf.stat().st_size // 1024} KB")
     return 0
