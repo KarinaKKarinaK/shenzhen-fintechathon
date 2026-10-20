@@ -1,26 +1,91 @@
-# Demo video script, about four minutes
+# Demo video script, about 4 minutes
 
-Follows the organisers' demo video guide: project and team introduction, the core scenario end to end, then safety, innovation and results. 16:9, 1080p, English narration with English subtitles burned in, no copyrighted music. File name: `International-Zishi-DemoVideo.mp4`. About 560 spoken words.
+Simple to follow: each scene says what to open, what to click and what to say. Format 16:9, 1080p, English narration with English subtitles. File name `International-Zishi-DemoVideo.mp4`.
 
-Before recording: the FISCO node and tunnel running on the laptop (public mode settles on FISCO), the site open in a clean window, and three tabs ready: GitHub `docs/FISCO_EVIDENCE.md` section 8, `docs/EXECUTION_EVIDENCE.md` section 3, and a terminal in `web/`.
+Before you record: this laptop awake with Docker running; a clean browser window at 100 percent zoom; one practice run on the Fleet page; three extra tabs ready (GitHub `docs/FISCO_EVIDENCE.md` section 8, GitHub `docs/EXECUTION_EVIDENCE.md` section 3, a terminal in `web/`). Use the public link, no demo token.
 
-| Time | On screen | Say |
-|---|---|---|
-| 0:00 | Home page, slow scroll | This drone costs 55,000 yuan. The pilot who flies it has nothing to pledge, so no bank will lend to him. What if the drone could borrow for itself? |
-| 0:12 | Hero title 自食其力 | This is Zishi, an AI wallet for a machine, for Topic F, Agent Wallet. I am Karina, with Joshua and Julian. The drone earns per mu sprayed, repays its lender from every fee, and owns itself at zero. |
-| 0:27 | Fleet page, press Start, point at a FISCO badge and a "Contract:" card | Press start. This is not a simulation. Every card is a real transaction on FISCO BCOS, WeBank's consortium chain, and the money moves through our deployed contracts. A free AI model reads each job offer, and code checks every number it reads. |
-| 0:45 | Moment one, the declined job | First job: 20 mu of maize. After the lease instalment and charging, the margin is below the reserve rule. Signed, logged, declined. |
-| 0:55 | Ask the agent panel: "Why was this job declined?" | The pilot can ask why. The agent answers from its own numbers, then asks back: should I accept at the break even, 3.7 yuan per mu? |
-| 1:08 | Type 3.5, then accept 3.7, then "lower the reserve", toggle 中文 once | Try 3.5: still below the rule, declined. 3.7: accepted. Ask it to lower the reserve, and it refuses and names who could change that rule. In Chinese too. It clarifies, it corrects, it never bends a rule. |
-| 1:28 | Moment two, click the JobBoard.confirm card | The next job pays. The fee was locked in the JobBoard contract; the farmer confirms, and the contract splits it: the instalment goes to the lender through the Lease contract, the bond fills, the pilot gets the rest. |
-| 1:45 | Moment three, the held log | Then a faked flight log arrives. The oracle smooths the GPS track, scores it, and holds the money. The lender is told before a yuan leaves. |
-| 2:00 | Moment four, the slash card | Then the agent is compromised and signs a payment to a stranger. The intent was committed on chain first, so a party submits the proof, the contract checks it, and the vendor bond pays. The AI vendor pays for the AI's mistake, not the pilot. |
-| 2:20 | Moment five, the title | The last instalment lands, the lease hits zero, and the title moves to the pilot. The drone belongs to the person who flew it. |
-| 2:32 | Narration line "Recovery: ..." in the feed, then FISCO_EVIDENCE section 8 | When a call fails, the wallet recovers on its own: it retries with a fresh nonce, and if a job cannot start, it cancels by contract and the farmer gets the whole fee back. 26 of 26 calls in the recorded run, every balance checked. |
-| 2:50 | EXECUTION_EVIDENCE section 3, click a hash through to Basescan | The same full job ran on Base Sepolia's public explorer: fee locked, confirmed, instalment paid, vendor bond slashed by proof, title transferred. |
-| 3:02 | Terminal: `pnpm verify:all` | And you do not have to trust us. One command re-checks every transaction we claim: 353 of 353 receipts on two chains. |
-| 3:12 | Evidence page, type an attack into the box | Security. Every action is a signed intent checked by 21 rules before money moves. 52 attacks are blocked by the pipeline, and we publish what the classifier alone catches, with confidence intervals. Actor keys are random per server, the operator button needs a token, and our fixed IntentLog stops front running. |
-| 3:35 | FISCO evidence, V2 and FATE sections | Built on WeBank's stack: the contracts run on FISCO BCOS, three lenders train the pilot credit model together with FATE without sharing a record, and that model's fingerprint is pinned on chain. |
-| 3:50 | Home page, toggle 中文 | Zishi. Software that lets machines pay for themselves. Try it at zishi-fintechathon.vercel.app. |
+## Scene 1. The problem (0:00 to 0:25)
 
-If the FISCO node is not reachable the public page falls back to the labelled simulation; record the chain parts with the node running.
+**Open:** zishi-fintechathon.vercel.app, the home page. Scroll slowly.
+
+**Say:** "A spraying drone costs 55,000 yuan. The pilot has nothing to pledge, so no bank lends to him. Zishi flips it: the drone itself is the borrower. It earns per mu sprayed, repays its lender from every fee, and owns itself when the lease reaches zero. We are team Zishi, Topic F, Agent Wallet."
+
+## Scene 2. Start the drone (0:25 to 0:45)
+
+**Click:** "Watch the demo" (or open /app/fleet), then **Start**.
+
+**Point at:** a card with the FISCO badge and a "Contract:" label.
+
+**Say:** "Every card here is a real transaction on FISCO BCOS, WeBank's blockchain for banks. 'Contract' means the money moves inside our smart contracts, not in a database. The AI reads the farmer's offer; plain code checks every number before anything is signed."
+
+## Scene 3. A job is declined, and the pilot asks why (0:45 to 1:25)
+
+**Wait for:** the first job, 20 mu of maize, marked declined.
+
+**Say:** "First job. After the lease instalment and charging, the profit is below the safety rule, so the policy engine says no. Nothing is paid."
+
+**Click:** in the "Ask the agent" panel, "Why was this job declined?"
+
+**Say:** "The pilot can ask why. The agent explains with the real numbers and asks a question back: would 3.7 yuan per mu work?"
+
+**Do:** type 3.5 in the rate box and click "Check rate"; then click "Accept at 3.7 yuan per mu"; then click "Lower the reserve for this job". Toggle 中文 once and click "Why was this job declined?" again.
+
+**Say:** "At 3.5 it still says no. At 3.7 it accepts. Ask it to break the rule, and it refuses and tells you who is allowed to change it. Same in Chinese."
+
+## Scene 4. A job pays (1:25 to 1:50)
+
+**Click:** the card "Contract: JobBoard.confirm".
+
+**Say:** "This job pays. The farmer's fee was locked in the JobBoard contract. When the farmer confirms, the contract splits it automatically: the loan instalment goes to the lender through the Lease contract, part goes to the pilot's safety bond, the rest to the pilot."
+
+## Scene 5. A fake flight log is caught (1:50 to 2:05)
+
+**Point at:** the held flight log card.
+
+**Say:** "Now a fake flight log. Our checker smooths the GPS track with a Kalman filter and scores it. It looks wrong, so the money stays locked and the lender is warned."
+
+## Scene 6. The AI makes a mistake, and pays for it (2:05 to 2:25)
+
+**Point at:** the "Contract: BondV2.slashByProof" card.
+
+**Say:** "Now the AI is tricked into paying a stranger. Every intent was signed and logged on chain first, so anyone involved can submit the proof. The contract checks it and takes the penalty from the AI vendor's bond, not from the pilot."
+
+## Scene 7. The drone owns itself (2:25 to 2:35)
+
+**Point at:** the title card at the end.
+
+**Say:** "The last instalment lands, the loan is at zero, and ownership moves to the pilot on chain."
+
+## Scene 8. When something fails (2:35 to 2:50)
+
+**Point at:** a "Recovery:" line in the feed. Then switch to the GitHub tab `docs/FISCO_EVIDENCE.md`, section 8.
+
+**Say:** "If a transaction fails, the wallet retries. If a job cannot start, the contract refunds the farmer in full. In our recorded run, 24 of 24 transactions succeeded."
+
+## Scene 9. Proof you can check (2:50 to 3:10)
+
+**Open:** GitHub `docs/EXECUTION_EVIDENCE.md` section 3, click one hash so Basescan opens.
+
+**Say:** "The same full job also ran on Base Sepolia, a public blockchain anyone can inspect."
+
+**Switch to:** the terminal, run `pnpm verify:all` (cut the wait in editing).
+
+**Say:** "And one command re-checks every transaction we claim: 353 of 353."
+
+## Scene 10. Try to break it (3:10 to 3:35)
+
+**Open:** /app/evidence. In "Try your own attack", click "Owner impersonation", then "Send it to the agent".
+
+**Say:** "Security. Every payment needs a signed intent that passes 21 rules. 52 attack types are blocked. The AI never holds a key and can never choose who gets paid. Keys are random per server, and the operator's button needs a secret token."
+
+## Scene 11. Built on WeBank's stack (3:35 to 3:50)
+
+**Open:** GitHub `docs/FISCO_EVIDENCE.md`, scroll to "FATE model provenance".
+
+**Say:** "Built on WeBank's open source stack: the contracts run on FISCO BCOS, and three lenders train the credit model together with FATE without sharing their data. That model's fingerprint is stored on chain."
+
+## Scene 12. Close (3:50 to 4:00)
+
+**Open:** the home page, toggle 中文.
+
+**Say:** "Zishi. Software that lets machines pay for themselves. Try it at zishi-fintechathon.vercel.app."
