@@ -1,7 +1,10 @@
 // In-memory rate limit for the public routes. One concurrent run per IP, ten per minute.
 
 const minute = new Map<string, number[]>();
-const running = new Set<string>();
+// ip -> start time. A slot expires after the longest a run can last, so a run killed by a timeout or a
+// closed tab can never lock a visitor out.
+const running = new Map<string, number>();
+const RUN_MAX_MS = 330_000;
 
 export function ipOf(req: Request): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "local";
@@ -17,8 +20,9 @@ export function allow(ip: string, perMinute = 10): boolean {
 }
 
 export function begin(ip: string): boolean {
-  if (running.has(ip)) return false;
-  running.add(ip);
+  const t = running.get(ip);
+  if (t !== undefined && Date.now() - t < RUN_MAX_MS) return false;
+  running.set(ip, Date.now());
   return true;
 }
 

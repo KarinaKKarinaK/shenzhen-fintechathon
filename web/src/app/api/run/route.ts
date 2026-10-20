@@ -10,15 +10,17 @@ export const maxDuration = 300;
 export async function GET(req: Request) {
   const ip = ipOf(req);
   if (!allow(ip)) return tooMany();
-  if (!begin(ip)) return tooMany();
   const url = new URL(req.url);
+  const isReplay = url.searchParams.get("replay") === "1" && (url.searchParams.get("scenario") || "fleet") === "fleet";
+  // A replay sends no transactions and calls no model, so it skips the one-run-per-visitor slot.
+  if (!isReplay && !begin(ip)) return tooMany();
   const name = (url.searchParams.get("scenario") || "fleet") as keyof typeof SCENARIOS;
   const fast = url.searchParams.get("fast") === "1";
   const lang = pickLang(url.searchParams.get("lang"));
   // Replay: a recorded public run on FISCO BCOS (src/engine/data/replay-fleet.json, captured from this
   // route), streamed at presentation speed. Every hash in it is a real transaction; the first line says
   // it is a replay. Used for recordings when the live node is slow.
-  if (url.searchParams.get("replay") === "1" && name === "fleet") {
+  if (isReplay && name === "fleet") {
     const { default: rec } = await import("@/engine/data/replay-fleet.json");
     const evs = (rec as { capturedAt: string; events: Record<string, unknown>[] });
     const enc2 = new TextEncoder();
@@ -31,10 +33,8 @@ export async function GET(req: Request) {
           if (req.signal.aborted) break;
           send({ ...ev, at: Date.now() });
         }
-        end(ip);
         controller.close();
       },
-      cancel() { end(ip); },
     });
     return new Response(body, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive" } });
   }
