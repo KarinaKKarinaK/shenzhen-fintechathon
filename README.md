@@ -31,6 +31,8 @@ Zishi is a wallet for a machine. An agricultural drone on hire purchase earns pe
 
 Entry to the 2026 Shenzhen International FinTech Competition, International Track, Topic F: AI as a Financial Participant.
 
+**Built on WeBank's stack.** The same four contracts run on **FISCO BCOS**, WeBank's consortium chain, as the licensed lender's ledger, and every intent is committed there with the same hash as on public Base Sepolia. Three lenders train the pilot credit model together in **FATE** without sharing a single repayment record, and that model's fingerprint is pinned on FISCO. [How it works](#built-on-webanks-stack-fisco-bcos-and-fate), [FISCO evidence](docs/FISCO_EVIDENCE.md), [FATE experiment](fate/README.md).
+
 ## Try it in two minutes
 
 | Step | Where | What you see |
@@ -79,6 +81,8 @@ Every figure is measured. Engine figures come from `pnpm test`, `pnpm bench` and
 | **52 of 52** attacks blocked | 7 of 7 benign messages pass; a naive wallet falls to 51 of 52 |
 | **21** policy rule lines | Over 7 intent kinds and 4 trust tiers, checked on every signed intent |
 | **30 of 30** intents on FISCO BCOS | Every hash read back from the FISCO IntentLog equals the engine's; 15 match Base Sepolia one for one |
+| **15 of 15** intents on two ledgers at once | One real run: each intent committed to Base Sepolia and FISCO BCOS with the same hash, both receipts successful |
+| **1** model fingerprint on chain | The FATE model's sha256 committed to the FISCO IntentLog and read back, so a lender can prove which model priced a pilot |
 | **0.729 to 0.782** AUC | A lender's credit model alone, then trained with two other lenders in FATE, no raw records shared |
 | **40 of 40** transactions confirmed | One real run, every receipt fetched back from the chain; 15 were IntentLog contract calls |
 | **100%** tamper detection | On five tamper classes, 500 held out flights, at 3.0% false alarm |
