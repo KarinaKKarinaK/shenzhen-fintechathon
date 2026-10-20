@@ -6,7 +6,7 @@ Deck text, ten slides, under ten minutes. One idea per slide. Amounts in yuan.
 
 Zishi 自食其力. Software that lets machines pay for themselves.
 
-A wallet for an agricultural drone on hire purchase. 2026 Shenzhen International FinTech Competition, International Track, Topic F.
+A wallet for an agricultural drone on hire purchase. 2026 Shenzhen International FinTech Competition (FinTechathon), International Track, Topic F. Built on WeBank's FISCO BCOS and FATE.
 
 Live: zishi-fintechathon.vercel.app
 
@@ -56,9 +56,13 @@ Ten components from other fields, each with a fixed seed and a held out set: a K
 
 False alarms on honest flights at full detection: 13.8 percent down to zero. Lender loss at the 95th percentile: 25,593 yuan down to 19,739. None of them can sign, pay or move a cap.
 
+Pilot credit is learned across three lenders with WeBank's FATE 2.2, no raw records shared. The lender with new pilots goes from AUC 0.729 alone to 0.782 federated, the same as pooling all the data. A new pilot's average rate error drops from 335 to 153 basis points. The model's fingerprint is committed on FISCO BCOS.
+
 ## 9. Honest about what is real
 
 Four contracts deployed and source verified on Base Sepolia, 44 Foundry tests. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
+
+The same four contracts run on FISCO BCOS 3.16.3, WeBank's consortium chain, as the lender's ledger. A full run committed 30 intents there and every hash read back matches the engine's; in one real run each intent went to Base Sepolia and FISCO in the same step with the same hash. Value moves on FISCO too: a vendor bond held, a job fee locked and refunded. The FISCO node runs in Docker from one script.
 
 Bond, JobBoard and Lease rules run in TypeScript mirrors of the deployed contracts today. Telemetry is synthetic and signed by demo keys; a secure element on the drone in production. A licensed lessor in a sandbox, not a bank.
 
@@ -66,6 +70,6 @@ Bond, JobBoard and Lease rules run in TypeScript mirrors of the deployed contrac
 
 The same rail works for any machine that does paid work someone can verify: delivery drones per drop, robot arms per part, robotaxis per trip.
 
-Next: one lessor pilot with ten drones, real flight logs through the same oracle, WeBank's FISCO BCOS as the production chain.
+Next: one lessor pilot with ten drones, real flight logs through the same oracle, a FISCO BCOS node run by the lessor instead of our own.
 
 Repo: github.com/KarinaKKarinaK/shenzhen-fintechathon

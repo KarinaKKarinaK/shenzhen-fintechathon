@@ -1,23 +1,22 @@
-# Demo video script, five minutes
+# Demo video script, two and a half minutes
 
-Screen recording of the live app in real mode, one voice, no music. Record at 1920 by 1080, English interface, then show the Chinese toggle once. Keep the browser at 100 percent zoom.
+Screen recording of the live app, one voice, light music under the first ten seconds only. Record at 1920 by 1080, English interface, 100 percent zoom. About 380 spoken words.
 
-Before recording: open the app once with the demo token so hashes are real, check the wallet balance on Basescan, and refresh the Dashboard so the ledger is empty.
+Before recording: open `zishi-fintechathon.vercel.app/app/live?demo=<token>` once so hashes are real Base Sepolia transactions, check the wallet on Basescan, and open `docs/FISCO_EVIDENCE.md` on GitHub in a second tab.
 
 | Time | On screen | Say |
 |---|---|---|
-| 0:00 | Home page, hero | A drone costs about 55,000 yuan. A pilot with nothing to pledge cannot borrow it. Zishi is a wallet that lets the drone pay for itself: it earns per mu sprayed, repays the lender from every fee, and owns itself at zero. |
-| 0:25 | Scroll the home page to the two bonds | Two bonds stand behind it. The pilot bond pays for the pilot's cheating. The vendor bond pays for the agent's mistakes. Both are slashed only on cryptographic proof. The pilot never pays for the AI. |
-| 0:45 | Dashboard, press Start | This is the engine running with real transactions on Base Sepolia. Every event you see is a signed intent, a policy decision, or a transaction. |
-| 1:00 | Moment one: the declined job | A farmer offers 20 mu of maize at 3 yuan. The planner runs the economics: after energy and the instalment the margin is below the reserve rule. The intent is signed, logged, and the policy engine declines it. Nothing moves. |
-| 1:30 | Moment two: the paid flight | A 100 mu passion fruit job. The fee is locked on the board, the drone flies, the farmer confirms. The fee splits by rule: instalment to the lender, rail fee, bond fill, the rest to the pilot. Click the instalment hash. It opens Basescan. |
-| 2:10 | Moment three: the held flight log | This flight log claims more area than the track supports. The oracle runs a Kalman filter on the GPS samples and a robust z score against a conformal threshold. The log is held, the fee stays locked, the lender is told. |
-| 2:40 | Moment four: the slash by proof | A compromised agent signs a payment to an address not on the allowlist. The intent hash is already in the log on chain. The lender submits the signed intent and the rule. The contract checks the signature, the log and the rule, and slashes the vendor bond. The harmed party is paid. No bounty on a live job. |
-| 3:15 | Moment five: the title | The last instalment brings the lease to zero and the title moves from the lender to the pilot. The drone belongs to the person who flew it. |
-| 3:35 | Evidence page, attack table | Fifty two attack cases run while the page loads: injection, impersonation, a payee in the text, replay, foreign evidence. Fifty two blocked, seven benign messages pass, a naive wallet falls to fifty one. |
-| 4:00 | Evidence page, learned components | Ten components from other fields, each on a fixed seed with a held out set. Kalman smoothing cut false alarms on honest flights from 13.8 percent to zero at full detection. The bonds take about 6,000 yuan off the lender's 95th percentile loss. None of them can sign or pay. |
-| 4:25 | Evidence page, contracts row, click an address | Four contracts, deployed and source verified. The engine calls IntentLog for every intent. The others run as mirrors today; their calls are next. |
-| 4:40 | Demo page, Live feed mode, press Start, then the Chinese toggle | The same engine on a live feed of new jobs, or on your own jobs as JSON or CSV. English and Simplified Chinese. |
-| 4:55 | Home page | Zishi. Software that lets machines pay for themselves. zishi-fintechathon.vercel.app. |
+| 0:00 | Home page, hero, slow scroll | This drone costs 55,000 yuan. The pilot who flies it has nothing to pledge, so no bank will lend to him. What if the drone could borrow for itself? |
+| 0:12 | Hero title 自食其力 | This is Zishi. A wallet for a machine. It earns per mu sprayed, repays its lender from every fee, and owns itself at zero. |
+| 0:22 | Fleet page, press Start | Here is one drone, live, on a real blockchain. Every card is a signed intent, a policy decision or a transaction. |
+| 0:32 | Moment one, the declined job | First job: 20 mu of maize. The planner runs the numbers, the margin is too thin, and the code says no. Signed, logged, declined. Nothing moves. |
+| 0:45 | Moment two, the fee split, open the instalment card | Next, 100 mu of passion fruit. The farmer confirms, and the fee splits by rule: the lender's instalment, the bond, the pilot's pay. Every transaction is real. Click it, it is on chain. |
+| 1:02 | Moment three, the held log | Now someone fakes a flight log. The oracle smooths the GPS track, scores it, and holds the money. The lender is told before a yuan leaves. |
+| 1:15 | Moment four, the slash by proof | Then the AI is compromised and signs a payment to a stranger. The intent was already on chain. A party submits the proof, the contract checks it, and the vendor bond pays. The AI vendor pays for the AI's mistake, not the pilot. |
+| 1:35 | Moment five, the title card | The last instalment lands. The lease hits zero. The title moves to the pilot. The drone belongs to the person who flew it. |
+| 1:45 | Evidence page, type an attack in the box | Try to break it. Type any scam. 52 attacks run every time this page loads. 52 blocked. The model holds no key and never decides who gets paid. Code does. |
+| 2:00 | GitHub tab, docs/FISCO_EVIDENCE.md, scroll the both ledgers table | And it is built on WeBank's stack. The same contracts run on FISCO BCOS, the consortium chain a licensed lender would run. One run, two ledgers: every intent sent to the public chain and to FISCO, same hash, both receipts successful. |
+| 2:15 | Landing page, WeBank cards | Credit for new pilots is trained across three lenders with FATE, and no lender hands over a record. The model's fingerprint sits on FISCO, so anyone can check which model set the rate. |
+| 2:25 | Toggle to 中文, then the home page | In English and Chinese. Zishi. Software that lets machines pay for themselves. |
 
-If a real transaction is slow, keep talking over the pending state; the status pill moves from pending to confirmed to finalised on its own. If the wallet runs dry, switch to simulated mode and say so on camera.
+If a real transaction is slow, keep talking over the pending state; the pill moves from pending to confirmed to finalised on its own. If the wallet runs dry, use the public simulated mode and say so on camera.

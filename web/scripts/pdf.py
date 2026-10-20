@@ -21,6 +21,7 @@ DOCS = [
     ("SELF_ASSESSMENT.md", "Security self assessment"),
     ("docs/JUDGES_GUIDE.md", "Judges guide"),
     ("docs/EXECUTION_EVIDENCE.md", "Execution evidence"),
+    ("docs/FISCO_EVIDENCE.md", "FISCO BCOS evidence"),
     ("docs/RED_TEAM.md", "Red team report"),
     ("docs/EVALUATION.md", "Evaluation"),
     ("docs/DECK.md", "Deck"),

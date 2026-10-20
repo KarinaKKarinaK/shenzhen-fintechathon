@@ -62,7 +62,7 @@ The gain is largest at onboarding, which is the point: that is where a lender ha
 
 ## Model provenance
 
-`model.json` carries the coefficients, intercept, feature scaling, FATE version, party row counts and five held out rows with FATE's own predictions. Its `sha256` is over the canonical JSON of every other field (sorted keys, no spaces, numbers as JavaScript writes them), so it can be recomputed in Python or TypeScript and anchored on chain. `pnpm test` in `web/` recomputes the hash and checks the TypeScript scorer reproduces FATE's predictions within 1e-6.
+`model.json` carries the coefficients, intercept, feature scaling, FATE version, party row counts and five held out rows with FATE's own predictions. Its `sha256` is over the canonical JSON of every field except `sha256` and `sha256_of` (sorted keys, no spaces, numbers as JavaScript writes them), so it can be recomputed in Python or TypeScript and anchored on chain. `pnpm test` in `web/` recomputes the hash and checks the TypeScript scorer reproduces FATE's predictions within 1e-6.
 
 ## Scope
 

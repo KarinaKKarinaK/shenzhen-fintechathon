@@ -10,7 +10,7 @@ Live app: https://zishi-fintechathon.vercel.app. English and Simplified Chinese 
 | 1 to 4 | Dashboard, press Start | The five moments: a job declined on economics, a paid flight with the fee split, a faked flight log held, a compromised intent slashed by proof, the title moving to the pilot at zero |
 | 4 to 6 | Live | A seeded feed of new jobs every few seconds with the odd injection attempt, or your own jobs as JSON or CSV. Same engine, your data |
 | 6 to 9 | Evidence | 52 attacks run while you watch, the benign set, the naive wallet baseline, ten learned components with held out numbers, the drift monitors, the contracts with explorer links |
-| 9 to 10 | Repository | `docs/EXECUTION_EVIDENCE.md`: 40 real transactions from one run, every receipt fetched back from Base Sepolia |
+| 9 to 10 | Repository | `docs/EXECUTION_EVIDENCE.md`: 40 real transactions from one run, every receipt fetched back from Base Sepolia. `docs/FISCO_EVIDENCE.md`: the same contracts and intent hashes on FISCO BCOS, and the FATE model fingerprint on chain |
 
 ## 2. What to click
 
@@ -40,7 +40,7 @@ The public link runs simulated and says so on every hash, so nobody can spend th
 | Real | Simulated |
 |---|---|
 | EIP-712 signatures, one key per actor, replay and nonce checks | The farmer, pilot, lender and vendor are scripted; their keys are generated at boot |
-| Four contracts on Base Sepolia, 44 Foundry tests | Bond, JobBoard and Lease rules run in TypeScript mirrors; only IntentLog is called on chain |
+| Four contracts on Base Sepolia and on FISCO BCOS 3.16.3, 44 Foundry tests | Bond, JobBoard and Lease rules run in TypeScript mirrors; only IntentLog is called on chain |
 | 52 attack cases run at request time | Flight telemetry and the message corpus are synthetic and say so |
 | Hash chained event log, verifiable through the API | Model explanations are templates unless an AI gateway key is set; decisions never depend on the model |
 
@@ -52,6 +52,8 @@ The public link runs simulated and says so on every hash, so nobody can spend th
 | `TECHNICAL.md` | Architecture, data model, the loop, every rule, every learned component, contracts, chain modes, bring your own data, API, i18n, deployment, testing, security boundaries |
 | `SELF_ASSESSMENT.md` | Security self assessment: risks, what is built, what production would do |
 | `docs/EXECUTION_EVIDENCE.md` | A real run, every receipt fetched back from the chain |
+| `docs/FISCO_EVIDENCE.md` | The contracts on FISCO BCOS, WeBank's consortium chain: a full run, a run on both ledgers, the FATE model hash, every receipt read back |
+| `fate/README.md` | Pilot credit trained across three lenders with WeBank's FATE, metrics and the prior study |
 | `docs/RED_TEAM.md` | The attack set, the benign set and the naive baseline, run at generation time |
 | `docs/EVALUATION.md`, `docs/results/` | Held out results of the ten learned components |
 | `docs/charts/` | Nine charts drawn from the engine |
