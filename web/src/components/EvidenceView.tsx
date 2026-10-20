@@ -10,8 +10,8 @@ import { Monitors } from "./Monitors";
 // Base Sepolia, block 48335911, source verified on Sourcify. Same values in contracts/deployments/base-sepolia.json.
 const DEPLOYED: Record<string, string> = {
   IntentLog: "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
-  Bond: "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754",
-  JobBoard: "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A",
+  Bond: "0x6161f6e08c8695849e7A8aF74c39a5A1056d5435",
+  JobBoard: "0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952",
   Lease: "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
 };
 const CONTRACT_NAMES = ["Bond", "IntentLog", "JobBoard", "Lease"];

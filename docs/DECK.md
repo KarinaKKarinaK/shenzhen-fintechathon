@@ -58,7 +58,7 @@ False alarms on honest flights at full detection: 13.8 percent down to zero. Len
 
 ## 9. Honest about what is real
 
-Four contracts deployed and source verified on Base Sepolia, 43 Foundry tests. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
+Four contracts deployed and source verified on Base Sepolia, 44 Foundry tests. In real mode every signed intent is committed to the deployed IntentLog by a contract call; every money event is anchored on the same chain with an explorer link.
 
 Bond, JobBoard and Lease rules run in TypeScript mirrors of the deployed contracts today. Telemetry is synthetic and signed by demo keys; a secure element on the drone in production. A licensed lessor in a sandbox, not a bank.
 

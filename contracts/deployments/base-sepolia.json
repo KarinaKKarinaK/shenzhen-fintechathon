@@ -6,10 +6,50 @@
   "deployedAt": "2026-10-19T20:05:00Z",
   "verified": "sourcify exact_match",
   "contracts": {
-    "IntentLog": { "address": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51", "tx": "0xb43b1cfa02f6a6978edfa682e495be9534e0295c1b08bb27598c15dcab6367e9", "gasUsed": 197751 },
-    "Bond": { "address": "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754", "tx": "0xfc3dc2b9ce33c71caabfdbe96e262f371a26c42ceb226e9cc548439cc6ea74eb", "gasUsed": 1931237, "args": { "treasury": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59", "log": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51", "startFloor": "200 ether" } },
-    "Lease": { "address": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2", "tx": "0xeaa13a7628e427b6043ef95172856bd536cb72a749f4872a8ef54b03405d5fdb", "gasUsed": 800050 },
-    "JobBoard": { "address": "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A", "tx": "0xda8db76f1842f0cbe203c1049029411c5a6f0c3ce8fb4cc853c4ed0a34059742", "gasUsed": 1517852, "args": { "bond": "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754", "lease": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2", "rail": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59" } }
+    "IntentLog": {
+      "address": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
+      "tx": "0xb43b1cfa02f6a6978edfa682e495be9534e0295c1b08bb27598c15dcab6367e9",
+      "gasUsed": 197751
+    },
+    "Bond": {
+      "address": "0x6161f6e08c8695849e7A8aF74c39a5A1056d5435",
+      "tx": "0x68f7117ae33a89819473d89a4ec2a70d2a5a7da8c681721dfdb68d37ecd5c578",
+      "gasUsed": 1949523,
+      "args": {
+        "treasury": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59",
+        "log": "0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51",
+        "startFloor": "200 ether"
+      },
+      "previous": {
+        "address": "0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754",
+        "tx": "0xfc3dc2b9ce33c71caabfdbe96e262f371a26c42ceb226e9cc548439cc6ea74eb",
+        "note": "first deployment, block 48335911, before the collusion fix: a vendor rule on a live job paid half of the penalty to the pilot"
+      },
+      "block": 48339163
+    },
+    "Lease": {
+      "address": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
+      "tx": "0xeaa13a7628e427b6043ef95172856bd536cb72a749f4872a8ef54b03405d5fdb",
+      "gasUsed": 800050
+    },
+    "JobBoard": {
+      "address": "0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952",
+      "tx": "0x97227e36f9d0c8beaa5fdd3e571ac0123e21c52f1017c4a2dd1bfdb40d2f6c1e",
+      "gasUsed": 1517852,
+      "args": {
+        "bond": "0x6161f6e08c8695849e7A8aF74c39a5A1056d5435",
+        "lease": "0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2",
+        "rail": "0x1b9D0C2A0023d21cB9Cf9e20F7bD5d7DFb452d59"
+      },
+      "previous": {
+        "address": "0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A",
+        "tx": "0xda8db76f1842f0cbe203c1049029411c5a6f0c3ce8fb4cc853c4ed0a34059742",
+        "note": "first deployment, block 48335911, before the collusion fix: a vendor rule on a live job paid half of the penalty to the pilot"
+      },
+      "block": 48339163
+    }
   },
-  "setBoardTx": "0x291c603036ea12821dd289e3fe4ab35b977a152264e9c5ba846b7826f6182508"
+  "setBoardTx": "0x08b8a1f1f9521d9901b899f257b72fbf7d008412e6c15661bfd3d9918eb80358",
+  "redeployedAt": "2026-10-20T00:00:00Z",
+  "note": "Bond and JobBoard redeployed after the collusion fix (a vendor rule broken on a live job pays the whole penalty to the treasury). IntentLog and Lease are the first deployment."
 }

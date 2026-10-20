@@ -1,6 +1,6 @@
 # Problems and fixes
 
-This page explains, in plain language, what was broken in the first Zishi design and how each problem was fixed. For the full engineering spec (interfaces, tests, order of work), see [`research/BONDED_AGENT_FIXES.md`](research/BONDED_AGENT_FIXES.md).
+This page explains, in plain language, what was broken in the first Zishi design and how each problem was fixed. For the full engineering spec (interfaces, tests, order of work), see `TECHNICAL.md` and `contracts/README.md`.
 
 ## The idea in 30 seconds
 

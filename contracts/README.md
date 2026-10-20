@@ -64,11 +64,11 @@ Deployed on Base Sepolia (chain 84532) in block 48,335,911 from the demo wallet,
 | Contract | Address |
 |---|---|
 | IntentLog | `0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51` |
-| Bond | `0x14cDb3Dd28C9F2F39Fe49FE8c319f113a3F58754` |
+| Bond | `0x6161f6e08c8695849e7A8aF74c39a5A1056d5435` |
 | Lease | `0x0D21c8f6C1e6e6EA2ae5fF073F51fC4d57AC5ed2` |
-| JobBoard | `0xB4C2A66F3CD59b9D2BF4D4D070BB07eB6f11Bb4A` |
+| JobBoard | `0xAbE83C0dD54EAd67DB63C8f9e854f00756f29952` |
 
-Redeploy pending: the deployed Bond predates the collusion fix. In the source, a vendor rule broken on a live job now pays the whole penalty to the treasury, where the deployed Bond pays half of it to the agent's operator (the pilot). The pilot is a party of the job and can submit proof, so the old payout let a pilot stage a fake scam and collect half the vendor's penalty. Until a redeploy, the Bond source here differs from the verified contract at the address above; IntentLog, Lease and JobBoard are unchanged.
+Bond and JobBoard were redeployed in block 48,339,163 after the collusion fix, so the deployed bytecode matches the source in this folder; IntentLog and Lease are the first deployment. First addresses are kept under `previous` in `deployments/base-sepolia.json`.
 
 Deploy and verify:
 

@@ -40,7 +40,7 @@ The public link runs simulated and says so on every hash, so nobody can spend th
 | Real | Simulated |
 |---|---|
 | EIP-712 signatures, one key per actor, replay and nonce checks | The farmer, pilot, lender and vendor are scripted; their keys are generated at boot |
-| Four contracts on Base Sepolia, 43 Foundry tests | Bond, JobBoard and Lease rules run in TypeScript mirrors; only IntentLog is called on chain |
+| Four contracts on Base Sepolia, 44 Foundry tests | Bond, JobBoard and Lease rules run in TypeScript mirrors; only IntentLog is called on chain |
 | 52 attack cases run at request time | Flight telemetry and the message corpus are synthetic and say so |
 | Hash chained event log, verifiable through the API | Model explanations are templates unless an AI gateway key is set; decisions never depend on the model |
 
