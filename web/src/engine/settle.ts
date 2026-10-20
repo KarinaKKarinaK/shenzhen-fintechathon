@@ -1,8 +1,8 @@
 // Contract settlement on FISCO BCOS. When a run's chain is the real FISCO chain, the engine's money
-// moments become calls to the deployed Bond, JobBoard, Lease and IntentLog, with real native value,
+// moments become calls to the deployed BondV2, JobBoard, Lease and IntentLogV2, with real native value,
 // in the same loop: vendor bond posted, agent registered, lease opened, each job's fee locked,
 // started, confirmed by the verifier (the contract splits the fee and pays the instalment to the
-// lender through Lease.pay), the rogue intent committed and proven with Bond.slashByProof, and the
+// lender through Lease.pay), the rogue intent committed and proven with BondV2.slashByProof, and the
 // last Lease.pay moving the title. Fresh role keys per run, funded from FISCO_PRIVATE_KEY.
 //
 // The mirrors in contracts.ts keep their rules and state. Their sends for the kinds settled here
@@ -21,12 +21,15 @@ import { CURRENCY, type ChainTx, type EngineEvent } from "./types";
 export const WEI_PER_YUAN = BigInt(1_000_000_000);
 export const yuanToWei = (y: number) => BigInt(Math.round(y * 100)) * WEI_PER_YUAN / BigInt(100);
 
-// Deployed on the local FISCO node (contracts/deployments/fisco-bcos.json). Env overrides.
+// The V2 set on the local FISCO node (contracts/deployments/fisco-v2.json): IntentLogV2 takes a commit
+// only from the job's agent and keys it by (agent, hash), so nobody can front-run the agent's slot;
+// BondV2.slashByProof checks that slot. Same call shapes as v1. Env overrides: FISCO_V2_INTENT_LOG,
+// FISCO_V2_BOND, FISCO_V2_LEASE, FISCO_V2_JOB_BOARD. FISCO_INTENT_LOG stays the v1 anchor log of chain.ts.
 export const FISCO_CONTRACTS = {
-  intentLog: (process.env.FISCO_INTENT_LOG || "0x9555c12c2789e44868070d0d877f9baadabe4f54") as `0x${string}`,
-  bond: (process.env.FISCO_BOND || "0xe3f2011697301e15e4cf829b0aeb189fab754029") as `0x${string}`,
-  lease: (process.env.FISCO_LEASE || "0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601") as `0x${string}`,
-  board: (process.env.FISCO_JOB_BOARD || "0x20dc56e80b73f6066208a9d8197748f861579d37") as `0x${string}`,
+  intentLog: (process.env.FISCO_V2_INTENT_LOG || "0xA4e3313cD42eaa14Fe4b6EE627FAeF84A541eac2") as `0x${string}`,
+  bond: (process.env.FISCO_V2_BOND || "0xaABE0669A13be1bDCdD7Dd16C95231d01bF8B838") as `0x${string}`,
+  lease: (process.env.FISCO_V2_LEASE || "0x2f64Db2c0180D117Be883DB9E5e0aAcbed79ee08") as `0x${string}`,
+  board: (process.env.FISCO_V2_JOB_BOARD || "0x89458f4bF72Fd71c8360CEFe35e148BE6C92C77b") as `0x${string}`,
 };
 
 // Kinds whose mirror send is replaced by a contract call. energy and top_up stay anchors.
@@ -228,9 +231,9 @@ export class Settlement {
     let funded = true;
     for (const r of ROLES) funded = (await this.fund(m, r, r === "vendor" ? vb : BigInt(0))) && funded;
     if (!funded) return;
-    await this.call(m, "vendor_bond", `Bond.postVendorBond ${t.vendorBond} yuan (penalty ${t.penalty}, daily cap ${t.dailyCap})`, "vendor", this.c.bond, GAS.vb, vb,
+    await this.call(m, "vendor_bond", `BondV2.postVendorBond ${t.vendorBond} yuan (penalty ${t.penalty}, daily cap ${t.dailyCap})`, "vendor", this.c.bond, GAS.vb, vb,
       { abi: BOND_ABI, functionName: "postVendorBond", args: [yuanToWei(t.penalty), yuanToWei(t.dailyCap)] });
-    await this.call(m, "vendor_bond", "Bond.register agent (operator pilot, allowlist lender)", "agent", this.c.bond, GAS.reg, BigInt(0),
+    await this.call(m, "vendor_bond", "BondV2.register agent (operator pilot, allowlist lender)", "agent", this.c.bond, GAS.reg, BigInt(0),
       { abi: BOND_ABI, functionName: "register", args: [this.addr("agent"), this.addr("pilot"), this.addr("vendor"), yuanToWei(t.bondMin), yuanToWei(t.perTxCap), yuanToWei(t.pilotSlash), [this.addr("lender")], "0x"] });
     const id = await this.read<bigint>(this.c.lease, LEASE_ABI, "nextId");
     const rate = Math.round(t.leaseRate * 10_000);
@@ -303,7 +306,7 @@ export class Settlement {
   }
 
   // The rogue intent: signed by the agent key under the contract's own digest, committed to the
-  // IntentLog by the agent, proven by the lender with rule PayeeNotAllowlisted. The vendor bond pays.
+  // IntentLogV2 by the agent under its own JobBoard job id (V2 rejects anyone else), proven by the lender with rule PayeeNotAllowlisted. The vendor bond pays.
   async slash(jobId: string, payee: string, amount: number) {
     const id = this.jobIds.get(jobId); if (id === undefined) { this.narrate(`No contract job for ${jobId}, the proof is not sent on FISCO.`); return; }
     const m = `rogue intent on ${jobId} proven`;
@@ -312,11 +315,11 @@ export class Settlement {
       const ih = await this.read<`0x${string}`>(this.c.bond, BOND_ABI, "hashIntent", [intent]);
       const dg = await this.read<`0x${string}`>(this.c.bond, BOND_ABI, "digestOf", [intent]);
       const sig = await this.roles.agent.sign({ hash: dg });
-      if (!(await this.call(m, "log", `IntentLog.commit rogue intent ${ih.slice(0, 10)} for ${jobId}`, "agent", this.c.intentLog, GAS.commit, BigInt(0), { abi: LOG_ABI, functionName: "commit", args: [intent.jobId, ih] }))) return;
-      if (!(await this.call(m, "slash", `Bond.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury`, "lender", this.c.bond, GAS.slash, BigInt(0), { abi: BOND_ABI, functionName: "slashByProof", args: [intent, sig, 0] }))) {
+      if (!(await this.call(m, "log", `IntentLogV2.commit rogue intent ${ih.slice(0, 10)} for ${jobId}`, "agent", this.c.intentLog, GAS.commit, BigInt(0), { abi: LOG_ABI, functionName: "commit", args: [intent.jobId, ih] }))) return;
+      if (!(await this.call(m, "slash", `BondV2.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury`, "lender", this.c.bond, GAS.slash, BigInt(0), { abi: BOND_ABI, functionName: "slashByProof", args: [intent, sig, 0] }))) {
         // No money moves. The signed intent and its commit stay valid, so the lender can re-submit the same proof.
         this.pendingProofs.push({ jobId, intentHash: ih, intent: { ...intent, amount: intent.amount.toString(), nonce: intent.nonce.toString(), expiry: intent.expiry.toString() }, signature: sig, rule: 0 });
-        this.recordRecovery(m, "Bond.slashByProof", "gave_up", `proof ${ih.slice(0, 10)} recorded for a manual re-submit, no money moved. Lender alerted.`);
+        this.recordRecovery(m, "BondV2.slashByProof", "gave_up", `proof ${ih.slice(0, 10)} recorded for a manual re-submit, no money moved. Lender alerted.`);
       }
     } catch (e) { this.narrate(`Proof on FISCO not sent: ${String((e as Error).message).split("\n")[0].slice(0, 120)}`); }
   }

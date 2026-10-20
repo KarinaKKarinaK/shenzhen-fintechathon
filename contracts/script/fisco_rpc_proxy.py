@@ -8,6 +8,7 @@ forwards everything else as is, one request at a time.
 Usage: python3 fisco_rpc_proxy.py <listen_port> <upstream_url>
 """
 import json
+import os
 import sys
 import threading
 import urllib.request
@@ -15,6 +16,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8545
 UPSTREAM = sys.argv[2] if len(sys.argv) > 2 else "http://127.0.0.1:8547"
+# Public instance: with RPC_KEY set, only POST /<RPC_KEY> is served (the key travels in the URL the
+# app holds as a secret), and only read and send methods pass; admin and debug methods are refused.
+RPC_KEY = os.environ.get("RPC_KEY", "")
+ALLOWED = ("eth_", "net_version", "web3_clientVersion")
 
 
 LOCK = threading.Lock()  # the node aborts under bursts of parallel requests, so send one at a time
@@ -46,8 +51,23 @@ def pad(node):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def deny(self, code, msg):
+        out = json.dumps({"jsonrpc": "2.0", "id": None, "error": {"code": -32000, "message": msg}}).encode()
+        self.send_response(code)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(out)))
+        self.end_headers()
+        self.wfile.write(out)
+
     def do_POST(self):
+        if RPC_KEY and self.path.rstrip("/") != "/" + RPC_KEY:
+            return self.deny(401, "unauthorised")
+        if int(self.headers.get("content-length", 0)) > 1_000_000:
+            return self.deny(413, "request too large")
         body = json.loads(self.rfile.read(int(self.headers.get("content-length", 0))) or b"{}")
+        msgs = body if isinstance(body, list) else [body]
+        if RPC_KEY and any(not str(m.get("method", "")).startswith(ALLOWED) for m in msgs if isinstance(m, dict)):
+            return self.deny(403, "method not allowed")
         body = [fix(m) for m in body] if isinstance(body, list) else fix(body)
         req = urllib.request.Request(UPSTREAM, json.dumps(body).encode(), {"content-type": "application/json"})
         with LOCK, urllib.request.urlopen(req, timeout=30) as r:

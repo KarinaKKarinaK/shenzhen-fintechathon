@@ -1,5 +1,5 @@
 // One fleet run on the real FISCO BCOS chain with contract settlement (src/engine/settle.ts): the
-// engine's money moments are calls to the deployed Bond, JobBoard, Lease and IntentLog with real
+// engine's money moments are calls to the deployed BondV2, JobBoard, Lease and IntentLogV2 (fisco-v2.json) with real
 // native value. Fetches every receipt back and checks balances, then writes
 // evidence/fisco/settled-run-<stamp>.json.
 // Run: pnpm settle   (FISCO node at FISCO_RPC_URL, default http://127.0.0.1:8545; deployer key from
@@ -12,10 +12,13 @@ const ROOT = join(__dirname, "..", "..");
 const dep = JSON.parse(readFileSync(join(ROOT, "contracts", "deployments", "fisco-bcos.json"), "utf8")) as { contracts: Record<string, { address: string }> };
 process.env.FISCO_RPC_URL ||= "http://127.0.0.1:8545";
 process.env.FISCO_PRIVATE_KEY ||= readFileSync(join(ROOT, "contracts", ".fisco", "deployer.key"), "utf8").trim();
-process.env.FISCO_INTENT_LOG ||= dep.contracts.IntentLog.address;
-process.env.FISCO_BOND ||= dep.contracts.Bond.address;
-process.env.FISCO_LEASE ||= dep.contracts.Lease.address;
-process.env.FISCO_JOB_BOARD ||= dep.contracts.JobBoard.address;
+process.env.FISCO_INTENT_LOG ||= dep.contracts.IntentLog.address; // v1 log: intent anchors from chain.ts
+// Settlement runs on the V2 set (front-running fix), contracts/deployments/fisco-v2.json.
+const v2 = JSON.parse(readFileSync(join(ROOT, "contracts", "deployments", "fisco-v2.json"), "utf8")) as { contracts: Record<string, { address: string }> };
+process.env.FISCO_V2_INTENT_LOG ||= v2.contracts.IntentLogV2.address;
+process.env.FISCO_V2_BOND ||= v2.contracts.BondV2.address;
+process.env.FISCO_V2_LEASE ||= v2.contracts.Lease.address;
+process.env.FISCO_V2_JOB_BOARD ||= v2.contracts.JobBoard.address;
 
 async function main() {
   const { fleet, RUNS } = await import("../src/engine/scenarios");
@@ -56,7 +59,7 @@ async function main() {
   const GAS_MONEY = BigInt(1_000_000_000);
   const lenderBal = await st.balance(st.addr("lender"));
   const lenderReceived = lenderBal - GAS_MONEY;
-  const vbPosted = BigInt(rows.find((r) => r.call.startsWith("Bond.postVendorBond"))?.valueWei ?? "0");
+  const vbPosted = BigInt(rows.find((r) => r.call.startsWith("BondV2.postVendorBond"))?.valueWei ?? "0");
   const vbNow = await st.vendorBond();
   const lease = await st.leaseState();
   const finalPay = BigInt(rows.find((r) => r.call.startsWith("Lease.pay"))?.valueWei ?? "0");
@@ -99,7 +102,7 @@ async function main() {
     contracts: st.c, roles: Object.fromEntries((["vendor", "agent", "lender", "farmer", "verifier", "pilot"] as const).map((r) => [r, st.addr(r)])),
     unit: "1 yuan = 1e9 wei", contractEventsInFeed: contractEvents, anchorsInFeed: anchors,
     rows, checks, narrations: feed,
-    note: "Each row is a real FISCO transaction sent by the engine's Session during the fleet run, receipt fetched back. Money moments (vendor bond, job post, confirm with the fee split, rogue intent proof, final lease payment) are contract calls; intents are still committed to the IntentLog and the charging payment is still an anchor. Fund rows are plain transfers from the deployer to the fresh role keys.",
+    note: "Each row is a real FISCO transaction sent by the engine's Session during the fleet run, receipt fetched back. Money moments (vendor bond, job post, confirm with the fee split, rogue intent proof, final lease payment) are contract calls; the rogue intent is committed to IntentLogV2 by the job's agent; other intents are still anchored on the v1 IntentLog and the charging payment is still an anchor. Fund rows are plain transfers from the deployer to the fresh role keys.",
   }, null, 2) + "\n");
   console.log(`wrote ${out}`);
 

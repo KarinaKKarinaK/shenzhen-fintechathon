@@ -1,0 +1,215 @@
+{
+  "ranAt": "2026-10-20T14:31:27.556Z",
+  "receipts": "settled-run-2026-10-20T14-31-27-555Z.json",
+  "events": "settled-run-2026-10-20T14-31-27-555Z-events.json",
+  "modelKey": true,
+  "freeModels": [
+    "minimax/minimax-m3.1-flash:free",
+    "poolside/laguna-s-2.1:free",
+    "nvidia/nemotron-3.5-super-vl:free",
+    "nvidia/nemotron-3.5-lightning:free"
+  ],
+  "offers": 5,
+  "offersReadByModel": 5,
+  "readingsAcceptedByCode": 5,
+  "modelReadingsAcceptedByCode": 5,
+  "perOffer": [
+    {
+      "jobId": "job-201",
+      "source": "model",
+      "accepted": true,
+      "used": "model",
+      "fee": 240,
+      "mu": 60,
+      "mismatch": []
+    },
+    {
+      "jobId": "job-202",
+      "source": "model",
+      "accepted": true,
+      "used": "model",
+      "fee": 60,
+      "mu": 20,
+      "mismatch": []
+    },
+    {
+      "jobId": "job-203",
+      "source": "model",
+      "accepted": true,
+      "used": "model",
+      "fee": 1500,
+      "mu": 100,
+      "mismatch": []
+    },
+    {
+      "jobId": "job-204",
+      "source": "model",
+      "accepted": true,
+      "used": "model",
+      "fee": 250,
+      "mu": 50,
+      "mismatch": []
+    },
+    {
+      "jobId": "job-205",
+      "source": "model",
+      "accepted": true,
+      "used": "model",
+      "fee": 150,
+      "mu": 30,
+      "mismatch": []
+    }
+  ],
+  "explanations": 68,
+  "explanationsFromModel": 4,
+  "modelCallsRecorded": 9,
+  "modelRepliesRejectedAsUngrounded": 0,
+  "contractCalls": [
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund vendor",
+      "tx": "0xe6065d4cc50316198133f5d20e6515022e86cf2a7a8dd82f3ce4b19c9b4bf632",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund agent",
+      "tx": "0xe211af6378dfbd8feca688284e91e6f23e93c4a874aef0cb68b4e2b8705b71d3",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund lender",
+      "tx": "0x187fbca24227f41ce08b5cd1d347afb9fb5bd767dc7fdd42319bffb31c7ebc54",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund farmer",
+      "tx": "0x1cd69dc91f790a1f21c759d3283ad44ecccb2774dbc1e887cc155bd04c2260a8",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund verifier",
+      "tx": "0x52ea9ca4daa0e060b5dc3a31c3de28f68cd77de42e5c4294abf337c0e652045a",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "fund pilot",
+      "tx": "0x95706c507bba38cd07d2002b083dddcf60d4dc3fd4dcc450948440f9941cbe7b",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "BondV2.postVendorBond 5000 yuan (penalty 200, daily cap 1000)",
+      "tx": "0x4cbb150ce77ce59fcb1f46416786a053c0d7b3f1de6f1990c572e4a1f63909e1",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "BondV2.register agent (operator pilot, allowlist lender)",
+      "tx": "0xcea5df9d7f7b11167703b093dc74ebd07c62e59e81e866d4bd4f389c0b4f6539",
+      "status": "success"
+    },
+    {
+      "moment": "vendor bond, agent, lease",
+      "call": "Lease.open 650 yuan at 40 percent of each fee",
+      "tx": "0x2ac6006b1e69bf56feb967a8b85b2cd7d380b7fa5dcfe4cb53fbb0de11cc6a17",
+      "status": "success"
+    },
+    {
+      "moment": "job job-202 posted",
+      "call": "fund farmer",
+      "tx": "0x2494f52529f6367afa7d187782dd81a2c881f28b1613c3a1a407cda6e33fec4d",
+      "status": "success"
+    },
+    {
+      "moment": "job job-202 posted",
+      "call": "JobBoard.post job-202 fee 60 yuan locked",
+      "tx": "0x3e8eb8f5fe39b6be107dfef165094bf679cf3417ed5eddc82a39d7b715380f4a",
+      "status": "success"
+    },
+    {
+      "moment": "job job-203 posted",
+      "call": "fund farmer",
+      "tx": "0x55c7557652f07017540ef4fab350840d87aac95e6af969277eea2fd5717fc3f7",
+      "status": "success"
+    },
+    {
+      "moment": "job job-203 posted",
+      "call": "JobBoard.post job-203 fee 1500 yuan locked",
+      "tx": "0xafe1456060735677c3aeb227dbec7527b3b5c9156e54d0c0f16e0544500c522f",
+      "status": "success"
+    },
+    {
+      "moment": "job job-203 started",
+      "call": "JobBoard.start job-203",
+      "tx": "0xc088e8c6ba53695cf01a818403a665a152ed54962efb7c2d8a13be4c7294641f",
+      "status": "success"
+    },
+    {
+      "moment": "job job-203 confirmed",
+      "call": "JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay",
+      "tx": "0x98553f767728525b2663657727eb24c5fafb3354f4dbe977ba1dd3d94ade90b8",
+      "status": "success"
+    },
+    {
+      "moment": "job job-204 posted",
+      "call": "fund farmer",
+      "tx": "0x6b257b4ea6bdda8eb90b9165fc3ff0772b3b132bddaef6455e4902bc64597f8c",
+      "status": "success"
+    },
+    {
+      "moment": "job job-204 posted",
+      "call": "JobBoard.post job-204 fee 250 yuan locked",
+      "tx": "0x740f4f65a629c23bf64db23049a2654215816ff0fa5a3d36cedbe8a4e23ce8ab",
+      "status": "success"
+    },
+    {
+      "moment": "job job-204 started",
+      "call": "JobBoard.start job-204",
+      "tx": "0xb73e9f330d77a39c912d9980b72771701fb2db991b32e726cde7f2e6648ddad3",
+      "status": "success"
+    },
+    {
+      "moment": "rogue intent on job-203 proven",
+      "call": "IntentLogV2.commit rogue intent 0xa38b7e12 for job-203",
+      "tx": "0xaa9b839d6bc369d870008888a4e220320b7d329a2c5eb291882549b859fbda32",
+      "status": "success"
+    },
+    {
+      "moment": "rogue intent on job-203 proven",
+      "call": "BondV2.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury",
+      "tx": "0xc78373ada4fd6de20bef9a4366c23335527f552466f198e79bcfd4b03ed438ed",
+      "status": "success"
+    },
+    {
+      "moment": "job job-201 posted",
+      "call": "fund farmer",
+      "tx": "0x70bf0d779598e42ad6097505f5a2f4fa26dc8fbc808bbc3a3a57ee6a5334d002",
+      "status": "success"
+    },
+    {
+      "moment": "job job-201 posted",
+      "call": "JobBoard.post job-201 fee 240 yuan locked",
+      "tx": "0xa6dd514ae1dbbfb27ef3828970e4765caa1fc86e5d94d03a4d4530e157574909",
+      "status": "success"
+    },
+    {
+      "moment": "job job-201 started",
+      "call": "JobBoard.start job-201",
+      "tx": "0xddfb7e912a12a8c96525e0eb26bb63dc3e32543c4333d61702266b4cbdfaf98b",
+      "status": "success"
+    },
+    {
+      "moment": "job job-201 confirmed",
+      "call": "JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay",
+      "tx": "0xb70eff028acc46da9f979134a10b6db958597ae7a427cc29b6e6cbe6127e8966",
+      "status": "success"
+    }
+  ],
+  "contractCallsSucceeded": "24 of 24",
+  "checksPassed": true
+}

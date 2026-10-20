@@ -1,9 +1,9 @@
 {
-  "ranAt": "2026-10-20T13:55:50.074Z",
+  "ranAt": "2026-10-20T14:32:52.726Z",
   "script": "web/scripts/verify-all.ts (pnpm verify:all)",
   "checks": "receipt exists, status success, block matches the source where recorded, IntentLog.commit calldata carries the recorded intent hash",
-  "total": 329,
-  "verified": 329,
+  "total": 353,
+  "verified": 353,
   "failed": 0,
   "skipped": 0,
   "intentHashesMatched": 46,
@@ -90,6 +90,13 @@
       "chain": "fisco",
       "claimed": 26,
       "verified": 26,
+      "failed": 0
+    },
+    {
+      "name": "FISCO BCOS engine settled run settled-run-2026-10-20T14-31-27-555Z.json",
+      "chain": "fisco",
+      "claimed": 24,
+      "verified": 24,
       "failed": 0
     },
     {

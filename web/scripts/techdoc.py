@@ -540,7 +540,7 @@ def section_04b(w: Writer):
     ])
     w.h2("Known risks")
     w.bullets([
-        "IntentLog.commit in v1 is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing. Fixed in IntentLogV2 and BondV2 (commit only by the job's agent, entries keyed by agent and hash, a skipped commit on a running job still slashable), deployed and demonstrated on FISCO BCOS with 16 Foundry tests; Base Sepolia keeps v1 until the redeploy.",
+        "IntentLog.commit in v1 is permissionless and first writer wins per hash, so a third party could commit an agent's intent hash first and a compromised agent could skip committing. Fixed in IntentLogV2 and BondV2 (commit only by the job's agent, entries keyed by agent and hash, a skipped commit on a running job still slashable), deployed on FISCO BCOS and used by the live engine's settlement there, with 16 Foundry tests; Base Sepolia keeps v1 until the redeploy.",
         "Actor keys are random per server instance and held in memory; a fixed derivation from public labels exists only for tests and replays. They are still software keys on one server; production keys live in the secure element, a hardware device and HSMs.",
         "Bond, JobBoard and Lease run as TypeScript mirrors in the live engine; a Foundry script runs one full job against the deployed contracts with its own evidence table.",
     ])

@@ -14,7 +14,7 @@ Source for `docs/Zishi_Demo_Video_Plan.docx`, written by `web/scripts/officialdo
 
 ### Safety mechanisms, innovation and results
 
-2:50 to 4:00. The same job on Base Sepolia's public explorer, `pnpm verify:all` re-checking 329 of 329 receipts, the attack console with honest per layer numbers, random actor keys, the operator button behind a token, the front running fix, and WeBank's stack: FISCO BCOS, FATE federated credit and the model fingerprint on chain.
+2:50 to 4:00. The same job on Base Sepolia's public explorer, `pnpm verify:all` re-checking 353 of 353 receipts, the attack console with honest per layer numbers, random actor keys, the operator button behind a token, the front running fix, and WeBank's stack: FISCO BCOS, FATE federated credit and the model fingerprint on chain.
 
 ## 02 Video Quality
 

@@ -176,7 +176,7 @@ export const zh: Dict = {
     contractsTitle: "合约",
     contracts: ["持有两笔保证金。只有当已签名意图违反规则时才罚没，并对照自身记录核验。", "在策略引擎裁决之前，按任务保存每个意图的哈希，被拦截的尝试无法消失。", "锁定农户的费用，确认后释放；若被标记，冻结其中一部分 24 小时。", "从每笔费用中扣取分期款，余额归零时把所有权转给飞手。"],
     contractsStatus: "四份合约均已部署到 Base Sepolia，源码经 Sourcify 验证，并在 CI 中通过测试。",
-    contractsGap: "已知缺口：在 Base Sepolia 上在线引擎调用 IntentLog 并锚定资金事件（在 FISCO 上直接通过合约结算）；IntentLog.commit 可能被抢先提交（计划修复：只接受该任务智能体的提交）；所有权已记录在链上，但还不是可转让的代币。",
+    contractsGap: "已知缺口：在 Base Sepolia 上在线引擎调用 IntentLog 并锚定资金事件（在 FISCO 上直接通过合约结算）；Base 上的 v1 IntentLog 可能被抢先提交（已由 IntentLogV2 修复，FISCO 结算即使用该版本）；所有权已记录在链上，但还不是可转让的代币。",
     fullJobTitle: "在已部署合约上跑完一整单",
     fullJobNote: "每一步都是对 Base Sepolia 上已部署合约的真实调用，资金按合约规则流动：供应商保证金存入、费用锁定、确认并分账（分期款经 Lease 付给出租方）、一个越权意图被提交并凭证明从供应商保证金罚没、最后一笔付款把所有权转给飞手。",
     fullJobFisco: "同一单也在微众银行的联盟链 FISCO BCOS 上跑完。回执见 docs/FISCO_EVIDENCE.md 和 contracts/deployments/fisco-fulljob.json。",

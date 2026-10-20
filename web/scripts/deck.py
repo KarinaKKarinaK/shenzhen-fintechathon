@@ -154,11 +154,11 @@ slide(header("Two bonds, slashed only by proof", "The pilot never pays for the A
 slide(header("On chain", "One loop, two ledgers, every receipt re-checked")
       + card(M, 2.3, 3.75, 3.9, f"{FISCO_CALLS}", f"contract calls on FISCO BCOS from one engine fleet run. Lender paid {LENDER_YUAN} yuan through Lease, vendor bond {VB_FROM:,} to {VB_TO:,} yuan by proof, lease at 0, title to the pilot.", RED, 34, 16)
       + card(M + 3.95, 2.3, 3.75, 3.9, "9 of 9", "contract calls in one full job on the deployed contracts on Base Sepolia, real value: fee locked, confirmed, instalment paid, vendor bond slashed, title moved.", GOLD, 34, 16)
-      + card(M + 7.9, 2.3, 3.75, 3.9, "329 of 329", "receipts re-fetched by pnpm verify:all on Base Sepolia and FISCO BCOS, with 46 intent hashes decoded from calldata.", INK, 34, 16)
+      + card(M + 7.9, 2.3, 3.75, 3.9, "353 of 353", "receipts re-fetched by pnpm verify:all on Base Sepolia and FISCO BCOS, with 46 intent hashes decoded from calldata.", INK, 34, 16)
       + [T(M, 6.4, 11.8, 0.5, "4 contracts deployed on Base Sepolia, source verified on Sourcify. 15 of 15 intents sent to both chains in the same step, same hash.", 14, GREY)],
       f"Money does move on chain. In one engine fleet run on FISCO BCOS, {FISCO_CALLS} contract calls succeeded: the lender received {LENDER_YUAN} yuan through Lease, "
       f"the vendor bond went from {VB_FROM:,} to {VB_TO:,} by proof, and the title went to the pilot. On Base Sepolia one full job ran on the deployed contracts, 9 of 9 calls with value. "
-      "And you do not have to trust us: pnpm verify:all re-fetches all 329 receipts we claim. (55 seconds)")
+      "And you do not have to trust us: pnpm verify:all re-fetches all 353 receipts we claim. (55 seconds)")
 
 # 9 webank stack
 slide(header("Built on WeBank's stack", "FISCO BCOS as the lender's ledger, FATE for credit")

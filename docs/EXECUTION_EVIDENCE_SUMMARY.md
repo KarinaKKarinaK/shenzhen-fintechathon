@@ -10,7 +10,7 @@ Topic F, Agent Wallet. Zishi is an AI wallet for an agricultural spraying drone 
 
 ### What the evidence demonstrates
 
-- The engine itself settles each job's money on the deployed contracts on FISCO BCOS in one loop: 16 contract calls plus 10 funding transfers to fresh role wallets, 26 of 26 transactions successful (fee locked in JobBoard, confirmed and split, instalments through Lease.pay, the rogue intent slashed by proof from the vendor bond, the title moved to the pilot).
+- The engine itself settles each job's money on the deployed contracts on FISCO BCOS in one loop, on the front running fix (IntentLogV2, BondV2): 14 contract calls plus 10 funding transfers to fresh role wallets, 24 of 24 transactions successful (fee locked in JobBoard, confirmed and split, instalments through Lease.pay, the rogue intent committed by its own agent and slashed by proof from the vendor bond, the title moved to the pilot).
 - A free AI model read the job offers in that run: 5 of 5 read by the model, 5 accepted by code against the signed listings.
 - One full job against the deployed contracts on public Base Sepolia: 9 of 9 contract calls with real value.
 - Every intent hash is committed to the IntentLog before the policy engine decides; in one real run each intent went to Base Sepolia and FISCO BCOS in the same step with the same hash (15 of 15).
@@ -54,26 +54,24 @@ Topic F, Agent Wallet. Zishi is an AI wallet for an agricultural spraying drone 
 | Lease | `0x9c46a913abaf37cacd67f01f6f3b3e70f7b66601` | `0xfbc077117e1477cb70d48ffdbe514e3c2380e8e12568bba62475afade737e50b` |
 | JobBoard | `0x20dc56e80b73f6066208a9d8197748f861579d37` | `0xd97cdec18ee572d25f4cbec08a2da705347e261995859c648588494d809992f2` |
 
-**The engine's own run settling on the FISCO contracts.**
+**The engine's own run settling on the FISCO contracts (V2 set).**
 
 | Moment | Call | Value (wei) | Transaction | Block | Status |
 |---|---|---|---|---|---|
-| vendor bond, agent, lease | Bond.postVendorBond 5000 yuan (penalty 200, daily cap 1000) | 5000000000000 | `0x4fa1fe6ba62647e95d3779c279a1240b80a8f37c3d29d9816516c19748949061` | 356 | success |
-| vendor bond, agent, lease | Bond.register agent (operator pilot, allowlist lender) | 0 | `0x0ea83a6b58a4951a71b3439aaab82cbf25b17215f98366e0ffc892a2ed69c1d0` | 357 | success |
-| vendor bond, agent, lease | Lease.open 650 yuan at 40 percent of each fee | 0 | `0xdac40ca8d38ee768e0553eb238ad8f82f6ffb05469ea2f7f8b45887d0f93b251` | 358 | success |
-| job job-202 posted | JobBoard.post job-202 fee 60 yuan locked | 60000000000 | `0x8290fe7f0606a82a44da4e45f69dc1ccf2e10d32f585527b0f2f5e9425221e8d` | 360 | success |
-| job job-203 posted | JobBoard.post job-203 fee 1500 yuan locked | 1500000000000 | `0x52d096bc2447a4724adc5f5d0e90980cd7616eaa44b25a814c1e742119bf77e2` | 363 | success |
-| job job-203 started | JobBoard.start job-203 | 0 | `0x9a3de560fb42eaf606b65c366c8968476068b5565c4b594155fd621b080ca616` | 365 | success |
-| job job-203 confirmed | JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay | 0 | `0x00b238d18dde985a67f1ca8f8905f7c47f21c873fccf1a9ddab100f710f1c858` | 367 | success |
-| job job-204 posted | JobBoard.post job-204 fee 250 yuan locked | 250000000000 | `0x88d910ab7b18863bd06aa6fef7ed8efbabbe9331b2f2c029b43ee1fb92cd3670` | 370 | success |
-| job job-204 started | JobBoard.start job-204 | 0 | `0x8e0af1d67fb9119240e2dbf930288f89c815762b891480529e8bfb5190984fe3` | 371 | success |
-| rogue intent on job-203 proven | IntentLog.commit rogue intent 0xb6922a51 for job-203 | 0 | `0x5a3417870f46e04f4758dc4725abfae8a81e57f621298903e5907366a4f0753a` | 374 | success |
-| rogue intent on job-203 proven | Bond.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury | 0 | `0x7c45ed8475744947092cc10ea29a67dd0804ee5e044ec3ea934280264d34cfc4` | 375 | success |
-| job job-201 posted | JobBoard.post job-201 fee 240 yuan locked | 240000000000 | `0xe8a76e841dda7eae5b3de3447b62c78276d35ab149ad4e3671db4e962ba92cdc` | 377 | success |
-| job job-201 started | JobBoard.start job-201 | 0 | `0xe585feb799618566b38b56ac3f39fa437e40ad4489976dac2462ae3e67999392` | 379 | success |
-| job job-201 confirmed | JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay | 0 | `0xe6767e521b4dc04e5b2380ed68e9d752a846fdeebc7c34d5f3e1cfbef637b719` | 381 | success |
-| hold job-203 released | JobBoard.releaseHold job-203 | 0 | `0x9aca2251c6706e71aef1862ef6925a55aed2b71b586797d70848f836825a67a0` | 383 | success |
-| hold job-201 released | JobBoard.releaseHold job-201 | 0 | `0x8d65df330815922f0820b6cc40986121456dd74c91f13f7bc6098635edbe1f37` | 384 | success |
+| vendor bond, agent, lease | BondV2.postVendorBond 5000 yuan (penalty 200, daily cap 1000) | 5000000000000 | `0x4cbb150ce77ce59fcb1f46416786a053c0d7b3f1de6f1990c572e4a1f63909e1` | 650 | success |
+| vendor bond, agent, lease | BondV2.register agent (operator pilot, allowlist lender) | 0 | `0xcea5df9d7f7b11167703b093dc74ebd07c62e59e81e866d4bd4f389c0b4f6539` | 651 | success |
+| vendor bond, agent, lease | Lease.open 650 yuan at 40 percent of each fee | 0 | `0x2ac6006b1e69bf56feb967a8b85b2cd7d380b7fa5dcfe4cb53fbb0de11cc6a17` | 652 | success |
+| job job-202 posted | JobBoard.post job-202 fee 60 yuan locked | 60000000000 | `0x3e8eb8f5fe39b6be107dfef165094bf679cf3417ed5eddc82a39d7b715380f4a` | 654 | success |
+| job job-203 posted | JobBoard.post job-203 fee 1500 yuan locked | 1500000000000 | `0xafe1456060735677c3aeb227dbec7527b3b5c9156e54d0c0f16e0544500c522f` | 657 | success |
+| job job-203 started | JobBoard.start job-203 | 0 | `0xc088e8c6ba53695cf01a818403a665a152ed54962efb7c2d8a13be4c7294641f` | 659 | success |
+| job job-203 confirmed | JobBoard.confirm job-203, fee split by the contract, instalment to the lender through Lease.pay | 0 | `0x98553f767728525b2663657727eb24c5fafb3354f4dbe977ba1dd3d94ade90b8` | 661 | success |
+| job job-204 posted | JobBoard.post job-204 fee 250 yuan locked | 250000000000 | `0x740f4f65a629c23bf64db23049a2654215816ff0fa5a3d36cedbe8a4e23ce8ab` | 664 | success |
+| job job-204 started | JobBoard.start job-204 | 0 | `0xb73e9f330d77a39c912d9980b72771701fb2db991b32e726cde7f2e6648ddad3` | 666 | success |
+| rogue intent on job-203 proven | IntentLogV2.commit rogue intent 0xa38b7e12 for job-203 | 0 | `0xaa9b839d6bc369d870008888a4e220320b7d329a2c5eb291882549b859fbda32` | 669 | success |
+| rogue intent on job-203 proven | BondV2.slashByProof PayeeNotAllowlisted, vendor bond pays the treasury | 0 | `0xc78373ada4fd6de20bef9a4366c23335527f552466f198e79bcfd4b03ed438ed` | 670 | success |
+| job job-201 posted | JobBoard.post job-201 fee 240 yuan locked | 240000000000 | `0xa6dd514ae1dbbfb27ef3828970e4765caa1fc86e5d94d03a4d4530e157574909` | 672 | success |
+| job job-201 started | JobBoard.start job-201 | 0 | `0xddfb7e912a12a8c96525e0eb26bb63dc3e32543c4333d61702266b4cbdfaf98b` | 673 | success |
+| job job-201 confirmed | JobBoard.confirm job-201, fee split by the contract, instalment to the lender through Lease.pay | 0 | `0xb70eff028acc46da9f979134a10b6db958597ae7a427cc29b6e6cbe6127e8966` | 675 | success |
 
 **Recovery drill (start reverted on chain, fee refunded by contract).**
 
@@ -94,7 +92,7 @@ Topic F, Agent Wallet. Zishi is an AI wallet for an agricultural spraying drone 
 | Timestamp | Action | Result | Link |
 |---|---|---|---|
 | 2026-10-20T12:37:47Z | Full job on the deployed Base Sepolia contracts | 9 of 9 calls successful, lender paid, vendor bond slashed, title to the pilot | https://sepolia.basescan.org/tx/0x5440d994b3c254e6e8925e7253da7537d90e63c6c4fe3612f6557a4b2e3c3bd3 |
-| 2026-10-20T13:50:56.828Z | Engine fleet run settling on FISCO with the free model reading offers | 26 of 26 successful, all balance checks passed | `settled-run-2026-10-20T13-50-56-827Z.json` |
+| 2026-10-20T14:31:27.555Z | Engine fleet run settling on the V2 contracts on FISCO with the free model reading offers | 24 of 24 successful, all balance checks passed | `settled-run-2026-10-20T14-31-27-555Z.json` |
 | 2026-10-20T13:53:56.737Z | Recovery drill, start reverted | fee refunded by JobBoard.cancel | `web/evidence/fisco/` |
 | 2026-10-19T20:05:00Z | Contracts deployed and verified on Base Sepolia | Sourcify exact match | https://sepolia.basescan.org/address/0x093eD0DD8E4bE4b0205a6e39d0c5988f5Cd8ad51 |
 | 2026-10-20 | Live demo | Public runs on FISCO BCOS, real Base Sepolia with the demo token | https://zishi-fintechathon.vercel.app |
